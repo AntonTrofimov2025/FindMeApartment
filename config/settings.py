@@ -46,7 +46,10 @@ INSTALLED_APPS = [
     'django_extensions',
 
     'apps.core.apps.CoreConfig',
-    'apps.users.apps.UsersConfig'
+    'apps.users.apps.UsersConfig',
+    'apps.listings.apps.ListingsConfig',
+    'apps.reviews.apps.ReviewsConfig',
+    'apps.bookings.apps.BookingsConfig'
 ]
 
 MIDDLEWARE = [

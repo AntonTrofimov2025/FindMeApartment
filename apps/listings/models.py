@@ -1,11 +1,11 @@
-from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.db import models
 from django.core.validators import MinLengthValidator
 from apps.core.models import UniqueID, TimeStampedModel, Countries, PropertyType, RoomCount, MaxGuests
 from django_extensions.db.fields import AutoSlugField
 from pytils.translit import slugify
 from django.utils import timezone
-from managers.listings import ListingSoftDeleteManager
+from managers.listings import ListingsSoftDeleteManager
 
 
 
@@ -14,10 +14,12 @@ class Listing(UniqueID, TimeStampedModel):
     title = models.CharField(max_length=100, validators=[MinLengthValidator(3)],
                              verbose_name="Listing's Title")
     description = models.TextField(verbose_name="Listing's description")
-    user = models.ForeignKey(get_user_model(), related_name='listings', on_delete=models.PROTECT,
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='listings', on_delete=models.PROTECT,
                              verbose_name='User', help_text='Current selected user')
     country = models.SmallIntegerField(choices=Countries, default=Countries.GERMANY, help_text='Selected country',
                                        verbose_name='Country')
+    district = models.CharField(max_length=50, validators=[MinLengthValidator(3)], help_text='Specified district',
+                            verbose_name='District')
     city = models.CharField(max_length=50, validators=[MinLengthValidator(3)], help_text='Specified city',
                             verbose_name='City')
     street = models.CharField(max_length=100, validators=[MinLengthValidator(3)], help_text='Specified street',
@@ -43,7 +45,7 @@ class Listing(UniqueID, TimeStampedModel):
         self.deleted_at = timezone.now()
         self.save(update_fields=['deleted_at'])
 
-    objects = ListingSoftDeleteManager()
+    objects = ListingsSoftDeleteManager()
     all_objects = models.Manager()
 
     def __str__(self):
@@ -59,7 +61,7 @@ class Listing(UniqueID, TimeStampedModel):
         db_table = 'fma_listings'
         verbose_name = 'Listing'
         verbose_name_plural = 'Listings'
-        constraints = [models.UniqueConstraint(fields=['user', 'country', 'city', 'street',
+        constraints = [models.UniqueConstraint(fields=['user', 'country', 'city', 'district', 'street',
                                                        'house_number', 'apartment_number'],
                                                name='unique_user_address',
                                                violation_error_message='Such an address combination already exists!')]

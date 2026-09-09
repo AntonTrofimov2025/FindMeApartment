@@ -8,9 +8,9 @@ from django.utils.translation import gettext_lazy as _
 
 class User(AbstractBaseUser, PermissionsMixin, UniqueID, TimeStampedModel):
 
-    class Roles(models.TextChoices):
-        TENANT = 'tenant', _('Tenant')
-        LANDLORD = 'landlord', _('Landlord')
+    # class Roles(models.TextChoices):
+    #     TENANT = 'tenant', _('Tenant')
+    #     LANDLORD = 'landlord', _('Landlord')
 
     username = models.CharField(blank=True, max_length=50, help_text="Specified Username", verbose_name='Username')
     email = models.EmailField(unique=True, max_length=50, help_text="Your email", verbose_name='Email')
