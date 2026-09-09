@@ -24,7 +24,7 @@ class Listing(UniqueID, TimeStampedModel):
                               verbose_name='Street')
     house_number = models.CharField(max_length=10, validators=[MinLengthValidator(1)],
                                     help_text='Specified house number', verbose_name='House number')
-    active = models.BooleanField(default=True, verbose_name='Available?')
+    is_active = models.BooleanField(default=True, verbose_name='Available?')
     property_type = models.CharField(max_length=9, choices=PropertyType, default=PropertyType.APARTMENT,
                                      help_text='Selected Property Type', verbose_name='Property type')
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Current price')
@@ -49,3 +49,4 @@ class Listing(UniqueID, TimeStampedModel):
                 f" street={self.street}, house_number={self.house_number}, active={self.active},"
                 f" property_type={self.property_type}, price={self.price}, rooms={self.rooms})>")
 
+    # Допиши Constraints!!

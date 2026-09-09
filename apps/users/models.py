@@ -1,21 +1,49 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserManager
 from apps.core.models import UniqueID, TimeStampedModel
+from django.utils import timezone
+from .managers.users import UserSoftDeleteManager
 
 
 class User(AbstractBaseUser, PermissionsMixin, UniqueID, TimeStampedModel):
 
-    username = models.CharField(unique=True, max_length=50)
-    email = models.EmailField(blank=True)
-    first_name = models.CharField(max_length=50, blank=True)
-    last_name = models.CharField(max_length=50, blank=True)
-    birth_date = models.DateField(null=True, blank=True)
-    avatar = models.ImageField(upload_to='avatars', null=True, blank=True)
+    username = models.CharField(blank=True, max_length=50, help_text="Specified Username", verbose_name='Username')
+    email = models.EmailField(unique=True, max_length=50, help_text="Your email", verbose_name='Email')
+    first_name = models.CharField(max_length=50, blank=True, verbose_name='First name')
+    last_name = models.CharField(max_length=50, blank=True, verbose_name='Last name')
+    birth_date = models.DateField(null=True, blank=True, help_text='Your birthday', verbose_name='Birthday')
+    avatar = models.ImageField(upload_to='avatars', null=True, blank=True, verbose_name='Avatar')
 
-    phone = models.CharField(max_length=75, blank=True, default='')
-    last_login = models.DateTimeField(null=True)
+    phone = models.CharField(max_length=75, blank=True, default='', help_text='Specified phone number', verbose_name='Phone number')
+    last_login = models.DateTimeField(null=True, verbose_name='Last login')
 
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
-    date_joined = models.DateTimeField(auto_now_add=True)
+    @property
+    def date_joined(self):
+        return self.created_at
+
+    @property
+    def is_deleted(self):
+        return self.deleted_at is not None
+
+    objects = UserSoftDeleteManager()
+    all_objects = UserManager()
+
+    def delete(self, *args, **kwargs):
+        self.deleted_at = timezone.now()
+        self.is_active = False
+        self.save(update_fields=['deleted_at', 'is_active'])
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+
+    def __repr__(self):
+        return (f"<User(username={self.username}, email={self.email}, first_name={self.first_name},"
+                f" last_name={self.last_name}, birth_date={self.birth_date}, phone={self.phone},"
+                f" is_stuff={self.is_staff}, is_active={self.is_active}, date_joined={self.date_joined})>")
+
+    def __str__(self):
+        return self.username
+
