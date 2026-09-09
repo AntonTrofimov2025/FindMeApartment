@@ -25,8 +25,11 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID, TimeStampedModel):
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
-    role = models.CharField(max_length=15, choices=Roles, default=Roles.TENANT,
-                            help_text='Select your role', verbose_name='Your role')
+    ##################################################################################
+    # role = models.CharField(max_length=15, choices=Roles, default=Roles.TENANT,    #
+    #                         help_text='Select your role', verbose_name='Your role')#
+    # Нужно переделать через стандартные django группы                               #
+    ##################################################################################
 
     @property
     def date_joined(self):

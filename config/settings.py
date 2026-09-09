@@ -82,22 +82,25 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-SQLITE_DB = {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-
-MYSQL_DB = {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'mydatabase',
-        'USER': 'mydatabaseuser',
-        'PASSWORD': env('MYSQL_PASSWORD'),
-        'HOST': 'localhost',
-        'PORT': 3306,
-    }
-
+# SQLITE_DB = {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+#
+# MYSQL_DB = {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'mydatabase',
+#         'USER': 'mydatabaseuser',
+#         'PASSWORD': env('MYSQL_PASSWORD'),
+#         'HOST': 'localhost',
+#         'PORT': 3306,
+#     }
+#
+# DATABASES = {
+#     'default': MYSQL_DB if env.bool('MY_SQL', default=False) else SQLITE_DB
+# }
 DATABASES = {
-    'default': MYSQL_DB if env.bool('MY_SQL', default=False) else SQLITE_DB
+    'default': env.db('DB_URL', default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
 }
 
 

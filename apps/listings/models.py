@@ -70,3 +70,7 @@ class Listing(UniqueID, TimeStampedModel):
                    models.Index(fields=['price'], name='fma_listings_price_idx'),
                    models.Index(fields=['rooms'], name='fma_listings_rooms_idx')]
 
+
+# Когда буду делать модель отзывов то надо учесть момент с OneToOne field (booking к review),
+# то есть учесть нюанс чтобы при удалении букинга не удалялся отзыв, это плохо.
+# Обратная ситуация: удаляем отзыв - удаляется объявление, отличная ситуация :
