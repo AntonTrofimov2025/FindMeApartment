@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.core.validators import MinLengthValidator
-from apps.core.models import UniqueID, TimeStampedModel, Countries, PropertyType, RoomCount
+from apps.core.models import UniqueID, TimeStampedModel, Countries, PropertyType, RoomCount, MaxGuests
 from django_extensions.db.fields import AutoSlugField
 from pytils.translit import slugify
 from django.utils import timezone
@@ -24,11 +24,16 @@ class Listing(UniqueID, TimeStampedModel):
                               verbose_name='Street')
     house_number = models.CharField(max_length=10, validators=[MinLengthValidator(1)],
                                     help_text='Specified house number', verbose_name='House number')
+    apartment_number = models.CharField(max_length=10, validators=[MinLengthValidator(1)], null=True, blank=True,
+                                        help_text='Specified apartment number', verbose_name='Apartment number')
     is_active = models.BooleanField(default=True, verbose_name='Available?')
-    property_type = models.CharField(max_length=9, choices=PropertyType, default=PropertyType.APARTMENT,
+    max_guests = models.SmallIntegerField(choices=MaxGuests, default=MaxGuests.TWO,
+                                          help_text='Selected guests max quantity', verbose_name='Max guests')
+    property_type = models.CharField(max_length=15, choices=PropertyType, default=PropertyType.APARTMENT,
                                      help_text='Selected Property Type', verbose_name='Property type')
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Current price')
-    rooms = models.SmallIntegerField(choices=RoomCount, default=RoomCount.ONE, verbose_name="Selected room's quantity")
+    rooms = models.SmallIntegerField(choices=RoomCount, default=RoomCount.ONE, help_text="Selected room's quantity",
+                                     verbose_name='Rooms')
 
     @property
     def is_deleted(self):
@@ -46,7 +51,22 @@ class Listing(UniqueID, TimeStampedModel):
 
     def __repr__(self):
         return (f"<Listing(title={self.title}, user={self.user}, country={self.country}, city={self.city},"
-                f" street={self.street}, house_number={self.house_number}, active={self.active},"
+                f" street={self.street}, house_number={self.house_number}, apartment_number={self.apartment_number},"
+                f" is_active={self.is_active},"
                 f" property_type={self.property_type}, price={self.price}, rooms={self.rooms})>")
 
-    # Допиши Constraints!!
+    class Meta:
+        db_table = 'fma_listings'
+        verbose_name = 'Listing'
+        verbose_name_plural = 'Listings'
+        constraints = [models.UniqueConstraint(fields=['user', 'country', 'city', 'street',
+                                                       'house_number', 'apartment_number'],
+                                               name='unique_user_address',
+                                               violation_error_message='Such an address combination already exists!')]
+        indexes = [models.Index(fields=['is_active'], name='fma_listings_is_active_idx'),
+                   models.Index(fields=['is_active', 'city'], name='fma_listings_is_active_city_idx'),
+                   models.Index(fields=['is_active', 'price'], name='fma_listings_is_active_price_idx'),
+                   models.Index(fields=['city'], name='fma_listings_city_idx'),
+                   models.Index(fields=['price'], name='fma_listings_price_idx'),
+                   models.Index(fields=['rooms'], name='fma_listings_rooms_idx')]
+

@@ -3,9 +3,14 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserM
 from apps.core.models import UniqueID, TimeStampedModel
 from django.utils import timezone
 from .managers.users import UserSoftDeleteManager
+from django.utils.translation import gettext_lazy as _
 
 
 class User(AbstractBaseUser, PermissionsMixin, UniqueID, TimeStampedModel):
+
+    class Roles(models.TextChoices):
+        TENANT = 'tenant', _('Tenant')
+        LANDLORD = 'landlord', _('Landlord')
 
     username = models.CharField(blank=True, max_length=50, help_text="Specified Username", verbose_name='Username')
     email = models.EmailField(unique=True, max_length=50, help_text="Your email", verbose_name='Email')
@@ -19,6 +24,9 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID, TimeStampedModel):
 
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+
+    role = models.CharField(max_length=15, choices=Roles, default=Roles.TENANT,
+                            help_text='Select your role', verbose_name='Your role')
 
     @property
     def date_joined(self):
@@ -42,7 +50,7 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID, TimeStampedModel):
     def __repr__(self):
         return (f"<User(username={self.username}, email={self.email}, first_name={self.first_name},"
                 f" last_name={self.last_name}, birth_date={self.birth_date}, phone={self.phone},"
-                f" is_stuff={self.is_staff}, is_active={self.is_active}, date_joined={self.date_joined})>")
+                f" is_staff={self.is_staff}, is_active={self.is_active}, date_joined={self.date_joined})>")
 
     def __str__(self):
         return self.username
