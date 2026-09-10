@@ -112,3 +112,10 @@ class MaxGuests(models.IntegerChoices):
     NINE = 9, '9'
     TEN = 10, '10'
 
+class StatusChoices(models.TextChoices):
+    PENDING = 'pending', _('Pending')
+    CONFIRMED = 'confirmed', _('Confirmed')
+    CHECKED_IN = 'checked_in', _('Checked In')
+    COMPLETED = 'completed', _('Completed')
+    CANCELLED = 'cancelled', _('Cancelled')
+    REJECTED = 'rejected', _('Rejected')
