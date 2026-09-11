@@ -11,6 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from django.db.models import Avg
 from django.db.models.functions import Round
 import os
+from decimal import Decimal
 
 
 
@@ -38,7 +39,8 @@ class Listing(UniqueID, TimeStampedModel):
                                           help_text='Selected guests max quantity', verbose_name=_('Max guests'))
     property_type = models.CharField(max_length=15, choices=PropertyType, default=PropertyType.APARTMENT,
                                      help_text='Selected Property Type', verbose_name=_('Property type'))
-    price_per_night = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_('Current price per night'))
+    price_per_night = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_('Current price per night'),
+                                          validators=[MinValueValidator(Decimal('0.00'))])
     rooms = models.SmallIntegerField(choices=RoomCount, default=RoomCount.ONE, help_text="Selected room's quantity",
                                      verbose_name=_('Rooms'))
 

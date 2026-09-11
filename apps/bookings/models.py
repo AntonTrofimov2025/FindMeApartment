@@ -29,7 +29,8 @@ class Booking(UniqueID, TimeStampedModel):
     snapshot_data = models.JSONField(blank=True, verbose_name=_('Snapshot of current Listing data'))
 
     total_price = models.DecimalField(max_digits=10, decimal_places=2,
-                                      help_text='Total price for the stay', verbose_name=_('Total price'))
+                                      help_text='Total price for the stay', verbose_name=_('Total price'),
+                                      validators=[MinValueValidator(Decimal('0.00'))])
 
     objects = BookingsSoftDeleteManager()
     all_objects = models.Manager()
@@ -108,7 +109,11 @@ class Booking(UniqueID, TimeStampedModel):
         constraints = [models.CheckConstraint(name='guests_from_1_to_10',
                                               condition=Q(guests_number__gte=1) & Q(guests_number__lte=10),
                                               violation_error_message='Guests number must be between 1 and 10!'),
-                       models.CheckConstraint(name='start_date_gt_than_end_date',
+                       models.CheckConstraint(name='end_date_gt_than_start_date',
                                               condition=Q(date_to__gt=F('date_from')),
-                       violation_error_message='Booking start date can not be greater than end date!')]
+                       violation_error_message='Booking start date can not be greater than end date!'),
+                       models.CheckConstraint(name='booking_total_price_gte_zero',
+                                              condition=Q(total_price__gte=0),
+                                              violation_error_message='Total price can not be less than zero!')
+                       ]
 

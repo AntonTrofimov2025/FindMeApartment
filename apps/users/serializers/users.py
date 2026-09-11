@@ -13,8 +13,8 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'updated_at', 'created_at', 'updated_at', 'deleted_at', 'date_joined']
 
     def validate_phone(self, value):
-        if not re.match(r'^\+\d{10,14}$', value):
-            raise serializers.ValidationError('The phone number must consist of 10-15 symbols in total and start from + symbol!!\n'
+        if not re.match(r'^\+\d{10,75}$', value):
+            raise serializers.ValidationError('The phone number must consist of 10-75 symbols in total and start from + symbol!!\n'
                                               'Example: +3423234455323')
         return value
 
