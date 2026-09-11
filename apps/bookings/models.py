@@ -10,6 +10,8 @@ from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from apps.core.models import StatusChoices
 from decimal import Decimal
+from dateutil.relativedelta import relativedelta
+from datetime import timedelta
 
 
 
@@ -46,12 +48,28 @@ class Booking(UniqueID, TimeStampedModel):
     def clean(self):
         super().clean()
         if self.date_to and self.date_from and self.date_to <= self.date_from:
-            raise ValidationError('Booking start date can not be greater than end date!')
+            raise ValidationError(_('Booking start date can not be greater than end date!'))
         if (Booking.objects.filter(listing_id=self.listing_id,
                                    booking_status__in=[StatusChoices.PENDING, StatusChoices.CONFIRMED],
                                   date_from__lt=self.date_to, date_to__gt=self.date_from).
                 exclude(id__in=[self.pk] if self.pk else []).exists()):
-            raise ValidationError("Unfortunately the selected dates are already booked.")
+            raise ValidationError(_("Unfortunately the selected dates are already booked."))
+
+        if self.date_from and self.date_from < timezone.localdate():
+            raise ValidationError(_('Booking start date cannot be in the past.'))
+        if self.date_from and self.date_from > timezone.localdate() + relativedelta(years=1):
+            raise ValidationError(_('You cannot book more than 1 year in advance.'))
+        if self.date_to and self.date_to > timezone.localdate() + relativedelta(years=1):
+            raise ValidationError(_('Booking end date cannot exceed 1 year from today.'))
+
+        if self.booking_status == StatusChoices.CANCELLED:
+            if self.pk:
+                booking = Booking.objects.get(pk=self.pk)
+
+                if booking.booking_status != StatusChoices.CANCELLED:
+                    if timezone.localdate() > self.date_from - timedelta(days=2):
+                        raise ValidationError(_('You cannot cancel this booking less than 2 days before the start date.'))
+
 
     def save(self, *args, **kwargs):
 
@@ -109,12 +127,12 @@ class Booking(UniqueID, TimeStampedModel):
         ordering = ('-created_at',)
         constraints = [models.CheckConstraint(name='guests_from_1_to_10',
                                               condition=Q(guests_number__gte=1) & Q(guests_number__lte=10),
-                                              violation_error_message='Guests number must be between 1 and 10!'),
-                       models.CheckConstraint(name='end_date_gt_than_start_date',
+                                              violation_error_message=_('Guests number must be between 1 and 10!')),
+                       models.CheckConstraint(name='end_date_gt_start_date',
                                               condition=Q(date_to__gt=F('date_from')),
-                       violation_error_message='Booking start date can not be greater than end date!'),
+                       violation_error_message=_('Booking start date can not be greater than end date!')),
                        models.CheckConstraint(name='booking_total_price_gte_zero',
                                               condition=Q(total_price__gte=0),
-                                              violation_error_message='Total price can not be less than zero!')
+                                              violation_error_message=_('Total price can not be less than zero!'))
                        ]
 

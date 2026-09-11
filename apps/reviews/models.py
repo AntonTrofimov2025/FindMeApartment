@@ -31,7 +31,7 @@ class Review(UniqueID, TimeStampedModel):
     def clean(self):
         super().clean()
         if self.booking and self.booking.booking_status != StatusChoices.COMPLETED:
-            raise ValidationError('You must complete your booking before writing review.')
+            raise ValidationError(_('You must complete your booking before writing review.'))
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -47,9 +47,9 @@ class Review(UniqueID, TimeStampedModel):
         ordering = ('-created_at',)
         constraints = [models.CheckConstraint(name='property_rating_1_to_5',
                                               condition=Q(property_rating__gte=1) & Q(property_rating__lte=5),
-                                              violation_error_message='Property rating must be between 1 and 5!'),
+                                              violation_error_message=_('Property rating must be between 1 and 5!')),
                        models.CheckConstraint(name='location_rating_1_to_5',
                                               condition=Q(location_rating__gte=1) & Q(location_rating__lte=5),
-                                              violation_error_message='Location rating must be between 1 and 5!')
+                                              violation_error_message=_('Location rating must be between 1 and 5!'))
                        ]
 

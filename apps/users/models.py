@@ -4,6 +4,7 @@ from apps.core.models import UniqueID, TimeStampedModel
 from django.utils import timezone
 from .managers.users import UserSoftDeleteManager
 from django.utils.translation import gettext_lazy as _
+from apps.users.validators import validate_birth_date
 
 
 class User(AbstractBaseUser, PermissionsMixin, UniqueID):
@@ -16,7 +17,8 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
     email = models.EmailField(unique=True, max_length=255, help_text="Your email", verbose_name='Email')
     first_name = models.CharField(max_length=50, blank=True, verbose_name='First name')
     last_name = models.CharField(max_length=50, blank=True, verbose_name='Last name')
-    birth_date = models.DateField(null=True, blank=True, help_text='Your birthday', verbose_name='Birthday')
+    birth_date = models.DateField(null=True, blank=True, help_text='Your birthday', verbose_name='Birthday',
+                                  validators=[validate_birth_date])
     # Проверку birthday сделай, то что человеку 18 лет
     avatar = models.ImageField(upload_to='avatars', null=True, blank=True, verbose_name='Avatar')
 
@@ -35,7 +37,7 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
 
     date_joined = models.DateTimeField(auto_now_add=True, help_text='Date of join', verbose_name='Joined at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Date of update', verbose_name='Updated at')
-    deleted_at = models.DateTimeField(null=True, help_text='Date of deletion', verbose_name='Deleted at')
+    deleted_at = models.DateTimeField(null=True, blank=True, help_text='Date of deletion', verbose_name='Deleted at')
 
     @property
     def is_deleted(self):

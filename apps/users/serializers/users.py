@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 import re
+from django.utils.translation import gettext_lazy as _
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -14,12 +15,12 @@ class UserSerializer(serializers.ModelSerializer):
 
     def validate_phone(self, value):
         if not re.match(r'^\+\d{10,75}$', value):
-            raise serializers.ValidationError('The phone number must consist of 10-75 symbols in total and start from + symbol!!\n'
-                                              'Example: +3423234455323')
+            raise serializers.ValidationError(_('The phone number must consist of 10-75 symbols in total and start from + symbol!!\n'
+                                              'Example: +3423234455323'))
         return value
 
     def validate_email(self, value):
         if get_user_model().objects.filter(email=value).exclude(id__in=[self.instance.pk] if self.instance else []).exists():
-            raise serializers.ValidationError('This email already exists!!')
+            raise serializers.ValidationError(_('This email already exists!!'))
         return value
 

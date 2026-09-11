@@ -46,7 +46,8 @@ class Listing(UniqueID, TimeStampedModel):
 
     @property
     def overall_rating(self):
-        overall_rating = self.bookings.aggregate(avg_rating=Round(Avg('review__property_rating'), 2))['avg_rating']
+        overall_rating = self.bookings.aggregate(
+            avg_rating=Round(Avg('review__property_rating'), 2))['avg_rating']
         return overall_rating or 0.0
 
     @property
@@ -77,7 +78,7 @@ class Listing(UniqueID, TimeStampedModel):
         constraints = [models.UniqueConstraint(fields=['user', 'country', 'city', 'district', 'street',
                                                        'house_number', 'apartment_number'],
                                                name='unique_user_address',
-                                               violation_error_message='Such an address combination already exists!')]
+                                               violation_error_message=_('Such an address combination already exists!'))]
         indexes = [models.Index(fields=['city', 'price_per_night'], name='fma_listings_city_price_idx'),
                    models.Index(fields=['city', 'rooms'], name='fma_listings_city_rooms_idx'),
                    models.Index(fields=['city', 'price_per_night', 'rooms'], name='fma_list_city_price_rooms_idx'),

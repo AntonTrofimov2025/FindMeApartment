@@ -11,7 +11,12 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 from pathlib import Path
+
+import rest_framework.permissions
 from environ import Env
+
+import apps.core.paginators.common
+from django.utils.translation import gettext_lazy as _
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -43,6 +48,8 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'django_filters',
+    'rest_framework_simplejwt',
+    # 'rest_framework_simplejwt.token_blacklist',
     'django_extensions',
 
     'apps.core.apps.CoreConfig',
@@ -78,6 +85,101 @@ TEMPLATES = [
         },
     },
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'apps.core.paginators.common.CommonPaginator',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication'
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.DjangoModelPermissions'
+    ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+        'apps.core.throttling.AnonBurstRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '200/day',
+        'anon_burst': '5/minute',
+        'user': '5000/day'
+    }
+}
+
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True
+}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'db_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'db_logs.log',
+            'maxBytes': 1024 * 1024 * 5,
+            'backupCount': 5,
+            'formatter': 'verbose'
+        },
+        'http_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'http_logs.log',
+            'maxBytes': 1024 * 1024 * 5,
+            'backupCount': 5,
+            'formatter': 'verbose'
+        },
+    },
+    'loggers': {
+        # SQL-запросы к БД (sqlite и любой другой)
+        'django.db.backends': {
+            'handlers': ['console', 'db_file'],
+            'level': 'DEBUG', # На продакшене не забудь переключить на INFO/WARNING!!
+            'propagate': False,
+        },
+        # Ошибки запросов (4xx/5xx), в том числе из DRF-views
+        'django.server': {
+            'handlers': ['console', 'http_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # # Ошибки 4xx/5xx на продакшене (Gunicorn/Docker)
+        # 'django.request': {
+        #     'handlers': ['console'],
+        #     'level': 'INFO',
+        #     'propagate': False,
+        # },
+        # Всё остальное django-логирование
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+}
+# ACHTUNG!!
+# При деплое не забудь дописать в dockerfile: RUN mkdir -p logs!!
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
@@ -131,11 +233,21 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
+LANGUAGES = [
+    ('ru', _('Russian')),
+    ('en', _('English')),
+    ('de', _('Deutsch')),
+]
+
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
 USE_TZ = True
+
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
 
 
 # Static files (CSS, JavaScript, Images)

@@ -14,7 +14,7 @@ class UniqueID(models.Model):
 class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text='Date of creation', verbose_name='Created at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Date of update', verbose_name='Updated at')
-    deleted_at = models.DateTimeField(null=True, help_text='Date of deletion', verbose_name='Deleted at')
+    deleted_at = models.DateTimeField(null=True, blank=True, help_text='Date of deletion', verbose_name='Deleted at')
 
     class Meta:
         abstract = True
