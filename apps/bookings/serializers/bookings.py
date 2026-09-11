@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from apps.bookings.models import Booking
 from django.core.exceptions import ValidationError
+import copy
 
 
 class BookingSerializer(serializers.ModelSerializer):
@@ -15,7 +16,7 @@ class BookingSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if self.instance:
-            instance = self.instance
+            instance = copy.deepcopy(self.instance)
             for field, value in attrs.items():
                 setattr(instance, field, value)
         else:
@@ -24,7 +25,8 @@ class BookingSerializer(serializers.ModelSerializer):
         try:
             instance.clean()
         except ValidationError as e:
-            raise serializers.ValidationError(e.message_dict)
+            e = e.message_dict if hasattr(e, 'message_dict') else e.messages
+            raise serializers.ValidationError(e)
 
         return attrs
 

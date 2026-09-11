@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from apps.reviews.models import Review
 from django.core.validators import ValidationError
+import copy
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -13,7 +14,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if self.instance:
-            instance = self.instance
+            instance = copy.deepcopy(self.instance)
             for field, value in attrs.items():
                 setattr(instance, field, value)
         else:
@@ -22,7 +23,8 @@ class ReviewSerializer(serializers.ModelSerializer):
         try:
             instance.clean()
         except ValidationError as e:
-            raise serializers.ValidationError(e.message_dict)
+            e = e.message_dict if hasattr(e, 'message_dict') else e.messages
+            raise serializers.ValidationError(e)
 
         return attrs
 
