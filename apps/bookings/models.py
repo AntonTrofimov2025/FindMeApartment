@@ -47,7 +47,8 @@ class Booking(UniqueID, TimeStampedModel):
         super().clean()
         if self.date_to and self.date_from and self.date_to <= self.date_from:
             raise ValidationError('Booking start date can not be greater than end date!')
-        if (Booking.objects.filter(listing_id=self.listing_id, booking_status__in=[StatusChoices.PENDING, StatusChoices.CONFIRMED],
+        if (Booking.objects.filter(listing_id=self.listing_id,
+                                   booking_status__in=[StatusChoices.PENDING, StatusChoices.CONFIRMED],
                                   date_from__lt=self.date_to, date_to__gt=self.date_from).
                 exclude(id__in=[self.pk] if self.pk else []).exists()):
             raise ValidationError("Unfortunately the selected dates are already booked.")

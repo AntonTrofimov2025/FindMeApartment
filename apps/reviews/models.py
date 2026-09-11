@@ -7,6 +7,8 @@ from apps.bookings.models import Booking
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import Q
+from apps.core.models import StatusChoices
+from django.core.validators import ValidationError
 
 
 class Review(UniqueID, TimeStampedModel):
@@ -25,6 +27,15 @@ class Review(UniqueID, TimeStampedModel):
     def delete(self, *args, **kwargs):
         self.deleted_at = timezone.now()
         self.save(update_fields=['deleted_at', 'updated_at'])
+
+    def clean(self):
+        super().clean()
+        if self.booking and self.booking.booking_status != StatusChoices.COMPLETED:
+            raise ValidationError('You must complete your booking before writing review.')
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     objects = ReviewsSoftDeleteManager()
     all_objects = models.Manager()
