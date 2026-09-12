@@ -75,7 +75,7 @@ class Booking(UniqueID, TimeStampedModel):
 
         if self.date_to and self.date_from and self.listing:
             nights = (self.date_to - self.date_from).days
-            self.total_price = nights * self.listing.price_per_night if nights > 0 else Decimal("0.00")
+            self.total_price = nights * self.listing.final_price_per_night if nights > 0 else Decimal("0.00")
 
         self.full_clean()
 
@@ -104,6 +104,7 @@ class Booking(UniqueID, TimeStampedModel):
                     'property_type': self.listing.get_property_type_display() or "No data",
                     'price_per_night': str(self.listing.price_per_night) if self.listing.price_per_night is not None
                     else "No data",
+                    'discount': self.listing.discount,
                     'rooms': self.listing.get_rooms_display() or "No data",
                 }
             if self.total_price:

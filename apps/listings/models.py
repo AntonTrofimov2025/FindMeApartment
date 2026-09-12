@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.core.validators import MinLengthValidator, MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
 from apps.core.models import UniqueID, TimeStampedModel, Countries, PropertyType, RoomCount, MaxGuests
 from django_extensions.db.fields import AutoSlugField
 from pytils.translit import slugify
@@ -8,7 +9,7 @@ from django.utils import timezone
 from .managers.listings import ListingsSoftDeleteManager
 from .managers.photo_manager import PhotoSoftDeleteManager
 from django.utils.translation import gettext_lazy as _
-from django.db.models import Avg
+from django.db.models import Avg, Q
 from django.db.models.functions import Round
 import os
 from decimal import Decimal
@@ -41,8 +42,17 @@ class Listing(UniqueID, TimeStampedModel):
                                      help_text='Selected Property Type', verbose_name=_('Property type'))
     price_per_night = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_('Current price per night'),
                                           validators=[MinValueValidator(Decimal('0.00'))])
+    discount = models.DecimalField(max_digits=3, decimal_places=2, validators=[MinValueValidator(Decimal("0.01")),
+                                                                MaxValueValidator(Decimal("1"))], default=Decimal("1"),
+                                   help_text=_('Discount coefficient for price per night'), verbose_name=_('Discount'))
     rooms = models.SmallIntegerField(choices=RoomCount, default=RoomCount.ONE, help_text="Selected room's quantity",
                                      verbose_name=_('Rooms'))
+
+    @property
+    def final_price_per_night(self):
+        if self.discount < Decimal("1"):
+            return (self.price_per_night * self.discount).quantize(Decimal("0.01"))
+        return self.price_per_night
 
     @property
     def overall_rating(self):
@@ -61,6 +71,17 @@ class Listing(UniqueID, TimeStampedModel):
     objects = ListingsSoftDeleteManager()
     all_objects = models.Manager()
 
+    def clean(self):
+        super().clean()
+        if self.property_type and self.property_type in [PropertyType.ROOM, PropertyType.APARTMENT] and not self.apartment_number:
+            raise ValidationError(_('The apartment number is required for room/apartment property type'))
+        if self.property_type and self.property_type in [PropertyType.HOUSE, PropertyType.STUDIO] and self.apartment_number:
+            raise ValidationError(_('The house/studio property type can not have an apartment number.'))
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Listing's Title: {self.title}"
 
@@ -78,7 +99,10 @@ class Listing(UniqueID, TimeStampedModel):
         constraints = [models.UniqueConstraint(fields=['user', 'country', 'city', 'district', 'street',
                                                        'house_number', 'apartment_number'],
                                                name='unique_user_address',
-                                               violation_error_message=_('Such an address combination already exists!'))]
+                                               violation_error_message=_('Such an address combination already exists!')),
+                       models.CheckConstraint(name='discount_from_0.01_to_1',
+                                              condition=Q(discount__gt=Decimal("0")) & Q(discount__lte=Decimal("1")),
+                                              violation_error_message='Discount is only allowed in range of (0.01 and 1.00).')]
         indexes = [models.Index(fields=['city', 'price_per_night'], name='fma_listings_city_price_idx'),
                    models.Index(fields=['city', 'rooms'], name='fma_listings_city_rooms_idx'),
                    models.Index(fields=['city', 'price_per_night', 'rooms'], name='fma_list_city_price_rooms_idx'),

@@ -2,16 +2,28 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 import re
 from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.password_validation import validate_password
+from rest_framework.exceptions import ValidationError as DRFValidationError
+from django.core.exceptions import ValidationError
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserListSerializer(serializers.ModelSerializer):
     is_deleted = serializers.ReadOnlyField()
 
     class Meta:
         model = get_user_model()
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'birth_date',
                   'phone', 'last_login', 'date_joined', 'updated_at', 'is_deleted', 'deleted_at']
-        read_only_fields = ['id', 'updated_at', 'created_at', 'updated_at', 'deleted_at', 'date_joined']
+        read_only_fields = ['id', 'updated_at', 'deleted_at', 'date_joined']
+
+class RegisterUserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(min_length=8, max_length=128, write_only=True)
+    re_password = serializers.CharField(min_length=8, max_length=128, write_only=True)
+
+    class Meta:
+        model = get_user_model()
+        fields = ['email', 'username', 'first_name', 'last_name', 'birth_date', 'phone', 'password', 're_password']
+        read_only_fields = ['id']
 
     def validate_phone(self, value):
         if not re.match(r'^\+\d{10,75}$', value):
@@ -20,7 +32,23 @@ class UserSerializer(serializers.ModelSerializer):
         return value
 
     def validate_email(self, value):
-        if get_user_model().objects.filter(email=value).exclude(id__in=[self.instance.pk] if self.instance else []).exists():
+        if get_user_model().all_objects.filter(email=value).exclude(id__in=[self.instance.pk] if self.instance else []).exists():
             raise serializers.ValidationError(_('This email already exists!!'))
         return value
+
+    def validate_password(self, value):
+        try:
+            validate_password(value)
+        except ValidationError as e:
+            raise serializers.ValidationError(list(e.messages))
+        return value
+
+    def validate(self, attrs):
+        if attrs.get('password') != attrs.get('re_password'):
+            raise DRFValidationError({'re_password': 'Passwords do not match!!'})
+        return attrs
+
+    def create(self, validated_data):
+        validated_data.pop('re_password', None)
+        return get_user_model().objects.create_user(**validated_data)
 

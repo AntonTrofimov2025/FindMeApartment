@@ -9,13 +9,14 @@ from rest_framework.exceptions import PermissionDenied
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
 from apps.listings.filters.listing_filter import ListingFilter
+from apps.listings.permissions import IsLandLordOrReadOnly
 
 
 class ListingViewSet(viewsets.ModelViewSet):
 
     queryset = Listing.objects.select_related('user').all()
     serializer_class = ListingSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsLandLordOrReadOnly]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     search_fields = ['title', 'description']
     filterset_class = ListingFilter
