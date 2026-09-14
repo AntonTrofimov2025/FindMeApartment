@@ -12,9 +12,9 @@ class UserListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'birth_date',
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'birth_date', 'bookings', 'listings',
                   'phone', 'last_login', 'date_joined', 'updated_at', 'is_deleted', 'deleted_at']
-        read_only_fields = ['id', 'updated_at', 'deleted_at', 'date_joined']
+        read_only_fields = ['id', 'updated_at', 'deleted_at', 'date_joined', 'bookings', 'listings']
 
 class RegisterUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(min_length=8, max_length=128, write_only=True)
@@ -22,8 +22,9 @@ class RegisterUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ['email', 'username', 'first_name', 'last_name', 'birth_date', 'phone', 'password', 're_password']
-        read_only_fields = ['id']
+        fields = ['email', 'username', 'first_name', 'last_name', 'birth_date',
+                  'phone', 'password', 're_password', 'deleted_at']
+        read_only_fields = ['id', 'deleted_at']
 
     def validate_phone(self, value):
         if not re.match(r'^\+\d{10,75}$', value):

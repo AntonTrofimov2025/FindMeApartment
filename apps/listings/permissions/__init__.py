@@ -1,1 +1,1 @@
-from .is_landlord import IsLandLordOrReadOnly
+from .is_landlord_or_read import IsLandLordOrReadOnly

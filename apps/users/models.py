@@ -9,10 +9,6 @@ from apps.users.validators import validate_birth_date
 
 class User(AbstractBaseUser, PermissionsMixin, UniqueID):
 
-    # class Roles(models.TextChoices):
-    #     TENANT = 'tenant', _('Tenant')
-    #     LANDLORD = 'landlord', _('Landlord')
-
     username = models.CharField(blank=True, max_length=50, help_text="Specified Username", verbose_name='Username')
     email = models.EmailField(unique=True, max_length=255, help_text="Your email", verbose_name='Email')
     first_name = models.CharField(max_length=50, blank=True, verbose_name='First name')
@@ -29,12 +25,6 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
-    ##################################################################################
-    # role = models.CharField(max_length=15, choices=Roles, default=Roles.TENANT,    #
-    #                         help_text='Select your role', verbose_name='Your role')#
-    # Нужно переделать через стандартные django группы                               #
-    ##################################################################################
-
     date_joined = models.DateTimeField(auto_now_add=True, help_text='Date of join', verbose_name='Joined at')
     updated_at = models.DateTimeField(auto_now=True, help_text='Date of update', verbose_name='Updated at')
     deleted_at = models.DateTimeField(null=True, blank=True, help_text='Date of deletion', verbose_name='Deleted at')
@@ -49,7 +39,7 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
     def delete(self, *args, **kwargs):
         self.deleted_at = timezone.now()
         self.is_active = False
-        self.save(update_fields=['deleted_at', 'is_active', 'updated_at'])
+        super().save(update_fields=['deleted_at', 'is_active', 'updated_at'])
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -61,3 +51,10 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
 
     def __str__(self):
         return f"User: {self.username} {self.email}"
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['email'], name='fma_user_email_idx'),
+            models.Index(fields=['last_name', 'first_name'], name='fma_user_fullname_idx'),
+        ]
+

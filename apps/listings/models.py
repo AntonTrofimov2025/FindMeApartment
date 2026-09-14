@@ -66,7 +66,7 @@ class Listing(UniqueID, TimeStampedModel):
 
     def delete(self, *args, **kwargs):
         self.deleted_at = timezone.now()
-        self.save(update_fields=['deleted_at', 'updated_at'])
+        super().save(update_fields=['deleted_at', 'updated_at'])
 
     objects = ListingsSoftDeleteManager()
     all_objects = models.Manager()
@@ -89,7 +89,7 @@ class Listing(UniqueID, TimeStampedModel):
         return (f"<Listing(title={self.title}, user={self.user}, country={self.country}, city={self.city},"
                 f" street={self.street}, house_number={self.house_number}, apartment_number={self.apartment_number},"
                 f" is_active={self.is_active},"
-                f" property_type={self.property_type}, price={self.price}, rooms={self.rooms})>")
+                f" property_type={self.property_type}, price_per_night={self.price_per_night}, rooms={self.rooms})>")
 
     class Meta:
         db_table = 'fma_listings'
@@ -108,10 +108,15 @@ class Listing(UniqueID, TimeStampedModel):
                    models.Index(fields=['city', 'price_per_night', 'rooms'], name='fma_list_city_price_rooms_idx'),
                    models.Index(fields=['city'], name='fma_listings_city_idx'),
                    models.Index(fields=['price_per_night'], name='fma_listings_price_idx'),
-                   models.Index(fields=['rooms'], name='fma_listings_rooms_idx')]
+                   models.Index(fields=['rooms'], name='fma_listings_rooms_idx'),
+                   models.Index(fields=['district'], name='fma_listings_district_idx'),
+                   models.Index(fields=['street'], name='fma_listings_street_idx'),
+                   models.Index(fields=['country'], name='fma_listings_country_idx'),
+                   models.Index(fields=['title'], name='fma_listings_title_idx'),
+                   models.Index(fields=['description'], name='fma_listings_description_idx')]
 
 def get_upload_path(instance, filename):
-    listing_id = instance.listing_id if instance.listing_id else 'Unknown'
+    listing_id = instance.listing.id if instance.listing_id else 'Unknown'
 
     return os.path.join('listings', str(listing_id), filename)
 
@@ -131,13 +136,18 @@ class Photo(UniqueID, TimeStampedModel):
 
     def delete(self, *args, **kwargs):
         self.deleted_at = timezone.now()
-        self.save(update_fields=['deleted_at', 'updated_at'])
+        super().save(update_fields=['deleted_at', 'updated_at'])
 
     class Meta:
         db_table = 'fma_photos'
         verbose_name = 'Photo'
         verbose_name_plural = 'Photos'
         ordering = ('-created_at',)
+        constraints = [models.UniqueConstraint(fields=['listing', 'photo_number'],
+                                name='unique_listing_photo_number',
+                                violation_error_message=_('Photo with this number already exists for this listing!')
+                            )
+                        ]
         indexes = [
             models.Index(fields=['listing', 'photo_number'], name='fma_listing_photo_number_idx'),
             models.Index(fields=['photo_number'], name='fma_photo_number_idx')

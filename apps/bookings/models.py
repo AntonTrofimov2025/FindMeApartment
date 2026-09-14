@@ -28,7 +28,7 @@ class Booking(UniqueID, TimeStampedModel):
     guests_number = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)],
                                               help_text="Specified guests number", verbose_name=_("Guest number"))
 
-    snapshot_data = models.JSONField(blank=True, verbose_name=_('Snapshot of current Listing data'))
+    snapshot_data = models.JSONField(default=dict, verbose_name=_('Snapshot of current Listing data'))
 
     total_price = models.DecimalField(max_digits=10, decimal_places=2,
                                       help_text='Total price for the stay', verbose_name=_('Total price'),
@@ -43,7 +43,7 @@ class Booking(UniqueID, TimeStampedModel):
 
     def delete(self, *args, **kwargs):
         self.deleted_at = timezone.now()
-        self.save(update_fields=['deleted_at', 'updated_at'])
+        super().save(update_fields=['deleted_at', 'updated_at'])
 
     def clean(self):
         super().clean()
@@ -77,13 +77,11 @@ class Booking(UniqueID, TimeStampedModel):
             nights = (self.date_to - self.date_from).days
             self.total_price = nights * self.listing.final_price_per_night if nights > 0 else Decimal("0.00")
 
-        self.full_clean()
-
-        if not self.pk:
+        if self._state.adding:
             snapshot_data = {}
 
             if self.user:
-                snapshot_data['tenant'] = {
+                snapshot_data['Tenant'] = {
                     'email': self.user.email or "No data",
                     'phone': self.user.phone or "No data",
                     'first_name': self.user.first_name or "No data",
@@ -104,13 +102,15 @@ class Booking(UniqueID, TimeStampedModel):
                     'property_type': self.listing.get_property_type_display() or "No data",
                     'price_per_night': str(self.listing.price_per_night) if self.listing.price_per_night is not None
                     else "No data",
-                    'discount': self.listing.discount,
+                    'discount': str(self.listing.discount),
                     'rooms': self.listing.get_rooms_display() or "No data",
                 }
             if self.total_price:
-                snapshot_data['total_price'] = self.total_price
+                snapshot_data['total_price'] = str(self.total_price)
 
             self.snapshot_data = snapshot_data
+
+        self.full_clean(exclude=['snapshot_data'])
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -134,6 +134,10 @@ class Booking(UniqueID, TimeStampedModel):
                        violation_error_message=_('Booking start date can not be greater than end date!')),
                        models.CheckConstraint(name='booking_total_price_gte_zero',
                                               condition=Q(total_price__gte=0),
-                                              violation_error_message=_('Total price can not be less than zero!'))
-                       ]
+                                              violation_error_message=_('Total price can not be less than zero!'))]
+        indexes = [models.Index(fields=['-created_at'], name='fma_bookings_created_at_idx'),
+                   models.Index(fields=['date_from', 'date_to'], name='fma_bookings_dates_idx'),
+                   models.Index(fields=['booking_status'], name='fma_bookings_status_idx'),
+                   models.Index(fields=['listing'], name='fma_bookings_listing_id_idx'),
+                   models.Index(fields=['user'], name='fma_bookings_user_id_idx')]
 

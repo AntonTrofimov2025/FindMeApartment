@@ -1,7 +1,6 @@
 from rest_framework import viewsets
 from apps.listings.models import Listing
-from .serializers.listings import ListingSerializer
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from .serializers.listings import ListingSerializer, ListingCreateUpdateSerializer
 from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.response import Response
@@ -18,14 +17,14 @@ class ListingViewSet(viewsets.ModelViewSet):
     serializer_class = ListingSerializer
     permission_classes = [IsLandLordOrReadOnly]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
-    search_fields = ['title', 'description']
+    search_fields = ['title', 'description', 'city', 'district', 'street']
     filterset_class = ListingFilter
-    ordering_fields = ['price', 'created_at']
+    ordering_fields = ['price_per_night', 'rooms', 'created_at']
     ordering = ['-created_at']
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
-            return ListingSerializer # 'ВРЕМЕННО! ЗАМЕНИ НА БУДУЩИЙ CREATE SERIALIZER' #
+            return ListingCreateUpdateSerializer
         return ListingSerializer
 
     def perform_create(self, serializer):

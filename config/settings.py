@@ -11,11 +11,10 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 
-import rest_framework.permissions
 from environ import Env
 
-import apps.core.paginators.common
 from django.utils.translation import gettext_lazy as _
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -51,6 +50,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'django_extensions',
+    'drf_spectacular',
 
     'apps.core.apps.CoreConfig',
     'apps.users.apps.UsersConfig',
@@ -88,6 +88,7 @@ TEMPLATES = [
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'apps.core.paginators.common.CommonPaginator',
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication'
     ],
@@ -107,12 +108,23 @@ REST_FRAMEWORK = {
     }
 }
 
-from datetime import timedelta
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'FindMeApartment API',
+    'DESCRIPTION': 'Сервис бронирования жилья',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SECURITY': [{
+        'jwtAuth': []
+    }],
+    'COMPONENT_SPLIT_REQUEST': True,
+}
+
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60), # SET LATER TO minutes=1
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',)
 }
 
 LOGGING = {
@@ -268,3 +280,29 @@ MAILERS = {
     },
 }
 
+# Custom groups Tenant and Landlord permission rules
+
+ROLE_PERMISSION = {
+    'Landlord': [
+        'listings.add_listing',
+        'listings.change_listing',
+        'listings.delete_listing',
+        'listings.view_listing',
+
+        'bookings.change_booking',
+        'bookings.view_booking',
+
+        'reviews.view_review'
+        ],
+    'Tenant': [
+        'listings.view_listing',
+
+        'bookings.add_booking',
+        'bookings.view_booking',
+        'bookings.change_booking',
+
+        'reviews.add_review',
+        'reviews.change_review',
+        'reviews.view_review'
+    ]
+}

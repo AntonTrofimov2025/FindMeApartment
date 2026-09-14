@@ -2,7 +2,6 @@ from rest_framework import serializers
 from apps.listings.models import Listing
 import copy
 from django.core.exceptions import ValidationError
-from decimal import Decimal
 
 
 class ListingSerializer(serializers.ModelSerializer):
@@ -11,10 +10,21 @@ class ListingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Listing
-        fields = ['id', 'title', 'user', 'description', 'district', 'city', 'street', 'house_number', 'discount',
-                  'overall_rating', 'apartment_number', 'price_per_night', 'final_price_per_night', 'is_deleted',
-                  'deleted_at']
-        read_only_fields = ['id', 'user', 'overall_rating', 'created_at', 'updated_at', 'deleted_at', 'final_price_per_night']
+        fields = ['id', 'title', 'user', 'description', 'country', 'district', 'city', 'street', 'house_number',
+                  'property_type', 'discount', 'overall_rating', 'apartment_number', 'max_guests',
+                  'price_per_night', 'final_price_per_night', 'rooms', 'is_deleted', 'deleted_at']
+        read_only_fields = ['id', 'user', 'overall_rating', 'deleted_at', 'final_price_per_night']
+
+
+class ListingCreateUpdateSerializer(serializers.ModelSerializer):
+    overall_rating = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Listing
+        fields = ['id', 'title', 'user', 'description', 'country', 'district', 'city', 'street', 'house_number',
+                  'property_type', 'discount', 'overall_rating',
+                  'apartment_number', 'max_guests', 'price_per_night', 'rooms', 'deleted_at']
+        read_only_fields = ['id', 'user', 'deleted_at']
 
     def validate(self, attrs):
         if self.instance:
