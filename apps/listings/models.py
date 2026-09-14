@@ -66,7 +66,8 @@ class Listing(UniqueID, TimeStampedModel):
 
     def delete(self, *args, **kwargs):
         self.deleted_at = timezone.now()
-        super().save(update_fields=['deleted_at', 'updated_at'])
+        self.is_active = False
+        super().save(update_fields=['deleted_at', 'is_active', 'updated_at'])
 
     objects = ListingsSoftDeleteManager()
     all_objects = models.Manager()

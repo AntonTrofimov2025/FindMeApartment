@@ -8,7 +8,7 @@ from django.utils import timezone
 
 class ListingsSoftDeleteQuerySet(models.QuerySet):
     def delete(self):
-        return self.update(deleted_at=timezone.now())
+        return self.update(deleted_at=timezone.now(), is_active=False)
 
 
 class ListingsSoftDeleteManager(models.Manager):

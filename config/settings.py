@@ -292,7 +292,12 @@ ROLE_PERMISSION = {
         'bookings.change_booking',
         'bookings.view_booking',
 
-        'reviews.view_review'
+        'reviews.view_review',
+
+        'listings.add_photo',
+        'listings.change_photo',
+        'listings.delete_photo',
+        'listings.view_photo'
         ],
     'Tenant': [
         'listings.view_listing',
@@ -303,6 +308,8 @@ ROLE_PERMISSION = {
 
         'reviews.add_review',
         'reviews.change_review',
-        'reviews.view_review'
+        'reviews.view_review',
+
+        'listings.view_photo'
     ]
 }

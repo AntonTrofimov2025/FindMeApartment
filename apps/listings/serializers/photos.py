@@ -8,5 +8,5 @@ class PhotoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Photo
         fields = ['id', 'listing', 'photo', 'photo_number', 'is_deleted', 'deleted_at']
-        read_only_fields = ['id', 'created_at', 'updated_at', 'deleted_at']
+        read_only_fields = ['id', 'is_deleted', 'deleted_at']
 

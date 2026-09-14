@@ -8,7 +8,7 @@ class IsLandLord(permissions.BasePermission):
         if not request.user.is_authenticated:
             return False
 
-        return request.user.is_staff or request.user.groups.filter(name='landlord').exists()
+        return request.user.is_staff or request.user.groups.filter(name='Landlord').exists()
 
     def has_object_permission(self, request, view, obj):
         if request.user.is_staff:

@@ -99,7 +99,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         if user.is_staff or user.is_superuser:
             return Booking.objects.select_related('user', 'listing').all()
 
-        if user.groups.filter(name='landlord').exists():
+        if user.groups.filter(name='Landlord').exists():
             return Booking.objects.select_related('user', 'listing').filter(listing__user=user)
 
         return Booking.objects.select_related('user', 'listing').filter(user=user)
