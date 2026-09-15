@@ -17,6 +17,7 @@ class Admin(admin.ModelAdmin):
         'phone',
         'is_active',
         'is_staff',
+        'last_login',
         'date_joined',
         'updated_at',
         'show_is_deleted'

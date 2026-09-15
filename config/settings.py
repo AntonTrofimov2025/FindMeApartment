@@ -273,7 +273,7 @@ LANGUAGES = [
     ('de', _('Deutsch')),
 ]
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Berlin' # TIME_ZONE = 'UTC'
 
 USE_I18N = True
 

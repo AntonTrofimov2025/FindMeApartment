@@ -12,9 +12,9 @@ class UserListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'birth_date', 'bookings', 'listings',
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'birth_date', 'avatar', 'bookings', 'listings',
                   'phone', 'last_login', 'date_joined', 'updated_at', 'is_deleted', 'deleted_at']
-        read_only_fields = ['id', 'updated_at', 'deleted_at', 'date_joined', 'bookings', 'listings']
+        read_only_fields = ['id', 'updated_at', 'deleted_at', 'date_joined', 'bookings', 'listings', 'last_login']
 
 class RegisterUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(min_length=8, max_length=128, write_only=True)
@@ -22,8 +22,8 @@ class RegisterUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ['email', 'username', 'first_name', 'last_name', 'birth_date',
-                  'phone', 'password', 're_password', 'deleted_at']
+        fields = ['email', 'username', 'first_name', 'last_name', 'birth_date', 'avatar',
+                  'phone', 'last_login', 'password', 're_password', 'deleted_at']
         read_only_fields = ['id', 'deleted_at']
 
     def validate_phone(self, value):
@@ -52,4 +52,16 @@ class RegisterUserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop('re_password', None)
         return get_user_model().objects.create_user(**validated_data)
+
+    def update(self, instance, validated_data):
+        validated_data.pop('re_password', None)
+        password = validated_data.pop('password', None)
+        if password:
+            instance.set_password(password)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        return instance
 
