@@ -33,3 +33,7 @@ class Admin(admin.ModelAdmin):
     @admin.display(boolean=True, description='Deleted?')
     def show_is_deleted(self, user):
         return user.is_deleted
+
+    def get_queryset(self, request):
+        return User.all_objects.get_queryset()
+

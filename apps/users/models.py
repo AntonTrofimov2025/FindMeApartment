@@ -2,9 +2,17 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserManager
 from apps.core.models import UniqueID, TimeStampedModel
 from django.utils import timezone
-from .managers.users import UserSoftDeleteManager
+from .managers.users import UserSoftDeleteManager, AllUserSoftDeleteManager
 from django.utils.translation import gettext_lazy as _
 from apps.users.validators import validate_birth_date
+import os
+from django.db.models import Q
+
+
+def get_avatar_upload_path(instance, filename):
+    user_id = instance.id if instance.id else 'Unknown'
+
+    return os.path.join('users', str(user_id), 'avatars', filename)
 
 
 class User(AbstractBaseUser, PermissionsMixin, UniqueID):
@@ -15,7 +23,7 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
     last_name = models.CharField(max_length=50, blank=True, verbose_name='Last name')
     birth_date = models.DateField(null=True, blank=True, help_text='Your birthday', verbose_name='Birthday',
                                   validators=[validate_birth_date])
-    avatar = models.ImageField(upload_to='avatars', null=True, blank=True, verbose_name='Avatar')
+    avatar = models.ImageField(upload_to=get_avatar_upload_path, null=True, blank=True, verbose_name='Avatar')
 
     phone = models.CharField(max_length=75, blank=True, default='', help_text='Specified phone number', verbose_name='Phone number')
     last_login = models.DateTimeField(null=True, verbose_name='Last login')
@@ -32,7 +40,7 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
         return self.deleted_at is not None
 
     objects = UserSoftDeleteManager()
-    all_objects = UserManager()
+    all_objects = AllUserSoftDeleteManager()
 
     def delete(self, *args, **kwargs):
         self.deleted_at = timezone.now()
@@ -51,6 +59,11 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
         return f"User: {self.username} {self.email}"
 
     class Meta:
+        constraints = [models.UniqueConstraint(
+                        fields=['phone'],
+                        condition=~Q(phone=''),
+                        name='unique_user_phone',
+                        violation_error_message=_('A user with this phone number already exists!'))]
         indexes = [
             models.Index(fields=['email'], name='fma_user_email_idx'),
             models.Index(fields=['last_name', 'first_name'], name='fma_user_fullname_idx'),
