@@ -53,7 +53,8 @@ class ListingViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         summary="Use to toggle the listing active status by providing its id",
-        description="Allow to activate/deactivate the specified listing (Hides from catalog)."
+        description="Allow to activate/deactivate the specified listing (Hides from catalog).",
+        request=None
     )
     @action(detail=True, methods=['post'], url_name='toggle_is_active', url_path='toggle')
     def toggle_is_active(self, request, *args, **kwargs):

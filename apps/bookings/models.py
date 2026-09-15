@@ -61,6 +61,11 @@ class Booking(UniqueID, TimeStampedModel):
             raise ValidationError(_('You cannot book more than 1 year in advance.'))
         if self.date_to and self.date_to > timezone.localdate() + relativedelta(years=1):
             raise ValidationError(_('Booking end date cannot exceed 1 year from today.'))
+        if self.date_from and self.date_to and (self.date_to - self.date_from).days > 30:
+            raise ValidationError(_("You cannot book this property for more than 30 nights."))
+
+        if self.guests_number > self.listing.max_guests:
+            raise ValidationError(_("The number of guests cannot exceed the listing's maximum capacity."))
 
         if self.booking_status == StatusChoices.CANCELLED:
             if self.pk:

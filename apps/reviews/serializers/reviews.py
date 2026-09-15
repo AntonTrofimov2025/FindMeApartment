@@ -30,7 +30,7 @@ class ReviewCreateUpdateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError('You can leave reviews for your own completed bookings only!')
 
             if booking.booking_status != StatusChoices.COMPLETED:
-                raise serializers.ValidationError("You can leave review for your booking after it's completed only!")
+                raise serializers.ValidationError("You can only leave a review after the booking is completed!")
 
             if hasattr(booking, 'review'):
                 if not self.instance or booking.review.pk != self.instance.pk:

@@ -31,7 +31,7 @@ class Review(UniqueID, TimeStampedModel):
     def clean(self):
         super().clean()
         if self.booking and self.booking.booking_status != StatusChoices.COMPLETED:
-            raise ValidationError(_('You must complete your booking before writing review.'))
+            raise ValidationError(_('You can only leave a review after the booking is completed!'))
 
     def save(self, *args, **kwargs):
         self.full_clean()

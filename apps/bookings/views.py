@@ -5,6 +5,7 @@ from apps.bookings.permissions import IsLandLord
 from rest_framework.generics import get_object_or_404
 from .models import Booking
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import ValidationError as DjangoValidationError
 from apps.core.models import StatusChoices
 from rest_framework import viewsets
 from django_filters.rest_framework import DjangoFilterBackend
@@ -12,6 +13,7 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from .serializers.bookings import BookingSerializer, BookingCreateUpdateSerializer
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from drf_spectacular.utils import extend_schema, extend_schema_view
+from django.utils import timezone
 
 @extend_schema(summary='Approve booking', description='Approval of booking provided its status is PENDING')
 @api_view(['POST'])
@@ -22,8 +24,12 @@ def booking_approve(request, pk, *args, **kwargs):
         raise PermissionDenied({'detail': 'You are not the owner of this property!'})
     if booking.booking_status != StatusChoices.PENDING:
         raise ValidationError({'detail': 'The booking status must be PENDING only to be approved!'})
-    booking.booking_status = StatusChoices.CONFIRMED
-    booking.save()
+    try:
+        booking.booking_status = StatusChoices.CONFIRMED
+        booking.save(update_fields=['booking_status', 'updated_at'])
+    except DjangoValidationError as e:
+        error_data = e.message_dict if hasattr(e, 'message_dict') else e.messages
+        raise ValidationError(error_data)
     return Response({'msg': 'The booking has successfully been confirmed.'}, status=status.HTTP_200_OK)
 
 @extend_schema(summary='Reject booking', description='Rejection of booking, provided its status is PENDING')
@@ -35,22 +41,50 @@ def booking_reject(request, pk, *args, **kwargs):
         raise PermissionDenied({'detail': 'You are not the owner of this property!'})
     if booking.booking_status != StatusChoices.PENDING:
         raise ValidationError({'detail': 'The booking status must be PENDING only to be rejected!'})
-    booking.booking_status = StatusChoices.REJECTED
-    booking.save()
+    try:
+        booking.booking_status = StatusChoices.REJECTED
+        booking.save(update_fields=['booking_status', 'updated_at'])
+    except DjangoValidationError as e:
+        error_data = e.message_dict if hasattr(e, 'message_dict') else e.messages
+        raise ValidationError(error_data)
     return Response({'msg': 'The booking has successfully been rejected.'}, status=status.HTTP_200_OK)
 
 @extend_schema(summary='Cancel booking', description='Cancellation of booking provided its status is CONFIRMED')
 @api_view(['POST'])
-@permission_classes([IsLandLord])
+@permission_classes([IsAuthenticated])
 def booking_cancel(request, pk, *args, **kwargs):
     booking = get_object_or_404(Booking, pk=pk)
     if request.user != booking.listing.user:
         raise PermissionDenied({'detail': 'You are not the owner of this property!'})
     if booking.booking_status != StatusChoices.CONFIRMED:
         raise ValidationError({'detail': 'The booking status must be CONFIRMED only to be cancelled!'})
-    booking.booking_status = StatusChoices.CANCELLED
-    booking.save()
+    try:
+        booking.booking_status = StatusChoices.CANCELLED
+        booking.save(update_fields=['booking_status', 'updated_at'])
+    except DjangoValidationError as e:
+        error_data = e.message_dict if hasattr(e, 'message_dict') else e.messages
+        raise ValidationError(error_data)
     return Response({'msg': 'The booking has successfully been cancelled.'}, status=status.HTTP_200_OK)
+
+@extend_schema(summary='CHECK IN your guest',
+               description='Change status of booking to CHECKED IN provided its status is CONFIRMED')
+@api_view(['POST'])
+@permission_classes([IsLandLord])
+def booking_check_in(request, pk, *args, **kwargs):
+    booking = get_object_or_404(Booking, pk=pk)
+    if request.user != booking.listing.user:
+        raise PermissionDenied({'detail': 'You are not the owner of this property!'})
+    if booking.booking_status != StatusChoices.CONFIRMED:
+        raise ValidationError({'detail': 'The booking status must be CONFIRMED only to check in your guest!'})
+    if timezone.localdate() < booking.date_from:
+        raise ValidationError({'detail': f'You cannot check in your guest before the start date ({booking.date_from})!'})
+    try:
+        booking.booking_status = StatusChoices.CHECKED_IN
+        booking.save(update_fields=['booking_status', 'updated_at'])
+    except DjangoValidationError as e:
+        error_data = e.message_dict if hasattr(e, 'message_dict') else e.messages
+        raise ValidationError(error_data)
+    return Response({'msg': 'Your guest has successfully been checked in. :)'}, status=status.HTTP_200_OK)
 
 @extend_schema_view(
     list=extend_schema(summary='Get all bookings', description='List of all bookings'),
@@ -95,6 +129,10 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+
+        Booking.objects.filter(date_to__lt=timezone.localdate(),
+                               booking_status__in=[StatusChoices.CONFIRMED, StatusChoices.CHECKED_IN]
+                               ).update(booking_status=StatusChoices.COMPLETED)
 
         if user.is_staff or user.is_superuser:
             return Booking.objects.select_related('user', 'listing').all()

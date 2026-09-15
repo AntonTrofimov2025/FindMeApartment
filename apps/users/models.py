@@ -15,11 +15,9 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
     last_name = models.CharField(max_length=50, blank=True, verbose_name='Last name')
     birth_date = models.DateField(null=True, blank=True, help_text='Your birthday', verbose_name='Birthday',
                                   validators=[validate_birth_date])
-    # Проверку birthday сделай, то что человеку 18 лет
     avatar = models.ImageField(upload_to='avatars', null=True, blank=True, verbose_name='Avatar')
 
     phone = models.CharField(max_length=75, blank=True, default='', help_text='Specified phone number', verbose_name='Phone number')
-    # Проверку тел номера сделай
     last_login = models.DateTimeField(null=True, verbose_name='Last login')
 
     is_staff = models.BooleanField(default=False)
