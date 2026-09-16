@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Booking cancelled</title>
+</head>
+<body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #f7f7f7; color: #222222;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f7f7f7; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                    <tr>
+                        <td style="background-color: #484848; padding: 24px; text-align: center;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">FindMeApartment</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 40px 32px; font-size: 16px; line-height: 1.6; color: #484848;">
+                            <p style="margin-top: 0; font-size: 18px; font-weight: 600; color: #222222;">Hello, {{ landlord_name }}.</p>
+
+                            <p style="margin: 20px 0;">
+                                The booking for your property <strong>'{{ listing_title }}'</strong> from <strong>{{ date_from }}</strong> to <strong>{{ date_to }}</strong> has been cancelled.
+                            </p>
+
+                            <p style="margin: 20px 0 0 0; font-style: italic; color: #767676;">
+                                We are very sorry for this inconvenience.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background-color: #f7f7f7; padding: 24px; text-align: center; font-size: 12px; color: #767676; border-top: 1px solid #ebebeb;">
+                            This is an automated notification from FindMeApartment. Please do not reply directly to this email.
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

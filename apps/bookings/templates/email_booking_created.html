@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>New Booking Request for your listing!</title>
+</head>
+<body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #f7f7f7; color: #222222;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f7f7f7; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                    <tr>
+                        <td style="background-color: #FF385C; padding: 24px; text-align: center;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">FindMeApartment</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 40px 32px; font-size: 16px; line-height: 1.6; color: #484848;">
+                            <p style="margin-top: 0; font-size: 18px; font-weight: 600; color: #222222;">Hello, {{ landlord_name }}!</p>
+
+                            <p style="margin: 20px 0;">
+                                User <strong style="color: #FF385C;">{{ tenant_name }}</strong> has sent a booking request for your property <strong style="color: #222222;">'{{ listing_title }}'</strong> from <strong>{{ date_from }}</strong> to <strong>{{ date_to }}</strong>.
+                            </p>
+
+                            <p style="margin: 20px 0 32px 0;">
+                                Please log in to your account to approve or reject this request.
+                            </p>
+
+                            <table border="0" cellspacing="0" cellpadding="0" align="center">
+                                <tr>
+                                    <td align="center" style="border-radius: 8px; background-color: #FF385C;">
+                                        <a href="http://127.0.0" target="_blank" style="font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; padding: 14px 32px; display: inline-block;">
+                                            Go to Account
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background-color: #f7f7f7; padding: 24px; text-align: center; font-size: 12px; color: #767676; border-top: 1px solid #ebebeb;">
+                            This is an automated notification from FindMeApartment. Please do not reply directly to this email.
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
