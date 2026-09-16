@@ -302,6 +302,9 @@ MAILERS = {
     },
 }
 
+# Email sending settings to console, as long as the project is in development.
+DEFAULT_FROM_EMAIL = 'support@findmeapartment.com'
+
 # Custom groups Tenant and Landlord permission rules
 
 ROLE_PERMISSION = {

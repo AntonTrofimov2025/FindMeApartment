@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from apps.users.validators import validate_birth_date
 import os
 from django.db.models import Q
+from apps.core.utils import validate_extension, validate_file_size
 
 
 def get_avatar_upload_path(instance, filename):
@@ -17,23 +18,25 @@ def get_avatar_upload_path(instance, filename):
 
 class User(AbstractBaseUser, PermissionsMixin, UniqueID):
 
-    username = models.CharField(blank=True, max_length=50, help_text="Specified Username", verbose_name='Username')
-    email = models.EmailField(unique=True, max_length=255, help_text="Your email", verbose_name='Email')
-    first_name = models.CharField(max_length=50, blank=True, verbose_name='First name')
-    last_name = models.CharField(max_length=50, blank=True, verbose_name='Last name')
-    birth_date = models.DateField(null=True, blank=True, help_text='Your birthday', verbose_name='Birthday',
+    username = models.CharField(blank=True, max_length=50, help_text=_("Specified Username"), verbose_name=_('Username'))
+    email = models.EmailField(unique=True, max_length=255, help_text=_("Your email"), verbose_name=_('Email'))
+    first_name = models.CharField(max_length=50, blank=True, verbose_name=_('First name'))
+    last_name = models.CharField(max_length=50, blank=True, verbose_name=_('Last name'))
+    birth_date = models.DateField(null=True, blank=True, help_text=_('Your birthday'), verbose_name=_('Birthday'),
                                   validators=[validate_birth_date])
-    avatar = models.ImageField(upload_to=get_avatar_upload_path, null=True, blank=True, verbose_name='Avatar')
+    avatar = models.ImageField(upload_to=get_avatar_upload_path, null=True, blank=True, verbose_name=_('Avatar'),
+                validators=[validate_extension, validate_file_size])
 
-    phone = models.CharField(max_length=75, blank=True, default='', help_text='Specified phone number', verbose_name='Phone number')
-    last_login = models.DateTimeField(null=True, verbose_name='Last login')
+    phone = models.CharField(max_length=75, blank=True, default='', help_text=_('Specified phone number'),
+                             verbose_name=_('Phone number'))
+    last_login = models.DateTimeField(null=True, verbose_name=_('Last login'))
 
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
-    date_joined = models.DateTimeField(auto_now_add=True, help_text='Date of join', verbose_name='Joined at')
-    updated_at = models.DateTimeField(auto_now=True, help_text='Date of update', verbose_name='Updated at')
-    deleted_at = models.DateTimeField(null=True, blank=True, help_text='Date of deletion', verbose_name='Deleted at')
+    date_joined = models.DateTimeField(auto_now_add=True, help_text=_('Date of join'), verbose_name=_('Joined at'))
+    updated_at = models.DateTimeField(auto_now=True, help_text=_('Date of update'), verbose_name=_('Updated at'))
+    deleted_at = models.DateTimeField(null=True, blank=True, help_text=_('Date of deletion'), verbose_name=_('Deleted at'))
 
     @property
     def is_deleted(self):

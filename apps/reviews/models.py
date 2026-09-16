@@ -42,8 +42,8 @@ class Review(UniqueID, TimeStampedModel):
 
     class Meta:
         db_table = 'fma_reviews'
-        verbose_name = 'Rating'
-        verbose_name_plural = 'Ratings'
+        verbose_name = 'Review'
+        verbose_name_plural = 'Reviews'
         ordering = ('-created_at',)
         constraints = [models.CheckConstraint(name='property_rating_1_to_5',
                                               condition=Q(property_rating__gte=1) & Q(property_rating__lte=5),

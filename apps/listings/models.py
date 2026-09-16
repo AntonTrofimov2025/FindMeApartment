@@ -13,6 +13,7 @@ from django.db.models import Avg, Q
 from django.db.models.functions import Round
 import os
 from decimal import Decimal
+from apps.core.utils import validate_extension, validate_file_size
 
 
 
@@ -122,7 +123,8 @@ def get_upload_path(instance, filename):
 
 class Photo(UniqueID, TimeStampedModel):
     listing = models.ForeignKey(Listing, on_delete=models.PROTECT, related_name='photos', verbose_name=_('Listing'))
-    photo = models.ImageField(upload_to=get_upload_path)
+    photo = models.ImageField(upload_to=get_upload_path, verbose_name=_('Photo'),
+    validators=[validate_extension, validate_file_size])
     photo_number = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(50)],
                                               help_text="Specified photo number", verbose_name=_('Photo number'))
 
@@ -149,8 +151,7 @@ class Photo(UniqueID, TimeStampedModel):
                             )
                         ]
         indexes = [
-            models.Index(fields=['listing', 'photo_number'], name='fma_listing_photo_number_idx'),
-            models.Index(fields=['photo_number'], name='fma_photo_number_idx')
+            models.Index(fields=['listing'], name='fma_listing_idx')
         ]
 
     def __repr__(self):
