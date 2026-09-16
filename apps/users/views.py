@@ -1,6 +1,7 @@
 from rest_framework.generics import CreateAPIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from .serializers.users import UserListSerializer, RegisterUserSerializer
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -43,6 +44,34 @@ class UserMeView(APIView):
     def patch(self, request, *args, **kwargs):
         return self.put(request, partial=True)
 
+class UserBecomeLandlordView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Become a Landlord",
+        description="Switch current user group from Tenant to Landlord to allow property listing.",
+        responses={200: 'Successfully became a landlord.'},
+        tags=["User Profile"]
+    )
+    def post(self, request, *args, **kwargs):
+        user = request.user
+
+        if user.groups.filter(name='Landlord').exists():
+            return Response({'detail': 'You are already a Landlord!'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            tenant_group = Group.objects.get(name='Tenant')
+            landlord_group = Group.objects.get(name='Landlord')
+            user.groups.remove(tenant_group)
+            user.groups.add(landlord_group)
+
+            return Response({'msg': 'You are now a Landlord. You can host properties! :)'},
+                            status=status.HTTP_200_OK)
+
+        except Group.DoesNotExist:
+            return Response({'detail': 'System user groups (Tenant/Landlord) are not initialized.'},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @extend_schema(summary='Account Logout',
                description='Logout authorized user by putting his REFRESH TOKEN to BLACKLIST.',

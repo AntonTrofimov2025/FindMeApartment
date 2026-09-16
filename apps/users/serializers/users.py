@@ -24,7 +24,7 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         model = get_user_model()
         fields = ['email', 'username', 'first_name', 'last_name', 'birth_date', 'avatar',
                   'phone', 'last_login', 'password', 're_password', 'deleted_at']
-        read_only_fields = ['id', 'deleted_at']
+        read_only_fields = ['id', 'deleted_at', 'last_login']
 
     def validate_phone(self, value):
         if not re.match(r'^\+\d{10,75}$', value):

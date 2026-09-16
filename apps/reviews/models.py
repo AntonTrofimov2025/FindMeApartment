@@ -53,6 +53,7 @@ class Review(UniqueID, TimeStampedModel):
                                               violation_error_message=_('Location rating must be between 1 and 5!'))
                        ]
         indexes = [models.Index(fields=['-created_at'], name='fma_reviews_created_at_idx'),
+                   models.Index(fields=['property_rating', 'location_rating'], name='fma_reviews_prop_loc_rat_idx'),
                    models.Index(fields=['property_rating'], name='fma_reviews_prop_rating_idx'),
                    models.Index(fields=['location_rating'], name='fma_reviews_loc_rating_idx'),
                    models.Index(fields=['booking'], name='fma_reviews_booking_id_idx')]
