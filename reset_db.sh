@@ -1,6 +1,6 @@
 #!/bin/bash
 
-find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
+sudo find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
 
 docker compose down
 sudo rm -rf ./db/*
