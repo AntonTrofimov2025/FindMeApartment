@@ -49,6 +49,9 @@ services:
       - .env
     environment:
       - DB_URL=${DB_URL}
+    volumes:
+      - .:/fma
+      - static_volume:/fma/static
 
   nginx:
     image: nginx:latest
