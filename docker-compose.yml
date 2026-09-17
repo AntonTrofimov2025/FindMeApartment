@@ -18,6 +18,15 @@ services:
       timeout: 5s
       retries: 5
       interval: 5s
+  migrate:
+    build: .
+    container_name: fma_migrate
+    command: python manage.py migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
 
   web:
     build:
@@ -29,8 +38,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       - DATABASE_URL=${DATABASE_URL}
-
-volumes:
-  data_base:
