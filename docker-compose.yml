@@ -1,0 +1,29 @@
+#version: '3.8'
+services:
+  db:
+    image: mysql:8
+    container_name: fma_db
+    environment:
+      MYSQL_DATABASE: rental_db
+      MYSQL_USER: user_sva
+      MYSQL_PASSWORD: 041002
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db:/var/lib/mysql
+#      - /opt/homebrew/var/mysql/rental_mysqldb:/var/lib/mysql
+
+  web:
+    build:
+      dockerfile: Dockerfile
+    container_name: findmeapartment
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+
+volumes:
+  data_base:
