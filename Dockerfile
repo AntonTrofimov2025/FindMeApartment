@@ -18,5 +18,5 @@ ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "config.wsgi:application"]
+CMD ["sh", "-c", "python manage.py makemigrations users && python manage.py migrate users && python manage.py makemigrations && python manage.py migrate && gunicorn --bind 0.0.0.0:8000 config.wsgi:application"]
 #CMD ["sh", "-c", "python manage.py runserver 0.0.0.0:8000"]
