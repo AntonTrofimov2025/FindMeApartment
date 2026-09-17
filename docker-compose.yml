@@ -33,7 +33,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: findmeapartment
+    container_name: fma_web
     ports:
       - "8000:8000"
     depends_on:
