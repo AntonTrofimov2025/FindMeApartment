@@ -10,7 +10,7 @@ from .managers.listings import ListingsSoftDeleteManager
 from .managers.photo_manager import PhotoSoftDeleteManager
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Avg, Q
-from django.db.models.functions import Round
+from django.db.models.functions import Round, Length
 import os
 from decimal import Decimal
 from apps.core.utils import validate_extension, validate_file_size
@@ -114,7 +114,7 @@ class Listing(UniqueID, TimeStampedModel):
                    models.Index(fields=['street'], name='fma_listings_street_idx'),
                    models.Index(fields=['country'], name='fma_listings_country_idx'),
                    models.Index(fields=['title'], name='fma_listings_title_idx'),
-                   models.Index(fields=['description'], name='fma_listings_description_idx')]
+                   models.Index(Length('description', length=500), name='fma_listings_description_idx')]
 
 def get_upload_path(instance, filename):
     listing_id = instance.listing.id if instance.listing_id else 'Unknown'

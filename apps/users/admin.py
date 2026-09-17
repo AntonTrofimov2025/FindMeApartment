@@ -13,6 +13,7 @@ class Admin(admin.ModelAdmin):
         'phone', 'is_active', 'is_staff', 'last_login', 'date_joined', 'updated_at', 'show_is_deleted'
     )
     search_fields = ('email', 'username', 'first_name', 'last_name')
+    readonly_fields = ('deleted_at', 'date_joined', 'updated_at', 'last_login')
     ordering = ('-date_joined',)
 
     @admin.display(description=_('Avatar'))
@@ -27,4 +28,11 @@ class Admin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return User.all_objects.get_queryset()
+
+    @admin.action(description="Restore selected deleted users")
+    def restore_users(self, request, queryset):
+        users = queryset.update(deleted_at=None, is_active=True)
+        self.message_user(request, f"Successfully restored {users} users. 🎉")
+
+    actions = [restore_users]
 

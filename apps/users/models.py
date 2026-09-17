@@ -27,8 +27,8 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
     avatar = models.ImageField(upload_to=get_avatar_upload_path, null=True, blank=True, verbose_name=_('Avatar'),
                 validators=[validate_extension, validate_file_size])
 
-    phone = models.CharField(max_length=75, blank=True, default='', help_text=_('Specified phone number'),
-                             verbose_name=_('Phone number'))
+    phone = models.CharField(max_length=75, unique=True, blank=True, null=True,
+                             help_text=_('Specified phone number'), verbose_name=_('Phone number'))
     last_login = models.DateTimeField(null=True, verbose_name=_('Last login'))
 
     is_staff = models.BooleanField(default=False)
@@ -50,6 +50,12 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
         self.is_active = False
         super().save(update_fields=['deleted_at', 'is_active', 'updated_at'])
 
+    def save(self, *args, **kwargs):
+        if self.phone == '' or (self.phone and not self.phone.strip()):
+            self.phone = None
+
+        super().save(*args, **kwargs)
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
@@ -62,11 +68,11 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
         return f"User: {self.username} {self.email}"
 
     class Meta:
-        constraints = [models.UniqueConstraint(
-                        fields=['phone'],
-                        condition=~Q(phone=''),
-                        name='unique_user_phone',
-                        violation_error_message=_('A user with this phone number already exists!'))]
+        # constraints = [models.UniqueConstraint(
+        #                 fields=['phone'],
+        #                 condition=~Q(phone=''),
+        #                 name='unique_user_phone',
+        #                 violation_error_message=_('A user with this phone number already exists!'))]
         indexes = [
             models.Index(fields=['email'], name='fma_user_email_idx'),
             models.Index(fields=['last_name', 'first_name'], name='fma_user_fullname_idx'),

@@ -11,6 +11,7 @@ class ListingAdmin(admin.ModelAdmin):
         'country', 'city', 'district', 'street', 'house_number', 'apartment_number',
         'is_active', 'price_per_night', 'max_guests', 'discount', 'rooms', 'show_is_deleted'
     )
+    readonly_fields = ('deleted_at',)
     search_fields = ('title', 'city', 'country', 'user__email')
     list_filter = ('property_type', 'country', 'created_at')
     ordering = ('-created_at',)
@@ -47,6 +48,7 @@ class PhotoAdmin(admin.ModelAdmin):
         'id', 'get_listing_title', 'get_mini_photo', 'get_listing_email',
         'photo_number', 'created_at', 'show_is_deleted'
     )
+    readonly_fields = ('deleted_at',)
 
     search_fields = (
         'listing__title', 'listing__city', 'listing__user__email'

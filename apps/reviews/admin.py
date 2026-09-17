@@ -10,6 +10,7 @@ class ReviewAdmin(admin.ModelAdmin):
         'id', 'get_property_stars', 'get_location_stars', 'get_tenant_email',
         'get_listing_title', 'short_text', 'created_at', 'show_is_deleted'
     )
+    readonly_fields = ('deleted_at',)
 
     search_fields = (
         'id', 'text', 'booking__user__email', 'booking__listing__title'
