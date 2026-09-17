@@ -54,7 +54,7 @@ services:
     image: nginx:latest
     container_name: fma_nginx
     ports:
-      - "80:80" # Открываем стандартный порт для сайтов
+      - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - static_volume:/fma/static

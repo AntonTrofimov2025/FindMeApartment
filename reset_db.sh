@@ -18,8 +18,8 @@ docker compose run --rm migrate sh -c "python manage.py makemigrations users && 
 
 #docker compose up -d
 
-echo "Настаиваем стили для NGINX"
+echo "Настраиваем стили для NGINX"
 sleep 3
-#docker exec -T fma_web python manage.py collectstatic --noinput
+#docker compose exec -T web python manage.py collectstatic --noinput
 
 echo "Done!! :)"
