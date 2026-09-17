@@ -4,24 +4,31 @@ services:
     image: mysql:8
     container_name: fma_db
     environment:
-      MYSQL_DATABASE: rental_db
-      MYSQL_USER: user_sva
-      MYSQL_PASSWORD: 041002
+      MYSQL_DATABASE: fma_db
+      MYSQL_USER: findmeapartment
+      MYSQL_PASSWORD: "041002"
       MYSQL_ROOT_PASSWORD: root
     ports:
       - "3306:3306"
     volumes:
       - ./db:/var/lib/mysql
 #      - /opt/homebrew/var/mysql/rental_mysqldb:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "findmeapartment", "-p041002" ]
+      timeout: 5s
+      retries: 5
+      interval: 5s
 
   web:
     build:
+      context: .
       dockerfile: Dockerfile
     container_name: findmeapartment
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       - DB_HOST=db
 
