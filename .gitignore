@@ -373,3 +373,6 @@ logs/db_logs.log
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,pycharm+all,python,flask
 media/
+
+**/migrations/*.py
+!**/migrations/__init__.py
