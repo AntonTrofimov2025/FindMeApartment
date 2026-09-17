@@ -38,12 +38,28 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: fma_web
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     depends_on:
       db:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+    env_file:
+      - .env
     environment:
       - DB_URL=${DB_URL}
+
+  nginx:
+    image: nginx:latest
+    container_name: fma_nginx
+    ports:
+      - "80:80" # Открываем стандартный порт для сайтов
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - static_volume:/fma/static
+    depends_on:
+      - web
+
+volumes:
+  static_volume:
