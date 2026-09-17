@@ -1,5 +1,11 @@
 *.sqlite3
 
+**/db
+db
+db/*
+.git
+.env
+
 **/__pycache__/
 *.pyc
 *.pyo
