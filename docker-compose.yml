@@ -4,17 +4,17 @@ services:
     image: mysql:8
     container_name: fma_db
     environment:
-      MYSQL_DATABASE: fma_db
-      MYSQL_USER: findmeapartment
-      MYSQL_PASSWORD: "041002"
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - ./db:/var/lib/mysql
 #      - /opt/homebrew/var/mysql/rental_mysqldb:/var/lib/mysql
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "findmeapartment", "-p041002" ]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USER}", "-p$${DB_PASSWORD}" ]
       timeout: 5s
       retries: 5
       interval: 5s
@@ -30,7 +30,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      - DB_HOST=db
+      - DATABASE_URL=${DATABASE_URL}
 
 volumes:
   data_base:
