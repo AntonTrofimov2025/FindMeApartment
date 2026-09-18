@@ -10,8 +10,8 @@ docker compose build --no-cache
 mkdir -p logs media
 
 docker compose up -d db
-echo "Ожидаем инициализацию MySQL..."
-sleep 10
+#echo "Ожидаем инициализацию MySQL..."
+#sleep 10
 
 docker compose run --rm migrate sh -c "python manage.py makemigrations users && \
  python manage.py makemigrations && python manage.py migrate users && python manage.py migrate"
