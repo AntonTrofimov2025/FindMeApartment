@@ -1,5 +1,5 @@
 from django.db import models
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from apps.core.models import UniqueID, TimeStampedModel
 from apps.listings.models import Listing
 from django.utils import timezone
@@ -47,6 +47,11 @@ class Booking(UniqueID, TimeStampedModel):
 
     def clean(self):
         super().clean()
+        try:
+            if not self.listing or not self.user_id:
+                return
+        except ObjectDoesNotExist:
+            return
         if self.date_to and self.date_from and self.date_to <= self.date_from:
             raise ValidationError(_('Booking start date can not be greater than end date!'))
         if (Booking.objects.filter(listing_id=self.listing_id,
@@ -64,7 +69,7 @@ class Booking(UniqueID, TimeStampedModel):
         if self.date_from and self.date_to and (self.date_to - self.date_from).days > 30:
             raise ValidationError(_("You cannot book this property for more than 30 nights."))
 
-        if self.guests_number > self.listing.max_guests:
+        if self.guests_number is not None and self.guests_number > self.listing.max_guests:
             raise ValidationError(_(f"The number of guests cannot exceed the listing's maximum capacity. (max: {self.listing.max_guests})"))
 
         if self.booking_status == StatusChoices.CANCELLED:
@@ -77,6 +82,11 @@ class Booking(UniqueID, TimeStampedModel):
 
 
     def save(self, *args, **kwargs):
+        try:
+            if not self.listing or not self.user_id:
+                return
+        except ObjectDoesNotExist:
+            return
 
         if self.date_to and self.date_from and self.listing:
             nights = (self.date_to - self.date_from).days

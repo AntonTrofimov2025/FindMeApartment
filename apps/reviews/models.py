@@ -30,6 +30,8 @@ class Review(UniqueID, TimeStampedModel):
 
     def clean(self):
         super().clean()
+        if not self.booking_id:
+            return
         if self.booking and self.booking.booking_status != StatusChoices.COMPLETED:
             raise ValidationError(_('You can only leave a review after the booking is completed!'))
 
