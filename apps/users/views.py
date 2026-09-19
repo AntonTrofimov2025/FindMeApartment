@@ -76,8 +76,8 @@ class UserBecomeLandlordView(APIView):
 @extend_schema(summary='Account Logout',
                description='Logout authorized user by putting his REFRESH TOKEN to BLACKLIST.',
                responses={
-                   status.HTTP_200_OK: 'You have been logged out.',
-                   status.HTTP_401_UNAUTHORIZED: 'You have not been logged in.'
+                   "200": 'You have been logged out.',
+                   "401": 'You have not been logged in.'
                },
                request=TokenBlacklistSerializer)
 @api_view(['POST'])

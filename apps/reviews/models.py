@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import Q
 from apps.core.models import StatusChoices
-from django.core.validators import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
 
 class Review(UniqueID, TimeStampedModel):
@@ -30,12 +30,20 @@ class Review(UniqueID, TimeStampedModel):
 
     def clean(self):
         super().clean()
-        if not self.booking_id:
+        try:
+            if not self.booking:
+                return
+        except ObjectDoesNotExist:
             return
-        if self.booking and self.booking.booking_status != StatusChoices.COMPLETED:
+        if self.booking.booking_status != StatusChoices.COMPLETED:
             raise ValidationError(_('You can only leave a review after the booking is completed!'))
 
     def save(self, *args, **kwargs):
+        try:
+            if not self.booking:
+                return
+        except ObjectDoesNotExist:
+            return
         self.full_clean()
         super().save(*args, **kwargs)
 

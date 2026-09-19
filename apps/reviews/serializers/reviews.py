@@ -1,7 +1,5 @@
 from rest_framework import serializers
 from apps.reviews.models import Review
-from django.core.validators import ValidationError
-import copy
 from apps.core.models import StatusChoices
 
 
@@ -29,25 +27,22 @@ class ReviewCreateUpdateSerializer(serializers.ModelSerializer):
             if booking.user != request.user:
                 raise serializers.ValidationError('You can leave reviews for your own completed bookings only!')
 
-            if booking.booking_status != StatusChoices.COMPLETED:
-                raise serializers.ValidationError("You can only leave a review after the booking is completed!")
-
             if hasattr(booking, 'review'):
                 if not self.instance or booking.review.pk != self.instance.pk:
                     raise serializers.ValidationError('You can leave only one review for the booking!')
 
-        if self.instance:
-            instance = copy.deepcopy(self.instance)
-            for field, value in attrs.items():
-                setattr(instance, field, value)
-        else:
-            instance = Review(**attrs)
-
-        try:
-            instance.clean()
-        except ValidationError as e:
-            e = e.message_dict if hasattr(e, 'message_dict') else e.messages
-            raise serializers.ValidationError(e)
+        # if self.instance:
+        #     instance = copy.deepcopy(self.instance)
+        #     for field, value in attrs.items():
+        #         setattr(instance, field, value)
+        # else:
+        #     instance = Review(**attrs)
+        #
+        # try:
+        #     instance.clean()
+        # except ValidationError as e:
+        #     e = e.message_dict if hasattr(e, 'message_dict') else e.messages
+        #     raise serializers.ValidationError(e)
 
         return attrs
 

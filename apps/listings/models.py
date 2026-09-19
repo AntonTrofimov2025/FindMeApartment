@@ -59,7 +59,7 @@ class Listing(UniqueID, TimeStampedModel):
     def overall_rating(self):
         overall_rating = self.bookings.aggregate(
             avg_rating=Round(Avg('review__property_rating'), 2))['avg_rating']
-        return overall_rating or 0.0
+        return float(overall_rating) if overall_rating else 0.0
 
     @property
     def is_deleted(self):
@@ -74,12 +74,16 @@ class Listing(UniqueID, TimeStampedModel):
 
     def clean(self):
         super().clean()
+        if not self.user_id:
+            return
         if self.property_type and self.property_type in [PropertyType.ROOM, PropertyType.APARTMENT] and not self.apartment_number:
             raise ValidationError(_('The apartment number is required for room/apartment property type'))
         if self.property_type and self.property_type in [PropertyType.HOUSE, PropertyType.STUDIO] and self.apartment_number:
             raise ValidationError(_('The house/studio property type can not have an apartment number.'))
 
     def save(self, *args, **kwargs):
+        if not self.user_id:
+            return
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -98,7 +102,7 @@ class Listing(UniqueID, TimeStampedModel):
         verbose_name_plural = 'Listings'
         ordering = ('-created_at',)
         constraints = [models.UniqueConstraint(fields=['user', 'country', 'city', 'district', 'street',
-                                                       'house_number', 'apartment_number'],
+                                                       'house_number'],
                                                name='unique_user_address',
                                                violation_error_message=_('Such an address combination already exists!')),
                        models.CheckConstraint(name='discount_from_0.01_to_1',

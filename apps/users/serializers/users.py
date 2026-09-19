@@ -27,6 +27,8 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'deleted_at', 'last_login']
 
     def validate_phone(self, value):
+        if not value or value.strip() == '':
+            return None
         if not re.match(r'^\+\d{10,75}$', value):
             raise serializers.ValidationError(_('The phone number must consist of 10-75 symbols in total and start from + symbol!!\n'
                                               'Example: +3423234455323'))
@@ -45,8 +47,11 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        if attrs.get('password') != attrs.get('re_password'):
-            raise DRFValidationError({'re_password': 'Passwords do not match!!'})
+        if self.instance is None or 'password' in attrs or 're_password' in attrs:
+            if not attrs.get('password') or not attrs.get('re_password'):
+                raise serializers.ValidationError({'password': 'Password fields are required for registration!!'})
+            if attrs.get('password') != attrs.get('re_password'):
+                raise DRFValidationError({'re_password': 'Passwords do not match!!'})
         return attrs
 
     def create(self, validated_data):

@@ -115,7 +115,7 @@ class BookingViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
     def get_serializer_class(self):
-        if self.request.method == 'POST':
+        if self.action in ['create', 'update', 'partial_update']:
             return BookingCreateUpdateSerializer
         return BookingSerializer
 

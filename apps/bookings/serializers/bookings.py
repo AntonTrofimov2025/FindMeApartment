@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from apps.bookings.models import Booking
-from django.core.exceptions import ValidationError
-import copy
+from apps.core.models import StatusChoices
+from django.utils.translation import gettext_lazy as _
 
 
 class BookingSerializer(serializers.ModelSerializer):
@@ -25,17 +25,21 @@ class BookingCreateUpdateSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if self.instance:
-            instance = copy.deepcopy(self.instance)
-            for field, value in attrs.items():
-                setattr(instance, field, value)
-        else:
-            instance = Booking(**attrs)
+            if self.instance.booking_status != StatusChoices.PENDING:
+                raise serializers.ValidationError(_("You can only modify bookings that are in 'Pending' status!"))
+        #     instance = copy.deepcopy(self.instance)
+        #     for field, value in attrs.items():
+        #         setattr(instance, field, value)
+        # else:
+        #     instance = Booking(**attrs)
+        #     if 'request' in self.context:
+        #         instance.user = self.context['request'].user
 
-        try:
-            instance.clean()
-        except ValidationError as e:
-            e = e.message_dict if hasattr(e, 'message_dict') else e.messages
-            raise serializers.ValidationError(e)
+        # try:
+        #     instance.clean()
+        # except ValidationError as e:
+        #     e = e.message_dict if hasattr(e, 'message_dict') else e.messages
+        #     raise serializers.ValidationError(e)
 
         return attrs
 

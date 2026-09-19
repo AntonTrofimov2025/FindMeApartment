@@ -1,7 +1,5 @@
 from rest_framework import serializers
 from apps.listings.models import Listing
-import copy
-from django.core.exceptions import ValidationError
 
 
 class ListingSerializer(serializers.ModelSerializer):
@@ -26,19 +24,19 @@ class ListingCreateUpdateSerializer(serializers.ModelSerializer):
                   'apartment_number', 'max_guests', 'price_per_night', 'rooms', 'deleted_at']
         read_only_fields = ['id', 'user', 'deleted_at']
 
-    def validate(self, attrs):
-        if self.instance:
-            instance = copy.deepcopy(self.instance)
-            for field, value in attrs.items():
-                setattr(instance, field, value)
-        else:
-            instance = Listing(**attrs)
-
-        try:
-            instance.clean()
-        except ValidationError as e:
-            e = e.message_dict if hasattr(e, 'message_dict') else e.messages
-            raise serializers.ValidationError(e)
-
-        return attrs
+    # def validate(self, attrs):
+    #     if self.instance:
+    #         instance = copy.deepcopy(self.instance)
+    #         for field, value in attrs.items():
+    #             setattr(instance, field, value)
+    #     else:
+    #         instance = Listing(**attrs)
+    #
+    #     try:
+    #         instance.clean()
+    #     except ValidationError as e:
+    #         e = e.message_dict if hasattr(e, 'message_dict') else e.messages
+    #         raise serializers.ValidationError(e)
+    #
+    #     return attrs
 
