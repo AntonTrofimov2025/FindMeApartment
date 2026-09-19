@@ -88,21 +88,25 @@ class Booking(UniqueID, TimeStampedModel):
         except ObjectDoesNotExist:
             return
 
+        dates_changed = False
+        if self.pk:
+            old_dates = Booking.all_objects.filter(pk=self.pk).values('date_from', 'date_to').first()
+            if old_dates and (old_dates['date_from'] != self.date_from or old_dates['date_to'] != self.date_to):
+                dates_changed = True
+
         if self.date_to and self.date_from and self.listing:
-            nights = (self.date_to - self.date_from).days
-            self.total_price = nights * self.listing.final_price_per_night if nights > 0 else Decimal("0.00")
+            if self._state.adding or dates_changed:
+                nights = (self.date_to - self.date_from).days
+                self.total_price = nights * self.listing.final_price_per_night if nights > 0 else Decimal("0.00")
 
-        if self._state.adding:
-            snapshot_data = {}
-
-            if self.user:
-                snapshot_data['Tenant'] = {
-                    'email': self.user.email or "No data",
-                    'phone': self.user.phone or "No data",
-                    'first_name': self.user.first_name or "No data",
-                    'last_name': self.user.last_name or "No data",
-                    'birth_date': str(self.user.birth_date) if self.user.birth_date else "No data",
-                }
+        if self._state.adding or dates_changed:
+            snapshot_data = {'Tenant': {
+                'email': self.user.email or "No data",
+                'phone': self.user.phone or "No data",
+                'first_name': self.user.first_name or "No data",
+                'last_name': self.user.last_name or "No data",
+                'birth_date': str(self.user.birth_date) if self.user.birth_date else "No data",
+            }}
 
             if self.listing:
                 snapshot_data['property_data'] = {
@@ -120,6 +124,12 @@ class Booking(UniqueID, TimeStampedModel):
                     'discount': str(self.listing.discount),
                     'rooms': self.listing.get_rooms_display() or "No data",
                 }
+            if self.date_from and self.date_to:
+                snapshot_data['booking_details'] = {'date_from': str(self.date_from),
+                                                    'date_to': str(self.date_to),
+                                                    'nights': str((self.date_to - self.date_from).days),
+                                                    'guests_number': str(self.guests_number)}
+
             if self.total_price:
                 snapshot_data['total_price'] = str(self.total_price)
 

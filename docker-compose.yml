@@ -15,9 +15,9 @@ services:
 #      - /opt/homebrew/var/mysql/rental_mysqldb:/var/lib/mysql
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USER}", "-p$${DB_PASSWORD}" ]
-      timeout: 5s
+      timeout: "5s"
       retries: 5
-      interval: 5s
+      interval: "5s"
 
   web:
     build:
@@ -39,10 +39,10 @@ services:
     healthcheck:
       # Проверяем, отвечает ли веб-сервер на порту 8000 (внутри контейнера)
       test: [ "CMD", "curl", "-f", "http://localhost:8000/ping/" ]
-      interval: 30s
-      timeout: 5s
+      interval: "30s"
+      timeout: "5s"
       retries: 3
-      start_period: 15s
+      start_period: "15s"
 
   nginx:
     image: nginx:latest
