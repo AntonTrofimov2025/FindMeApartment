@@ -54,7 +54,7 @@ services:
       - ./static:/fma/static
     healthcheck:
       # Проверяем, отвечает ли веб-сервер на порту 8000 (внутри контейнера)
-      test: [ "CMD", "curl", "-f", "http://localhost:8000/" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/ping/" ]
       interval: 3s
       timeout: 3s
       retries: 3
