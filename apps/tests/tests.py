@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from datetime import date
+from datetime import date, timedelta
 from apps.listings.models import Listing, Photo
 from apps.bookings.models import Booking
 from apps.reviews.models import Review
@@ -31,7 +31,7 @@ class FMATesting(APITestCase):
                       username=fake.user_name(),
                       first_name=fake.unique.first_name(),
                       last_name=fake.unique.last_name(),
-                      birth_date=date(year=2026, month=9, day=19),
+                      birth_date=date(year=random.randint(1970, 2008), month=9, day=19),
                       password=fake.password(length=random.randrange(8, 129, 8)),
                       is_staff=True)
             users.append(user)
@@ -64,9 +64,10 @@ class FMATesting(APITestCase):
         bookings = [Booking(
                       user=random.choice(all_users),
                       listing=random.choice(all_listings),
-                      date_from=date(year=2026, month=12, day=1 + i),
-                      date_to=date(year=2026, month=12, day=2 + i),
-                      guests_number=random.randint(2, 10)
+                      date_from=timezone.localdate() + timedelta(days=i),
+                      date_to=timezone.localdate() + timedelta(days=i + 1),
+                      guests_number=random.randint(2, 10),
+                      booking_status=StatusChoices.COMPLETED
                     ) for i in range(30)]
         for booking in bookings:
             booking.save()
