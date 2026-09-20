@@ -142,7 +142,7 @@ class Booking(UniqueID, TimeStampedModel):
         return f"Booking's Title: {self.listing.title}"
 
     def __repr__(self):
-        return (f"<Booking(date_from={self.date_from}, user={self.user}, date_to={self.date_to},"
+        return (f"<Booking(user={self.user_id}, date_from={self.date_from}, date_to={self.date_to},"
                 f" booking_status={self.booking_status}, guests_number={self.guests_number},"
                 f" total_price={self.total_price})>")
 

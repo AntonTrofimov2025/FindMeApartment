@@ -91,7 +91,7 @@ class Listing(UniqueID, TimeStampedModel):
         return f"Listing's Title: {self.title}"
 
     def __repr__(self):
-        return (f"<Listing(title={self.title}, user={self.user}, country={self.country}, city={self.city},"
+        return (f"<Listing(title={self.title}, user={self.user_id}, country={self.country}, city={self.city},"
                 f" street={self.street}, house_number={self.house_number}, apartment_number={self.apartment_number},"
                 f" is_active={self.is_active},"
                 f" property_type={self.property_type}, price_per_night={self.price_per_night}, rooms={self.rooms})>")
@@ -159,7 +159,7 @@ class Photo(UniqueID, TimeStampedModel):
         ]
 
     def __repr__(self):
-        return f"<Photo(listing={self.listing}, photo={self.photo}, photo_number={self.photo_number})>"
+        return f"<Photo(listing={self.listing_id}, photo={self.photo}, photo_number={self.photo_number})>"
 
     def __str__(self):
         return f"Photo {self.photo.name if self.photo else 'No photo'}"

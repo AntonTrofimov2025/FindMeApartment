@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import sys
 
 from environ import Env
 
@@ -339,3 +340,30 @@ ROLE_PERMISSION = {
         'listings.view_photo'
     ]
 }
+
+if IS_TESTING := 'test' in sys.argv:
+
+    PASSWORD_HASHERS = [
+        'django.contrib.auth.hashers.MD5PasswordHasher',
+    ]
+
+    print("🧪 [TEST MODE] PASSWORD HASHER OVERRIDDEN TO MD5!")
+    print(f"📊 CURRENT ACTIVE HASHER: {PASSWORD_HASHERS[0]}")
+
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {'class': 'logging.StreamHandler'},
+        },
+        'loggers': {
+            'django.db.backends': {
+                'level': 'INFO',
+                'handlers': ['console'],
+                'propagate': False,
+            },
+        },
+    }
+else:
+    print("🔒 [PROD/DEV MODE] SECURITY CHECK: Default Django Strong Encryption (PBKDF2) is Active.")
+

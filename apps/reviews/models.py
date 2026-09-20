@@ -50,6 +50,13 @@ class Review(UniqueID, TimeStampedModel):
     objects = ReviewsSoftDeleteManager()
     all_objects = models.Manager()
 
+    def __str__(self):
+        return f"Review from user: {self.booking.user_id}"
+
+    def __repr__(self):
+        return (f"<Review(booking={self.booking_id}, text={self.text}, property_rating={self.property_rating},"
+                f" location_rating={self.location_rating})>")
+
     class Meta:
         db_table = 'fma_reviews'
         verbose_name = 'Review'
