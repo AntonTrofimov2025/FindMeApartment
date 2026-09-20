@@ -9,6 +9,11 @@ from decimal import Decimal
 import random
 from faker import Faker
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils import timezone
+from django.db.models.functions import ExtractIsoWeekDay
+from io import BytesIO
+from PIL import Image
+from apps.core.models import Countries, StatusChoices, PropertyType, RoomCount
 
 User = get_user_model()
 fake = Faker()
@@ -23,34 +28,35 @@ class FMATesting(APITestCase):
         users = []
         for _ in range(10):
             user = User.objects.create_user(email=fake.unique.email(),
-                      username="hell",
-                      first_name="oy",
-                      last_name="boy",
+                      username=fake.user_name(),
+                      first_name=fake.unique.first_name(),
+                      last_name=fake.unique.last_name(),
                       birth_date=date(year=2026, month=9, day=19),
-                      password="s23tringst",
+                      password=fake.password(length=random.randrange(8, 129, 8)),
                       is_staff=True)
             users.append(user)
         listings = [Listing(
-                      title="Helloy",
+                      title=fake.word(),
                       user=random.choice(users),
-                      description="dasdasdas",
-                      country=276,
-                      district="goody",
-                      city="SPB",
-                      street="not yet",
+                      description=fake.paragraph(nb_sentences=random.randint(3, 5)),
+                      country=random.choice(Countries.values),
+                      district=fake.state(),
+                      city=fake.city(),
+                      street=fake.street_address(),
                       house_number=f"{i}",
-                      property_type="apartment",
+                      property_type=random.choice(PropertyType.values),
                       discount=random.uniform(0.01, 1),
                       apartment_number=fake.unique.word(),
                       max_guests=10,
-                      price_per_night=Decimal("14550.50"),
-                      rooms=0
+                      price_per_night=Decimal(random.randint(3000, 25000)),
+                      rooms=random.choice(RoomCount.values)
                     ) for i in range(20)]
         Listing.objects.bulk_create(listings)
         all_listings = list(Listing.objects.all())
         photos = [Photo(listing=listing,
-                          photo=SimpleUploadedFile('our_photo.png', content=b"0" * 1024 * 1024, content_type="image/png"),
-                          photo_number=50) for listing in all_listings]
+                          photo=SimpleUploadedFile('our_photo.png', content=b"0" * 1024 * 1024,
+                                                   content_type="image/png"),
+                          photo_number=random.randint(1, 50)) for listing in all_listings]
         Photo.objects.bulk_create(photos)
         all_users = list(User.objects.all())
         random.shuffle(all_listings)
@@ -67,9 +73,9 @@ class FMATesting(APITestCase):
         all_bookings = list(Booking.objects.all())
         random.shuffle(all_bookings)
         reviews = [Review(booking=all_bookings.pop(),
-                          property_rating=5,
-                          location_rating=5,
-                          text="heeeyy :DD"
+                          property_rating=random.randint(1, 5),
+                          location_rating=random.randint(1, 5),
+                          text=fake.lexify(text='?' * 1500)
                         ) for _ in range(30)]
         Review.objects.bulk_create(reviews)
 
@@ -80,6 +86,36 @@ class FMATesting(APITestCase):
         self.assertEqual(len(response.data), 4)
         for key in pagination_keys:
             self.assertIn(key, response.data)
+
+    def test_not_authenticated(self, viewname='booking-list', viewname_detail: str | None='booking-detail',
+                               args=None):
+        if viewname_detail == 'booking-detail' and args is None:
+            args = Booking.objects.first().id
+        args = [args] if args else []
+        response = self.client.get(reverse(viewname))
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('Authentication credentials were not provided.', response.data['errors'][0]['detail'])
+        if viewname_detail:
+            response = self.client.get(reverse(viewname_detail, args=args))
+            self.assertEqual(response.status_code, 401)
+            self.assertIn('Authentication credentials were not provided.', response.data['errors'][0]['detail'])
+
+    def test_not_authenticated_part_2(self):
+        self.test_not_authenticated('user-list', 'user-detail', User.objects.first().id)
+
+    def test_not_authenticated_part_3(self):
+        self.test_not_authenticated('user-profile-view', None)
+        self.test_not_authenticated('user-become-landlord-view', None)
+
+    def test_not_authenticated_part_4(self):
+        self.test_not_authenticated('logout-view', None)
+
+    def test_not_authenticated_booking_endpoints(self):
+        booking_id = Booking.objects.last().id
+        viewnames = ('booking-approve-view', 'booking-cancel-view', 'booking-reject-view', 'booking-check-in-view')
+        for viewname in viewnames:
+            response = self.client.get(reverse(viewname, args=[booking_id]))
+            self.assertEqual(response.status_code, 401)
 
     def test_get_all_users(self):
         self.client.force_authenticate(User.objects.last())
@@ -113,7 +149,7 @@ class FMATesting(APITestCase):
 
     def test_txt_file_is_forbidden(self):
         self.client.force_authenticate(User.objects.first())
-        bad_file = SimpleUploadedFile('image.txt', content=b"fake bytes", content_type="text/plain")
+        bad_file = SimpleUploadedFile('diary.txt', content=b"fake bytes", content_type="text/plain")
         listing_id = Listing.objects.last().id
         data = {
             'listing': listing_id,
@@ -126,3 +162,29 @@ class FMATesting(APITestCase):
                       ' The file you uploaded was either not an image or a corrupted image.',
                       response.data['errors'][0]['detail'])
 
+    def test_file_size_is_too_big(self):
+        buffer = BytesIO()
+        image = Image.new(mode='RGB', size=(1, 1), color='white')
+        image.save(buffer, format='JPEG', quality=100, subsampling='4:4:4')
+        buffer.write(b"0" * int(2.5 * 1024 * 1024))
+        buffer.seek(0)
+        self.client.force_authenticate(User.objects.last())
+        bad_file = SimpleUploadedFile('too_big_file.jpeg', content=buffer.read(),
+                                      content_type='image/jpeg')
+        listing_id = Listing.objects.first().id
+        data = {
+            'listing': listing_id,
+            'photo': bad_file,
+            'photo_number': 35
+        }
+        response = self.client.post(reverse('photo-list'), data=data, format='multipart')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('File size is too big! Maximum allowed size is 2 MB.', response.data['errors'][0]['detail'])
+
+    def test_photos_per_week_day(self):
+        current_day = timezone.now().isoweekday()
+        photos = Photo.all_objects.annotate(day_of_week=ExtractIsoWeekDay('created_at')).filter(day_of_week=current_day)
+        self.assertTrue(photos.exists())
+        for photo in photos:
+            self.assertEqual(photo.created_at.isoweekday(), current_day)
+            self.assertEqual(photo.day_of_week, current_day)
