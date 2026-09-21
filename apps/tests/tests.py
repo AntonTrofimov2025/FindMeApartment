@@ -46,7 +46,7 @@ class FMATesting(APITestCase):
                       house_number=f"{i}",
                       property_type=random.choice(PropertyType.values),
                       discount=random.uniform(0.01, 1),
-                      apartment_number=fake.unique.word(),
+                      apartment_number=random.randint(1, 10),
                       max_guests=10,
                       price_per_night=Decimal(random.randint(3000, 25000)),
                       rooms=random.choice(RoomCount.values)
