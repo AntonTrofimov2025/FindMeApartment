@@ -189,3 +189,52 @@ class FMATesting(APITestCase):
         for photo in photos:
             self.assertEqual(photo.created_at.isoweekday(), current_day)
             self.assertEqual(photo.day_of_week, current_day)
+
+    def test_age_greater_120(self):
+        user_data = {'email': fake.unique.email(),
+                    'username': fake.user_name(),
+                    'first_name': fake.unique.first_name(),
+                    'last_name': fake.unique.last_name(),
+                    'birth_date': date(year=1900, month=1, day=1),
+                    'password': fake.password(length=random.randrange(8, 129, 8)),
+                    'is_staff': True}
+        response = self.client.post(reverse('user-create-view'), data=user_data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('You are so old my friend! :D Try again :)', response.data['errors'][0]['detail'])
+
+    def test_overlapping_dates(self):
+        listing_id = Listing.objects.first().id
+        user = User.objects.last()
+        self.client.force_authenticate(user)
+        data = {
+              'listing': listing_id,
+              'date_from': (timezone.localdate() + timedelta(days=41)).strftime('%Y-%m-%d'),
+              'date_to': (timezone.localdate() + timedelta(days=43)).strftime('%Y-%m-%d'),
+              'guests_number': random.randint(2, 10)
+            }
+        response = self.client.post(reverse('booking-list'), data=data, format='json')
+        self.assertEqual(response.status_code, 201)
+        response = self.client.post(reverse('booking-list'), data=data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Unfortunately the selected dates are already booked.', response.data['errors'][0]['detail'])
+
+    def test_soft_delete(self):
+        alive_users_before = User.objects.count()
+        self.assertEqual(alive_users_before, 10)
+        user = User.objects.first()
+        user.delete()
+        self.client.force_authenticate(User.objects.last())
+        response = self.client.get(reverse('user-detail', args=[user.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data['is_deleted'] is True)
+        self.assertTrue(response.data['deleted_at'] is not None)
+
+        alive_users_after = User.objects.count()
+        self.assertEqual(alive_users_after, 9)
+
+        admin_user = User.objects.filter(is_staff=True).first()
+        self.client.force_authenticate(admin_user)
+        admin_response = self.client.get(reverse('user-list'))
+        self.assertEqual(admin_response.status_code, 200)
+        self.assertEqual(admin_response.data['count'], 10)
+
