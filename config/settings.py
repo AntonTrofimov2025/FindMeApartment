@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    "simple_history",
     'rest_framework',
     'django_filters',
     'rest_framework_simplejwt',
@@ -67,6 +68,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'simple_history.middleware.HistoryRequestMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -364,6 +366,7 @@ if IS_TESTING := 'test' in sys.argv:
             },
         },
     }
+    MEDIA_ROOT = BASE_DIR / 'test_media'
 else:
     print("🔒 [PROD/DEV MODE] SECURITY CHECK: Default Django Strong Encryption (PBKDF2) is Active.")
 

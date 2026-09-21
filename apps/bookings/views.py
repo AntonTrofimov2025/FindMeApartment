@@ -1,6 +1,6 @@
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from apps.bookings.permissions import IsLandLord
 from rest_framework.generics import get_object_or_404
 from .models import Booking
@@ -14,6 +14,8 @@ from .serializers.bookings import BookingSerializer, BookingCreateUpdateSerializ
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from django.utils import timezone
+from django.db.models import Sum, Count, Q
+from .permissions.is_landlord import IsLandLord
 
 @extend_schema(summary='Approve booking', description='Approval of booking provided its status is PENDING')
 @api_view(['POST'])
@@ -141,4 +143,47 @@ class BookingViewSet(viewsets.ModelViewSet):
             return Booking.objects.select_related('user', 'listing').filter(listing__user=user)
 
         return Booking.objects.select_related('user', 'listing').filter(user=user)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsLandLord],
+            url_name='landlord_analytics', url_path='analytics')
+    def landlord_analytics(self, request):
+        """
+        Эндпоинт для Хозяина (Landlord): возвращает общую финансовую
+        и операционную статистику по всем его объявлениям.
+        """
+        user = request.user
+
+        landlord_bookings = Booking.objects.filter(listing__user=user)
+
+        stats = landlord_bookings.aggregate(
+            total_earnings=Sum('total_price',
+                               filter=Q(booking_status__in=[StatusChoices.CONFIRMED, StatusChoices.COMPLETED])),
+            total_bookings_count=Count('id'),
+            pending_count=Count('id', filter=Q(booking_status=StatusChoices.PENDING)),
+            confirmed_count=Count('id', filter=Q(booking_status=StatusChoices.CONFIRMED)),
+            completed_count=Count('id', filter=Q(booking_status=StatusChoices.COMPLETED)),
+            cancelled_count=Count('id', filter=Q(booking_status=StatusChoices.CANCELLED))
+        )
+
+        total_earnings = float(stats['total_earnings']) if stats['total_earnings'] else 0.0
+
+        analytics_data = {
+            "financials": {
+                "total_earnings": total_earnings,
+                "currency": "EUR"
+            },
+            "counters": {
+                "total_bookings": stats['total_bookings_count'],
+                "pending": stats['pending_count'],
+                "confirmed": stats['confirmed_count'],
+                "completed": stats['completed_count'],
+                "cancelled": stats['cancelled_count']
+            },
+            "performance": {
+                "active_properties_count": landlord_bookings.values('listing').distinct().count(),
+                "properties_ids": list(landlord_bookings.values_list('listing', flat=True).order_by().distinct())
+            }
+        }
+
+        return Response(analytics_data, status=status.HTTP_200_OK)
 

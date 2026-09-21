@@ -12,6 +12,7 @@ from apps.core.models import StatusChoices
 from decimal import Decimal
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
+from simple_history.models import HistoricalRecords
 
 
 
@@ -33,6 +34,9 @@ class Booking(UniqueID, TimeStampedModel):
     total_price = models.DecimalField(max_digits=10, decimal_places=2,
                                       help_text='Total price for the stay', verbose_name=_('Total price'),
                                       validators=[MinValueValidator(Decimal('0.00'))])
+    history = HistoricalRecords(
+        table_name='fma_bookings_historicalrecords'
+    )
 
     objects = BookingsSoftDeleteManager()
     all_objects = models.Manager()
