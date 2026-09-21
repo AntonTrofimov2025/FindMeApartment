@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ -f .env ]; then
-    export $(grep -v '^#' .env | xargs)
+    export $(grep -v '^#' .env | sed 's/\r$//' | xargs)
 else
     echo "Ошибка: Файл .env не найден!"
     exit 1
