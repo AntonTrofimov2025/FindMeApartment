@@ -148,8 +148,8 @@ class BookingViewSet(viewsets.ModelViewSet):
             url_name='landlord_analytics', url_path='analytics')
     def landlord_analytics(self, request):
         """
-        Эндпоинт для Хозяина (Landlord): возвращает общую финансовую
-        и операционную статистику по всем его объявлениям.
+        Landlord Analytics Endpoint: returns consolidated financial
+        and operational metrics across all properties owned by the current user.
         """
         user = request.user
 
