@@ -4,11 +4,12 @@ from .serializers.reviews import ReviewSerializer, ReviewCreateUpdateSerializer
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
+from .permissions import IsReviewAuthorOrAdmin
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
 
-    queryset = Review.objects.select_related('booking', 'booking__user', 'booking__listing').all()
+    queryset = Review.all_objects.select_related('booking', 'booking__user', 'booking__listing').all()
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
@@ -31,3 +32,13 @@ class ReviewViewSet(viewsets.ModelViewSet):
             return ReviewCreateUpdateSerializer
         return ReviewSerializer
 
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated and (user.is_staff or user.is_superuser):
+            return self.queryset
+        return Review.objects.select_related('booking', 'booking__user', 'booking__listing').all()
+
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [IsReviewAuthorOrAdmin()]
+        return super().get_permissions()

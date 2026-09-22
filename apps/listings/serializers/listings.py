@@ -10,8 +10,8 @@ class ListingSerializer(serializers.ModelSerializer):
         model = Listing
         fields = ['id', 'title', 'user', 'description', 'country', 'district', 'city', 'street', 'house_number',
                   'property_type', 'discount', 'overall_rating', 'apartment_number', 'max_guests',
-                  'price_per_night', 'final_price_per_night', 'rooms', 'is_deleted', 'deleted_at']
-        read_only_fields = ['id', 'user', 'overall_rating', 'deleted_at', 'final_price_per_night']
+                  'price_per_night', 'final_price_per_night', 'rooms', 'is_active', 'is_deleted', 'deleted_at']
+        read_only_fields = ['id', 'user', 'overall_rating', 'is_active', 'deleted_at', 'final_price_per_night']
 
 
 class ListingCreateUpdateSerializer(serializers.ModelSerializer):
@@ -21,8 +21,8 @@ class ListingCreateUpdateSerializer(serializers.ModelSerializer):
         model = Listing
         fields = ['id', 'title', 'user', 'description', 'country', 'district', 'city', 'street', 'house_number',
                   'property_type', 'discount', 'overall_rating',
-                  'apartment_number', 'max_guests', 'price_per_night', 'rooms', 'deleted_at']
-        read_only_fields = ['id', 'user', 'deleted_at']
+                  'apartment_number', 'max_guests', 'price_per_night', 'rooms', 'is_active', 'deleted_at']
+        read_only_fields = ['id', 'user', 'is_active', 'deleted_at']
 
     # def validate(self, attrs):
     #     if self.instance:

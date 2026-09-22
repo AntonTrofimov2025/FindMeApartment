@@ -80,7 +80,7 @@ class Booking(UniqueID, TimeStampedModel):
             if self.pk:
                 booking = Booking.objects.get(pk=self.pk)
 
-                if booking.booking_status != StatusChoices.CANCELLED:
+                if booking.booking_status == StatusChoices.CONFIRMED:
                     if timezone.localdate() > self.date_from - timedelta(days=2):
                         raise ValidationError(_('You cannot cancel this booking less than 2 days before the start date.'))
 

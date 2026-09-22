@@ -17,7 +17,7 @@ class IsLandLordOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        if request.user.is_staff:
+        if request.user.is_staff or request.user.is_superuser:
             return True
 
         return obj.user == request.user

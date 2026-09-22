@@ -24,14 +24,14 @@ class UserMeView(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(summary="Get current user's profile.", responses={200: UserListSerializer},
+    @extend_schema(summary="Get current user's profile.", responses={'200': UserListSerializer},
                    tags=["User Profile"])
     def get(self, request, *args, **kwargs):
         serializer = UserListSerializer(request.user, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(summary="Fully updates current user's profile (such as avatar, phone number, etc.)", request=RegisterUserSerializer,
-                   responses={200: UserListSerializer}, tags=["User Profile"])
+                   responses={'200': UserListSerializer}, tags=["User Profile"])
     def put(self, request, *args, partial=False, **kwargs):
         serializer = RegisterUserSerializer(request.user, data=request.data, partial=partial, context={'request': request})
         serializer.is_valid(raise_exception=True)
@@ -40,9 +40,22 @@ class UserMeView(APIView):
 
     @extend_schema(summary="Partially updates current user's profile (such as avatar, phone number, etc.)",
                    request=RegisterUserSerializer,
-                   responses={200: UserListSerializer}, tags=["User Profile"])
+                   responses={'200': UserListSerializer}, tags=["User Profile"])
     def patch(self, request, *args, **kwargs):
         return self.put(request, partial=True)
+
+    @extend_schema(
+        summary="Delete current user's account",
+        description="Soft deletes the authenticated user profile, deactivates access, and logs the timestamp.",
+        responses={"200": "Your account has been successfully deleted."},
+        tags=["User Profile"]
+    )
+    def delete(self, request, *args, **kwargs):
+        request.user.delete()
+        return Response(
+            {'msg': "Your account has been successfully deleted. We'd like to kindly thank you for being with us! :)"},
+            status=status.HTTP_200_OK
+        )
 
 class UserBecomeLandlordView(APIView):
 
@@ -51,7 +64,7 @@ class UserBecomeLandlordView(APIView):
     @extend_schema(
         summary="Become a Landlord",
         description="Switch current user group from Tenant to Landlord to allow property listing.",
-        responses={200: 'Successfully became a landlord.'},
+        responses={'200': 'Successfully became a landlord.'},
         tags=["User Profile"]
     )
     def post(self, request, *args, **kwargs):
@@ -65,8 +78,10 @@ class UserBecomeLandlordView(APIView):
             landlord_group = Group.objects.get(name='Landlord')
             user.groups.remove(tenant_group)
             user.groups.add(landlord_group)
+            refresh = RefreshToken.for_user(user)
 
-            return Response({'msg': 'You are now a Landlord. You can host properties! :)'},
+            return Response({'msg': 'You are now a Landlord. You can host properties! :)',
+                             'tokens': {'refresh': str(refresh), 'access': str(refresh.access_token)}},
                             status=status.HTTP_200_OK)
 
         except Group.DoesNotExist:

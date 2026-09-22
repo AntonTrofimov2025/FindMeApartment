@@ -21,14 +21,14 @@ from .permissions.is_landlord import IsLandLord
 @api_view(['POST'])
 @permission_classes([IsLandLord])
 def booking_approve(request, pk, *args, **kwargs):
-    booking = get_object_or_404(Booking, pk=pk)
+    booking = get_object_or_404(Booking.all_objects, pk=pk)
     if request.user != booking.listing.user:
         raise PermissionDenied({'detail': 'You are not the owner of this property!'})
     if booking.booking_status != StatusChoices.PENDING:
         raise ValidationError({'detail': 'The booking status must be PENDING only to be approved!'})
     try:
         booking.booking_status = StatusChoices.CONFIRMED
-        booking.save(update_fields=['booking_status', 'updated_at'])
+        booking.save()
     except DjangoValidationError as e:
         error_data = e.message_dict if hasattr(e, 'message_dict') else e.messages
         raise ValidationError(error_data)
@@ -38,14 +38,14 @@ def booking_approve(request, pk, *args, **kwargs):
 @api_view(['POST'])
 @permission_classes([IsLandLord])
 def booking_reject(request, pk, *args, **kwargs):
-    booking = get_object_or_404(Booking, pk=pk)
+    booking = get_object_or_404(Booking.all_objects, pk=pk)
     if request.user != booking.listing.user:
         raise PermissionDenied({'detail': 'You are not the owner of this property!'})
     if booking.booking_status != StatusChoices.PENDING:
         raise ValidationError({'detail': 'The booking status must be PENDING only to be rejected!'})
     try:
         booking.booking_status = StatusChoices.REJECTED
-        booking.save(update_fields=['booking_status', 'updated_at'])
+        booking.save()
     except DjangoValidationError as e:
         error_data = e.message_dict if hasattr(e, 'message_dict') else e.messages
         raise ValidationError(error_data)
@@ -55,14 +55,14 @@ def booking_reject(request, pk, *args, **kwargs):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def booking_cancel(request, pk, *args, **kwargs):
-    booking = get_object_or_404(Booking, pk=pk)
-    if request.user != booking.listing.user:
-        raise PermissionDenied({'detail': 'You are not the owner of this property!'})
-    if booking.booking_status != StatusChoices.CONFIRMED:
-        raise ValidationError({'detail': 'The booking status must be CONFIRMED only to be cancelled!'})
+    booking = get_object_or_404(Booking.all_objects, pk=pk)
+    if request.user != booking.listing.user and request.user != booking.user:
+        raise PermissionDenied({'detail': 'You do not have permission to cancel this booking!'})
+    if booking.booking_status not in [StatusChoices.CONFIRMED, StatusChoices.PENDING]:
+        raise ValidationError({'detail': 'The booking status must be either PENDING or CONFIRMED only to be cancelled!'})
     try:
         booking.booking_status = StatusChoices.CANCELLED
-        booking.save(update_fields=['booking_status', 'updated_at'])
+        booking.save()
     except DjangoValidationError as e:
         error_data = e.message_dict if hasattr(e, 'message_dict') else e.messages
         raise ValidationError(error_data)
@@ -73,7 +73,7 @@ def booking_cancel(request, pk, *args, **kwargs):
 @api_view(['POST'])
 @permission_classes([IsLandLord])
 def booking_check_in(request, pk, *args, **kwargs):
-    booking = get_object_or_404(Booking, pk=pk)
+    booking = get_object_or_404(Booking.all_objects, pk=pk)
     if request.user != booking.listing.user:
         raise PermissionDenied({'detail': 'You are not the owner of this property!'})
     if booking.booking_status != StatusChoices.CONFIRMED:
@@ -82,7 +82,7 @@ def booking_check_in(request, pk, *args, **kwargs):
         raise ValidationError({'detail': f'You cannot check in your guest before the start date ({booking.date_from})!'})
     try:
         booking.booking_status = StatusChoices.CHECKED_IN
-        booking.save(update_fields=['booking_status', 'updated_at'])
+        booking.save()
     except DjangoValidationError as e:
         error_data = e.message_dict if hasattr(e, 'message_dict') else e.messages
         raise ValidationError(error_data)
@@ -98,7 +98,7 @@ def booking_check_in(request, pk, *args, **kwargs):
 )
 class BookingViewSet(viewsets.ModelViewSet):
 
-    queryset = Booking.objects.select_related('user', 'listing').all()
+    queryset = Booking.all_objects.select_related('user', 'listing').all()
     serializer_class = BookingSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
@@ -125,7 +125,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
     def get_permissions(self):
-        if self.action in ['update', 'partial_update']:
+        if self.action in ['update', 'partial_update', 'destroy']:
             return [IsAdminUser()]
         return super().get_permissions()
 

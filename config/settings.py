@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'drf_spectacular',
     "drf_standardized_errors",
+    'corsheaders',
 
     'apps.core.apps.CoreConfig',
     'apps.users.apps.UsersConfig',
@@ -63,6 +64,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -94,7 +96,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'apps.core.paginators.common.CommonPaginator',
     # 'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     "DEFAULT_SCHEMA_CLASS": "drf_standardized_errors.openapi.AutoSchema",
-    "EXCEPTION_HANDLER": "apps.core.exceptions.drf_standardized_err_custom_exception_handler",
+    # "EXCEPTION_HANDLER": "apps.core.exceptions.drf_standardized_err_custom_exception_handler",
+    "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication'
     ],
@@ -116,7 +119,9 @@ REST_FRAMEWORK = {
 
 #############################################################################
 # DO NOT FORGET TO UNCOMMENT AFTER DEPLOYMENT!!
-DRF_STANDARDIZED_ERRORS = {"ENABLE_IN_DEBUG_FOR_UNHANDLED_EXCEPTIONS": True}
+DRF_STANDARDIZED_ERRORS = {"ENABLE_IN_DEBUG_FOR_UNHANDLED_EXCEPTIONS": True,
+                           "ENABLE_IN_OPENAPI_SCHEMA": True,
+                           "EXCEPTION_HANDLER_CLASS": "apps.core.exceptions.CustomDRFStandardizedErrorsExceptionHandler"}
 #############################################################################
 
 SPECTACULAR_SETTINGS = {
@@ -141,7 +146,10 @@ SPECTACULAR_SETTINGS = {
         "ErrorCode429Enum": "drf_standardized_errors.openapi_serializers.ErrorCode429Enum.choices",
         "ErrorCode500Enum": "drf_standardized_errors.openapi_serializers.ErrorCode500Enum.choices"
     },
-    "POSTPROCESSING_HOOKS": ["drf_standardized_errors.openapi_hooks.postprocess_schema_enums"]
+    "POSTPROCESSING_HOOKS": ["drf_standardized_errors.openapi_hooks.postprocess_schema_enums"],
+    'PLUGINS': [
+        'drf_standardized_errors.openapi_serializers.StandardizedErrorsPlugin',
+    ]
 }
 
 SIMPLE_JWT = {
@@ -370,3 +378,7 @@ if IS_TESTING := 'test' in sys.argv:
 else:
     print("🔒 [PROD/DEV MODE] SECURITY CHECK: Default Django Strong Encryption (PBKDF2) is Active.")
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]

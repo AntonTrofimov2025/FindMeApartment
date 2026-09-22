@@ -25,7 +25,7 @@ from django.db.models import Q
 )
 class ListingViewSet(viewsets.ModelViewSet):
 
-    queryset = Listing.objects.select_related('user').all()
+    queryset = Listing.all_objects.select_related('user').all()
     serializer_class = ListingSerializer
     permission_classes = [IsLandLordOrReadOnly]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
@@ -47,9 +47,10 @@ class ListingViewSet(viewsets.ModelViewSet):
         if user.is_authenticated and (user.is_staff or user.is_superuser):
             return self.queryset
         if user.is_authenticated and user.groups.filter(name='Landlord').exists():
-            return Listing.objects.select_related('user').filter(Q(user=user) | Q(is_active=True))
+            return Listing.all_objects.select_related('user').filter(
+                Q(user=user) | Q(deleted_at__isnull=True, is_active=True))
 
-        return Listing.objects.select_related('user').filter(is_active=True)
+        return Listing.all_objects.select_related('user').filter(deleted_at__isnull=True, is_active=True)
 
     @extend_schema(
         summary="Use to toggle the listing active status by providing its id",
@@ -59,6 +60,10 @@ class ListingViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_name='toggle_is_active', url_path='toggle')
     def toggle_is_active(self, request, *args, **kwargs):
         listing = self.get_object()
+
+        if listing.is_deleted:
+            return Response({'msg': 'Cannot toggle active status on a deleted listing!'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         if listing.user != request.user and not request.user.is_staff:
             raise PermissionDenied('You are not allowed to manage this listing!')
@@ -79,7 +84,7 @@ class ListingViewSet(viewsets.ModelViewSet):
 )
 class PhotoViewSet(viewsets.ModelViewSet):
 
-    queryset = Photo.objects.select_related('listing').all()
+    queryset = Photo.all_objects.select_related('listing').all()
     serializer_class = PhotoSerializer
     permission_classes = [IsLandLordOrReadOnly]
     parser_classes = [MultiPartParser, FormParser]
@@ -96,6 +101,12 @@ class PhotoViewSet(viewsets.ModelViewSet):
         if self.action in ['update', 'partial_update']:
             return [IsAdminUser()]
         return super().get_permissions()
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated and (user.is_staff or user.is_superuser):
+            return self.queryset
+        return Photo.objects.select_related('listing').filter(listing__is_active=True)
 
     def perform_create(self, serializer):
         listing = serializer.validated_data.get('listing')
