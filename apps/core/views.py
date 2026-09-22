@@ -12,11 +12,26 @@ from rest_framework.permissions import AllowAny
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def test_django_standard_exceptions(request):
+    """
+    System endpoint designed to trigger a ZeroDivisionError.
+
+    Used exclusively in test and staging environments to verify that
+    the global drf_standardized_err_custom_exception_handler intercepts
+    core Python/Django exceptions and cleanly converts them into
+    standardized 500 Server Error JSON responses.
+    """
     x = 1 / 0
     return Response({'msg': x})
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def health_check(request):
+    """
+    Lightweight health check endpoint.
+
+    Provides container orchestration tools (like Docker compose healthchecks or AWS ECS)
+    with a simple mechanism to verify that the Gunicorn/Django application
+    instance is live, responsive, and accepting incoming HTTP traffic.
+    """
     return Response("Server works fine :)", status=HTTP_200_OK)
 

@@ -21,6 +21,12 @@ from .permissions.is_landlord import IsLandLord
 @api_view(['POST'])
 @permission_classes([IsLandLord])
 def booking_approve(request, pk, *args, **kwargs):
+    """
+    Approve a pending booking request.
+
+    Accessible only by the Landlord who owns the listing.
+    Transitions the booking status from PENDING to CONFIRMED.
+    """
     booking = get_object_or_404(Booking.all_objects, pk=pk)
     if request.user != booking.listing.user:
         raise PermissionDenied({'detail': 'You are not the owner of this property!'})
@@ -38,6 +44,12 @@ def booking_approve(request, pk, *args, **kwargs):
 @api_view(['POST'])
 @permission_classes([IsLandLord])
 def booking_reject(request, pk, *args, **kwargs):
+    """
+    Reject a pending booking request.
+
+    Accessible only by the Landlord who owns the listing.
+    Transitions the booking status from PENDING to REJECTED. No funds are charged.
+    """
     booking = get_object_or_404(Booking.all_objects, pk=pk)
     if request.user != booking.listing.user:
         raise PermissionDenied({'detail': 'You are not the owner of this property!'})
@@ -55,6 +67,13 @@ def booking_reject(request, pk, *args, **kwargs):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def booking_cancel(request, pk, *args, **kwargs):
+    """
+    Cancel an existing booking reservation.
+
+    Accessible by both the Landlord and the Tenant who created the booking.
+    Allows cancellation for bookings in PENDING or CONFIRMED status.
+    Enforces a strict 2-day minimum notice policy via model validation if the booking was already confirmed.
+    """
     booking = get_object_or_404(Booking.all_objects, pk=pk)
     if request.user != booking.listing.user and request.user != booking.user:
         raise PermissionDenied({'detail': 'You do not have permission to cancel this booking!'})
@@ -73,6 +92,13 @@ def booking_cancel(request, pk, *args, **kwargs):
 @api_view(['POST'])
 @permission_classes([IsLandLord])
 def booking_check_in(request, pk, *args, **kwargs):
+    """
+    Register the check-in event for the tenant.
+
+    Accessible only by the Landlord who owns the listing.
+    Transitions the booking status from CONFIRMED to CHECKED_IN.
+    Prevents check-in actions before the officially scheduled arrival date.
+    """
     booking = get_object_or_404(Booking.all_objects, pk=pk)
     if request.user != booking.listing.user:
         raise PermissionDenied({'detail': 'You are not the owner of this property!'})
@@ -97,6 +123,16 @@ def booking_check_in(request, pk, *args, **kwargs):
     destroy=extend_schema(summary='Delete specific booking', description='Deletion of one specific booking')
 )
 class BookingViewSet(viewsets.ModelViewSet):
+    """
+    A unified ViewSet for managing booking records.
+
+    Provides CRUD operations for reservations with dynamic serialization and query filtering.
+    Automatically recalculates expired active bookings into COMPLETED status upon listing fetch.
+
+    Permissions:
+        - List/Retrieve/Create: Authenticated users (Tenants see their own, Landlords see their listings).
+        - Update/Destroy: Restrictive administrative access only (IsAdminUser).
+    """
 
     queryset = Booking.all_objects.select_related('user', 'listing').all()
     serializer_class = BookingSerializer

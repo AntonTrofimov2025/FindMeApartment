@@ -15,24 +15,48 @@ from rest_framework_simplejwt.serializers import TokenBlacklistSerializer
 
 @extend_schema(summary='Register new user', description='New user registration')
 class UserCreateGenericView(CreateAPIView):
+    """
+    Endpoint for public tenant registration.
+
+    Accepts registration details, performs password validation constraints,
+    and checks if the email is already taken against both active and soft-deleted accounts.
+    Automatically assigns the new user to the default 'Tenant' group upon creation.
+    """
 
     queryset = get_user_model().all_objects.all()
     serializer_class = RegisterUserSerializer
     permission_classes = [AllowAny]
 
 class UserMeView(APIView):
+    """
+    A unified profile management controller for the currently authenticated user.
+
+    Provides direct access to personal data, profile updating flows, and safe account closure.
+    """
 
     permission_classes = [IsAuthenticated]
 
     @extend_schema(summary="Get current user's profile.", responses={'200': UserListSerializer},
                    tags=["User Profile"])
     def get(self, request, *args, **kwargs):
+        """
+        Retrieve personal profile summary.
+
+        Returns full details of the authenticated user instance, including relation metadata,
+        phone state, and system timestamps.
+        """
         serializer = UserListSerializer(request.user, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(summary="Fully updates current user's profile (such as avatar, phone number, etc.)", request=RegisterUserSerializer,
                    responses={'200': UserListSerializer}, tags=["User Profile"])
     def put(self, request, *args, partial=False, **kwargs):
+        """
+        Perform a full or partial data synchronization for the user's profile.
+
+        Handles phone formatting syntax checks, unique email validation, excludes
+        and accepts profile updates without password re-entry on partial fields payload.
+        """
         serializer = RegisterUserSerializer(request.user, data=request.data, partial=partial, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -51,6 +75,13 @@ class UserMeView(APIView):
         tags=["User Profile"]
     )
     def delete(self, request, *args, **kwargs):
+        """
+        Trigger soft-deletion flow for the authenticated user's account.
+
+        Deactivates profile visibility flag (`is_active=False`) and logs the deletion
+        timestamp (`deleted_at`), completely blocking future authentication attempts
+        under these credentials without hard-deleting the underlying transactional data logs.
+        """
         request.user.delete()
         return Response(
             {'msg': "Your account has been successfully deleted. We'd like to kindly thank you for being with us! :)"},
@@ -58,6 +89,9 @@ class UserMeView(APIView):
         )
 
 class UserBecomeLandlordView(APIView):
+    """
+    Controller to handle privilege elevation requests for Tenants.
+    """
 
     permission_classes = [IsAuthenticated]
 
@@ -68,6 +102,13 @@ class UserBecomeLandlordView(APIView):
         tags=["User Profile"]
     )
     def post(self, request, *args, **kwargs):
+        """
+        Upgrade the user's role from Tenant to Landlord.
+
+        Removes the user from the system 'Tenant' group and re-assigns them to the 'Landlord' group.
+        Instantly generates and issues a fresh set of JWT Access and Refresh tokens with updated claims
+        to avoid forced application re-login cycles on the frontend UI layer.
+        """
         user = request.user
 
         if user.groups.filter(name='Landlord').exists():
@@ -98,6 +139,12 @@ class UserBecomeLandlordView(APIView):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout(request, *args, **kwargs):
+    """
+    Revoke user session and invalidate authentication tokens.
+
+    Accepts a valid JWT Refresh token, performs validation parsing, and pushes it
+    into the Django security token blacklist database registry to complete the session termination flow.
+    """
     refresh_token = request.data.get('refresh')
     if not refresh_token:
         return Response({'detail': 'Refresh token is required.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -110,6 +157,13 @@ def logout(request, *args, **kwargs):
 
 
 class UserReadOnlyViewSet(ReadOnlyModelViewSet):
+    """
+    Administrative directory ViewSet for monitoring user profiles.
+
+    Provides high-privilege read-only list and detail lookups.
+    Leverages the `all_objects` model manager to keep soft-deleted user records
+    visible for compliance audits, analytical cross-matching, and historical tracking.
+    """
 
     queryset = get_user_model().all_objects.all()
     serializer_class = UserListSerializer

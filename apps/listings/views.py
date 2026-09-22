@@ -24,6 +24,17 @@ from django.db.models import Q
     destroy=extend_schema(summary='Delete specific listing', description='Deletion of one specific listing')
 )
 class ListingViewSet(viewsets.ModelViewSet):
+    """
+    A comprehensive ViewSet for managing real estate properties.
+
+    Handles full CRUD lifecycle operations for property listings with dynamic serialization
+    and advanced query filtering. Integrates multi-role visibility boundaries:
+
+    Queryset Scopes:
+        - Administrators: Gain unconditional access to all listings (active, inactive, and soft-deleted).
+        - Landlords: Authorized to see their own properties in any state, plus other hosts' active ones.
+        - Tenants / Guests: Restricted exclusively to active, non-deleted properties in the catalog.
+    """
 
     queryset = Listing.all_objects.select_related('user').all()
     serializer_class = ListingSerializer
@@ -59,6 +70,16 @@ class ListingViewSet(viewsets.ModelViewSet):
     )
     @action(detail=True, methods=['post'], url_name='toggle_is_active', url_path='toggle')
     def toggle_is_active(self, request, *args, **kwargs):
+        """
+        Toggle the activation flag (`is_active`) of a property listing.
+
+        Enables hosts to instantly hide their listings from the public search catalog
+        or make them visible again. Aborts execution with a 400 Bad Request if the
+        target property has already been soft-deleted.
+
+        Permissions:
+            - Restriced to the property owner or system Administrators.
+        """
         listing = self.get_object()
 
         if listing.is_deleted:
@@ -83,6 +104,17 @@ class ListingViewSet(viewsets.ModelViewSet):
     destroy=extend_schema(summary='Delete specific photo', description='Deletion of one specific photo')
 )
 class PhotoViewSet(viewsets.ModelViewSet):
+    """
+    A ViewSet for uploading and managing property media content.
+
+    Supports multipart file processing to upload property images into isolated directories.
+    Enforces strict file extension whitelist checks and a 2 MB maximum file size constraint.
+
+    Permissions:
+        - Read: Anyone (SAFE_METHODS).
+        - Create / Destroy: Bound tightly to the Landlord who owns the underlying property asset.
+        - Update: Locked globally to global Administrators only to protect metadata history integrity.
+    """
 
     queryset = Photo.all_objects.select_related('listing').all()
     serializer_class = PhotoSerializer

@@ -32,7 +32,11 @@ echo "Настраиваем стили для NGINX..."
 sleep 5
 docker compose exec -T web python manage.py collectstatic --noinput
 
-echo "Выдаем полные права пользования на MySQL пользователю ${DB_USER}"
+echo "Создаем группы Tenant и Landlord с соответствующими правами..."
+sleep 5
+docker compose exec -T web python manage.py create_groups
+
+echo "Выдаем полные права пользования на MySQL пользователю ${DB_USER}..."
 sleep 5
 docker compose exec db mysql -u root -p"${DB_ROOT_PASSWORD}" -e "GRANT ALL PRIVILEGES ON \
 test_${DB_NAME}.* TO '${DB_USER}'@'%'; FLUSH PRIVILEGES;"

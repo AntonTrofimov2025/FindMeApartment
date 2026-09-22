@@ -8,6 +8,19 @@ from .permissions import IsReviewAuthorOrAdmin
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for publishing, reading, and managing property reviews.
+
+    Provides public access to view ratings and feedback while enforcing strict business
+    logic boundaries for data modifications. Leverages optimized SQL joins via select_related
+    to eliminate the N+1 query problem across Booking, User, and Listing relations.
+
+    Access Restrictions:
+        - List / Retrieve: Publicly accessible to all users and anonymous guests.
+        - Create: Limited to authenticated Tenants who have a fully completed booking history.
+        - Update / Destroy: Guarded by custom object-level permissions. Restricted strictly
+          to the original review author (Tenant) or system Administrators.
+    """
 
     queryset = Review.all_objects.select_related('booking', 'booking__user', 'booking__listing').all()
     serializer_class = ReviewSerializer
