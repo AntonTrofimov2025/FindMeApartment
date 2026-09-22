@@ -1,9 +1,8 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from apps.listings.models import Listing, Photo
 from .serializers import ListingSerializer, ListingCreateUpdateSerializer
 from .serializers import PhotoSerializer
 from rest_framework.decorators import action
-from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from django_filters.rest_framework import DjangoFilterBackend
@@ -139,6 +138,11 @@ class PhotoViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if user.is_authenticated and (user.is_staff or user.is_superuser):
             return self.queryset
+
+        if user.is_authenticated and user.groups.filter(name='Landlord').exists():
+            return Photo.all_objects.select_related('listing').filter(
+                Q(listing__user=user) | Q(listing__deleted_at__isnull=True, listing__is_active=True))
+
         return Photo.objects.select_related('listing').filter(listing__is_active=True)
 
     def perform_create(self, serializer):

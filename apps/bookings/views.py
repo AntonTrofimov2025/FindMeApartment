@@ -134,7 +134,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         - Update/Destroy: Restrictive administrative access only (IsAdminUser).
     """
 
-    queryset = Booking.all_objects.select_related('user', 'listing').all()
+    queryset = Booking.all_objects.select_related('user').all()
     serializer_class = BookingSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
@@ -173,7 +173,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                                ).update(booking_status=StatusChoices.COMPLETED)
 
         if user.is_staff or user.is_superuser:
-            return Booking.objects.select_related('user', 'listing').all()
+            return Booking.all_objects.select_related('user', 'listing').all()
 
         if user.groups.filter(name='Landlord').exists():
             return Booking.objects.select_related('user', 'listing').filter(listing__user=user)
