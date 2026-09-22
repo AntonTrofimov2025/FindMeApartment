@@ -4,6 +4,12 @@ from apps.core.models import StatusChoices
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+    """
+    Public data serialization layout for feedback records.
+
+    Transforms qualitative user review texts, property metrics, and location stars
+    into standard consumer-facing JSON arrays.
+    """
     is_deleted = serializers.ReadOnlyField()
 
     class Meta:
@@ -13,6 +19,17 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class ReviewCreateUpdateSerializer(serializers.ModelSerializer):
+    """
+    Strict contractual validation serializer for leaving and updating reviews.
+
+    Guards evaluation fields to prevent rating injection and feedback forgery.
+
+    Validation Rules:
+        - Strict Integrity: Validates that the active client matches the unique Tenant
+          bound to the underlying completed booking transaction.
+        - One-to-One Limit: Restricts operations to a single unique review entry per booking.
+          Throws an validation block if an associated review instance already exists.
+    """
 
     class Meta:
         model = Review
@@ -30,19 +47,6 @@ class ReviewCreateUpdateSerializer(serializers.ModelSerializer):
             if hasattr(booking, 'review'):
                 if not self.instance or booking.review.pk != self.instance.pk:
                     raise serializers.ValidationError('You can leave only one review for the booking!')
-
-        # if self.instance:
-        #     instance = copy.deepcopy(self.instance)
-        #     for field, value in attrs.items():
-        #         setattr(instance, field, value)
-        # else:
-        #     instance = Review(**attrs)
-        #
-        # try:
-        #     instance.clean()
-        # except ValidationError as e:
-        #     e = e.message_dict if hasattr(e, 'message_dict') else e.messages
-        #     raise serializers.ValidationError(e)
 
         return attrs
 

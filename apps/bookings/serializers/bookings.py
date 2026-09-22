@@ -5,6 +5,14 @@ from django.utils.translation import gettext_lazy as _
 
 
 class BookingSerializer(serializers.ModelSerializer):
+    """
+    Output data representation serializer for established booking records.
+
+    Used to safely serialize detailed reservation payloads. Fully exposes
+    pre-calculated total price metrics and immutable deep JSON metadata structures
+    extracted from `snapshot_data`.
+    """
+
     is_deleted = serializers.ReadOnlyField()
 
     class Meta:
@@ -16,6 +24,16 @@ class BookingSerializer(serializers.ModelSerializer):
 
 
 class BookingCreateUpdateSerializer(serializers.ModelSerializer):
+    """
+    Input validation serializer for booking creation and tenancy modifications.
+
+    Defines the exact transactional fields accepted from clients during reservations.
+    Keeps status fields and pricing metadata locked as `read_only` to prevent payload forgery.
+
+    Validation Rules:
+        - Restricts operational updates strictly to instances currently holding a 'PENDING' status.
+          Throws a 400 validation block if users try to modify confirmed or archived trips.
+    """
 
     class Meta:
         model = Booking

@@ -17,6 +17,21 @@ from simple_history.models import HistoricalRecords
 
 
 class Booking(UniqueID, TimeStampedModel):
+    """
+    Database model representing a property reservation transaction.
+
+    Maintains the full lifecycle of a rental agreement between a Tenant and a Landlord.
+    Calculates final pricing dynamically based on listing discounts and stay duration.
+    Captures an immutable, frozen data snapshot (`snapshot_data`) upon creation or date modification
+    to preserve historical financial and legal logs against subsequent profile updates.
+
+    Business Rules Enforced:
+        - Strict chronologically valid date ranges (check-out must succeed check-in).
+        - Double-booking prevention via non-overlapping reservation checking filters.
+        - Advanced limits: Maximum 30-night stays, no bookings more than 1 year in advance.
+        - Operational safeguards: Prevent check-in before the target arrival date,
+          and restrict standard cancellations to a minimum of 2 days prior to check-in.
+    """
     listing = models.ForeignKey(Listing, on_delete=models.PROTECT, related_name='bookings', verbose_name=_('Listing'))
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='bookings',
                                 verbose_name=_('User'))

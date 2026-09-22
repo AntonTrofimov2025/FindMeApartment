@@ -3,6 +3,12 @@ from apps.listings.models import Photo
 
 
 class PhotoSerializer(serializers.ModelSerializer):
+    """
+    Multipart parsing asset validation serializer for property media attachments.
+
+    Maps structural binary file payloads to designated asset foreign key relations.
+    Protects administrative historical records by locking modification dates as read-only.
+    """
     is_deleted = serializers.ReadOnlyField()
 
     class Meta:

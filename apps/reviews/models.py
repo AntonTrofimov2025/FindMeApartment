@@ -12,7 +12,16 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
 
 class Review(UniqueID, TimeStampedModel):
+    """
+    Database model representing tenant feedback and structural ratings.
 
+    Maintains a strict One-to-One structural mapping with a single completed Booking instance.
+    Stores qualitative text entries alongside standardized numeric evaluation scales.
+
+    Business Rules Enforced:
+        - Prevents reviews from being published until the target booking status is officially 'COMPLETED'.
+        - Relies on database check constraints to enforce property and location metrics between 1 and 5 stars.
+    """
     booking = models.OneToOneField(Booking, related_name='review', on_delete=models.PROTECT,
                                 help_text='Associated Booking', verbose_name=_('Booking'))
 

@@ -6,7 +6,6 @@ from .managers.users import UserSoftDeleteManager, AllUserSoftDeleteManager
 from django.utils.translation import gettext_lazy as _
 from apps.users.validators import validate_birth_date
 import os
-from django.db.models import Q
 from apps.core.utils import validate_extension, validate_file_size
 
 
@@ -17,7 +16,17 @@ def get_avatar_upload_path(instance, filename):
 
 
 class User(AbstractBaseUser, PermissionsMixin, UniqueID):
+    """
+    Custom user identity model replacing standard Django authentication credentials.
 
+    Uses a unique email address field as the primary authorization token instead of a username.
+    Integrates soft-deletion mechanics that deactivate target profiles (`is_active=False`)
+    while preserving underlying system audit logs and historical relational keys intact.
+
+    Fields & Validations:
+        - birth_date: Validates tenant age constraints (restricting registrations to users between 18 and 120 years old).
+        - phone: Optional, format-validated E.164 database string field that defaults to None on clean empty payloads.
+    """
     username = models.CharField(blank=True, max_length=50, help_text=_("Specified Username"), verbose_name=_('Username'))
     email = models.EmailField(unique=True, max_length=255, help_text=_("Your email"), verbose_name=_('Email'))
     first_name = models.CharField(max_length=50, blank=True, verbose_name=_('First name'))
@@ -68,11 +77,6 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
         return f"User: {self.username} {self.email}"
 
     class Meta:
-        # constraints = [models.UniqueConstraint(
-        #                 fields=['phone'],
-        #                 condition=~Q(phone=''),
-        #                 name='unique_user_phone',
-        #                 violation_error_message=_('A user with this phone number already exists!'))]
         indexes = [
             models.Index(fields=['email'], name='fma_user_email_idx'),
             models.Index(fields=['last_name', 'first_name'], name='fma_user_fullname_idx'),

@@ -3,6 +3,12 @@ from apps.listings.models import Listing
 
 
 class ListingSerializer(serializers.ModelSerializer):
+    """
+    Consumer facing data representation serializer for property details.
+
+    Exposes comprehensive read-only property fields including computed aggregates
+    such as `overall_rating` and the quantized Decimal `final_price_per_night`.
+    """
     overall_rating = serializers.ReadOnlyField()
     is_deleted = serializers.ReadOnlyField()
 
@@ -15,6 +21,12 @@ class ListingSerializer(serializers.ModelSerializer):
 
 
 class ListingCreateUpdateSerializer(serializers.ModelSerializer):
+    """
+    Operational schema serializer for publishing or editing property assets.
+
+    Locks critical system ownership fields as `read_only` to guarantee that
+    the active authenticated user is automatically bound as the property host.
+    """
     overall_rating = serializers.ReadOnlyField()
 
     class Meta:
@@ -23,20 +35,4 @@ class ListingCreateUpdateSerializer(serializers.ModelSerializer):
                   'property_type', 'discount', 'overall_rating',
                   'apartment_number', 'max_guests', 'price_per_night', 'rooms', 'is_active', 'deleted_at']
         read_only_fields = ['id', 'user', 'is_active', 'deleted_at']
-
-    # def validate(self, attrs):
-    #     if self.instance:
-    #         instance = copy.deepcopy(self.instance)
-    #         for field, value in attrs.items():
-    #             setattr(instance, field, value)
-    #     else:
-    #         instance = Listing(**attrs)
-    #
-    #     try:
-    #         instance.clean()
-    #     except ValidationError as e:
-    #         e = e.message_dict if hasattr(e, 'message_dict') else e.messages
-    #         raise serializers.ValidationError(e)
-    #
-    #     return attrs
 

@@ -33,7 +33,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool('DEBUG')
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
 
 
 # Application definition
@@ -232,23 +232,6 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-# SQLITE_DB = {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-#
-# MYSQL_DB = {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'mydatabase',
-#         'USER': 'mydatabaseuser',
-#         'PASSWORD': env('MYSQL_PASSWORD'),
-#         'HOST': 'localhost',
-#         'PORT': 3306,
-#     }
-#
-# DATABASES = {
-#     'default': MYSQL_DB if env.bool('MY_SQL', default=False) else SQLITE_DB
-# }
 DATABASES = {
     'default': env.db('DB_URL', default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
 }

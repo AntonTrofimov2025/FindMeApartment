@@ -8,6 +8,13 @@ from django.core.exceptions import ValidationError
 
 
 class UserListSerializer(serializers.ModelSerializer):
+    """
+    Read-only serializer for full user profile summaries.
+
+    Exposes all non-sensitive user metadata, including relation counters for
+    associated listings and bookings. Used for rendering accounts in directories
+    and the personal profile dashboard.
+    """
     is_deleted = serializers.ReadOnlyField()
 
     class Meta:
@@ -17,6 +24,19 @@ class UserListSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'updated_at', 'deleted_at', 'date_joined', 'bookings', 'listings', 'last_login']
 
 class RegisterUserSerializer(serializers.ModelSerializer):
+    """
+    Write/Update serializer for user registration and profile modifications.
+
+    Manages account creation fields and partial profile updates (`PATCH`).
+    Enforces password complexity match controls on initial registration.
+
+    Validation Rules:
+        - phone: Enforces strict E.164 syntax checks (`+` symbol followed by 10-75 digits).
+          Normalizes empty strings or white spaces directly to `None` in the database.
+        - email: Implements custom global unique constraints, checking inputs against
+          both active and soft-deleted records to prevent email duplication.
+        - password: Pipes raw text inputs directly into Django's core AUTH_PASSWORD_VALIDATORS.
+    """
     password = serializers.CharField(min_length=8, max_length=128, write_only=True)
     re_password = serializers.CharField(min_length=8, max_length=128, write_only=True)
 

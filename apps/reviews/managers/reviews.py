@@ -3,11 +3,17 @@ from django.utils import timezone
 
 
 class ReviewsSoftDeleteQuerySet(models.QuerySet):
+    """
+    Custom QuerySet providing soft-deletion support for arrays of reviews.
+    """
     def delete(self):
         return self.update(deleted_at=timezone.now())
 
 
 class ReviewsSoftDeleteManager(models.Manager):
+    """
+    Default manager ensuring soft-deleted feedback logs are omitted from consumer-facing indices.
+    """
     def get_queryset(self):
         return ReviewsSoftDeleteQuerySet(self.model, using=self._db).filter(deleted_at__isnull=True)
 

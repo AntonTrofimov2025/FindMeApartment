@@ -4,6 +4,13 @@ from apps.core.models import Countries, RoomCount, MaxGuests
 
 
 class ListingFilter(filters.FilterSet):
+    """
+    Advanced multi-attribute catalog search criteria mapper.
+
+    Binds frontend query parameters (e.g., price ranges, localized text metrics,
+    and strict choice enumerations) to matching transactional properties
+    in the database to facilitate precise catalog filtering.
+    """
     min_price = filters.NumberFilter(field_name='price_per_night', lookup_expr='gte')
     max_price = filters.NumberFilter(field_name='price_per_night', lookup_expr='lte')
     min_rooms = filters.NumberFilter(field_name='rooms', lookup_expr='gte')

@@ -5,13 +5,18 @@ from django.utils.translation import gettext_lazy as _
 
 
 class UserSoftDeleteQuerySet(models.QuerySet):
+    """
+    Custom QuerySet supplying soft-delete and state deactivation updates for user profiles.
+    """
     def delete(self):
         return self.update(deleted_at=timezone.now(), is_active=False)
 
 
 class UserSoftDeleteManager(UserManager):
+    """
+    Primary user manager filtering active entries and handling default user/superuser account generation.
+    """
     def get_queryset(self):
-        # return super().get_queryset().filter(deleted_at__isnull=True)
         return UserSoftDeleteQuerySet(self.model, using=self._db).filter(deleted_at__isnull=True)
 
     def create_user(self, email, password=None, **extra_fields):
@@ -36,6 +41,9 @@ class UserSoftDeleteManager(UserManager):
         return self.create_user(email, password, **extra_fields)
 
 class AllUserSoftDeleteManager(UserManager):
+    """
+    Administrative lookup manager providing complete, unfiltered access to all users (active and soft-deleted).
+    """
     def get_queryset(self):
         return UserSoftDeleteQuerySet(self.model, using=self._db)
 

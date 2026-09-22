@@ -18,7 +18,21 @@ from apps.core.utils import validate_extension, validate_file_size
 
 
 class Listing(UniqueID, TimeStampedModel):
+    """
+    Database model representing a real estate rental asset hosted on the platform.
 
+    Contains structural specification fields (property type, room count, capacities), location references,
+    and base pricing metadata. Computes financial metrics dynamically using quantized Decimal scaling.
+
+    Properties:
+        - final_price_per_night: Returns base price multiplied by discount factor, quantized to two decimal points.
+        - overall_rating: Aggregates and returns a rounded floating-point mean of all submitted reviews.
+
+    Constraints & Validations:
+        - Apartment numbers are explicitly required for multi-unit types (Apartments/Rooms)
+          and strictly forbidden for standalone structures (Houses/Studios).
+        - Unique structural constraints prevent a single landlord from duplicating identical physical addresses.
+    """
     title = models.CharField(max_length=100, validators=[MinLengthValidator(3)],
                              verbose_name=_("Listing's Title"))
     description = models.TextField(verbose_name=_("Listing's description"))
@@ -126,6 +140,12 @@ def get_upload_path(instance, filename):
     return os.path.join('listings', str(listing_id), filename)
 
 class Photo(UniqueID, TimeStampedModel):
+    """
+    Database model representing a media asset associated with a property listing.
+
+    Handles binary file path registration inside structured container media storage volumes.
+    Enforces atomic ordering within a single property directory via sequential numbering constraints.
+    """
     listing = models.ForeignKey(Listing, on_delete=models.PROTECT, related_name='photos', verbose_name=_('Listing'))
     photo = models.ImageField(upload_to=get_upload_path, verbose_name=_('Photo'),
     validators=[validate_extension, validate_file_size])

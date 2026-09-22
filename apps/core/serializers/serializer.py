@@ -3,6 +3,13 @@ from django.utils import timezone
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    Custom JWT validation serializer extending SimpleJWT credentials verification.
+
+    Interatively intercepts successful login events to update and save the user's
+    `last_login` timestamp flag directly inside the database transaction layer.
+    """
+
     def validate(self, attrs):
 
         data = super().validate(attrs)
