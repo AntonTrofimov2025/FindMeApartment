@@ -176,7 +176,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             return Booking.all_objects.select_related('user', 'listing').all()
 
         if user.groups.filter(name='Landlord').exists():
-            return Booking.objects.select_related('user', 'listing').filter(listing__user=user)
+            return Booking.all_objects.select_related('user', 'listing').filter(listing__user=user)
 
         return Booking.objects.select_related('user', 'listing').filter(user=user)
 
