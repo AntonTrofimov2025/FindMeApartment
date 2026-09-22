@@ -33,7 +33,8 @@ class ReviewViewSet(viewsets.ModelViewSet):
     filterset_fields = {
         'property_rating': ['exact', 'gte', 'lte'],
         'location_rating': ['exact', 'gte', 'lte'],
-        'booking__listing': ['exact']
+        'booking__listing': ['exact'],
+        'booking': ['exact']
     }
     ordering_fields = [
         'property_rating', 'location_rating', 'created_at'

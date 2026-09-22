@@ -36,7 +36,7 @@ class ListingViewSet(viewsets.ModelViewSet):
         - Tenants / Guests: Restricted exclusively to active, non-deleted properties in the catalog.
     """
 
-    queryset = Listing.all_objects.select_related('user').all()
+    queryset = Listing.all_objects.select_related('user').prefetch_related('photos').all()
     serializer_class = ListingSerializer
     permission_classes = [IsLandLordOrReadOnly]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
@@ -58,10 +58,11 @@ class ListingViewSet(viewsets.ModelViewSet):
         if user.is_authenticated and (user.is_staff or user.is_superuser):
             return self.queryset
         if user.is_authenticated and user.groups.filter(name='Landlord').exists():
-            return Listing.all_objects.select_related('user').filter(
+            return Listing.all_objects.select_related('user').prefetch_related('photos').filter(
                 Q(user=user) | Q(deleted_at__isnull=True, is_active=True))
 
-        return Listing.all_objects.select_related('user').filter(deleted_at__isnull=True, is_active=True)
+        return Listing.all_objects.select_related('user').prefetch_related(
+            'photos').filter(deleted_at__isnull=True, is_active=True)
 
     @extend_schema(
         summary="Use to toggle the listing active status by providing its id",

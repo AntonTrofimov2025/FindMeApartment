@@ -111,8 +111,8 @@ REST_FRAMEWORK = {
         'apps.core.throttling.AnonBurstRateThrottle'
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '200/day',
-        'anon_burst': '5/minute',
+        'anon': '1000/day',
+        'anon_burst': '200/minute',
         'user': '5000/day'
     }
 }
@@ -153,7 +153,7 @@ SPECTACULAR_SETTINGS = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60), # SET LATER TO minutes=1
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,

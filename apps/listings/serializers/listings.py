@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from apps.listings.models import Listing
+from .photos import PhotoSerializer
 
 
 class ListingSerializer(serializers.ModelSerializer):
@@ -11,11 +12,12 @@ class ListingSerializer(serializers.ModelSerializer):
     """
     overall_rating = serializers.ReadOnlyField()
     is_deleted = serializers.ReadOnlyField()
+    photos = PhotoSerializer(many=True, read_only=True)
 
     class Meta:
         model = Listing
         fields = ['id', 'title', 'user', 'description', 'country', 'district', 'city', 'street', 'house_number',
-                  'property_type', 'discount', 'overall_rating', 'apartment_number', 'max_guests',
+                  'property_type', 'discount', 'overall_rating', 'apartment_number', 'max_guests', 'photos',
                   'price_per_night', 'final_price_per_night', 'rooms', 'is_active', 'is_deleted', 'deleted_at']
         read_only_fields = ['id', 'user', 'overall_rating', 'is_active', 'deleted_at', 'final_price_per_night']
 
