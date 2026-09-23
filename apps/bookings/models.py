@@ -66,10 +66,7 @@ class Booking(UniqueID, TimeStampedModel):
 
     def clean(self):
         super().clean()
-        try:
-            if not self.listing or not self.user_id:
-                return
-        except ObjectDoesNotExist:
+        if not self.listing_id or not self.user_id:
             return
         if self.date_to and self.date_from and self.date_to <= self.date_from:
             raise ValidationError(_('Booking start date can not be greater than end date!'))
@@ -102,10 +99,7 @@ class Booking(UniqueID, TimeStampedModel):
 
 
     def save(self, *args, **kwargs):
-        try:
-            if not self.listing or not self.user_id:
-                return
-        except ObjectDoesNotExist:
+        if not self.listing or not self.user_id:
             return
         with transaction.atomic():
             selected_listing = Listing.all_objects.select_for_update().get(pk=self.listing_id)
