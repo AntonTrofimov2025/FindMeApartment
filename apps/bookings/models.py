@@ -1,5 +1,5 @@
 from django.db import models, transaction
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ValidationError
 from apps.core.models import UniqueID, TimeStampedModel
 from apps.listings.models import Listing
 from django.utils import timezone

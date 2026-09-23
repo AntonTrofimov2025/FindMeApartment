@@ -40,7 +40,7 @@ class Review(UniqueID, TimeStampedModel):
     def clean(self):
         super().clean()
         try:
-            if not self.booking:
+            if not self.booking_id:
                 return
         except ObjectDoesNotExist:
             return
@@ -49,7 +49,7 @@ class Review(UniqueID, TimeStampedModel):
 
     def save(self, *args, **kwargs):
         try:
-            if not self.booking:
+            if not self.booking_id:
                 return
         except ObjectDoesNotExist:
             return
