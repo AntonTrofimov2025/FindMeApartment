@@ -15,11 +15,13 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
+from django.db import transaction
 from .permissions.is_landlord import IsLandLord
 
 @extend_schema(summary='Approve booking', description='Approval of booking provided its status is PENDING')
 @api_view(['POST'])
 @permission_classes([IsLandLord])
+@transaction.atomic
 def booking_approve(request, pk, *args, **kwargs):
     """
     Approve a pending booking request.
@@ -43,6 +45,7 @@ def booking_approve(request, pk, *args, **kwargs):
 @extend_schema(summary='Reject booking', description='Rejection of booking, provided its status is PENDING')
 @api_view(['POST'])
 @permission_classes([IsLandLord])
+@transaction.atomic
 def booking_reject(request, pk, *args, **kwargs):
     """
     Reject a pending booking request.
@@ -66,6 +69,7 @@ def booking_reject(request, pk, *args, **kwargs):
 @extend_schema(summary='Cancel booking', description='Cancellation of booking provided its status is CONFIRMED')
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+@transaction.atomic
 def booking_cancel(request, pk, *args, **kwargs):
     """
     Cancel an existing booking reservation.
@@ -91,6 +95,7 @@ def booking_cancel(request, pk, *args, **kwargs):
                description='Change status of booking to CHECKED IN provided its status is CONFIRMED')
 @api_view(['POST'])
 @permission_classes([IsLandLord])
+@transaction.atomic
 def booking_check_in(request, pk, *args, **kwargs):
     """
     Register the check-in event for the tenant.

@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from apps.core.models import UniqueID, TimeStampedModel
 from apps.listings.models import Listing
@@ -74,7 +74,8 @@ class Booking(UniqueID, TimeStampedModel):
         if self.date_to and self.date_from and self.date_to <= self.date_from:
             raise ValidationError(_('Booking start date can not be greater than end date!'))
         if (Booking.objects.filter(listing_id=self.listing_id,
-                                   booking_status__in=[StatusChoices.PENDING, StatusChoices.CONFIRMED],
+                                   booking_status__in=[StatusChoices.PENDING, StatusChoices.CONFIRMED,
+                                                       StatusChoices.CHECKED_IN, StatusChoices.COMPLETED],
                                   date_from__lt=self.date_to, date_to__gt=self.date_from).
                 exclude(id__in=[self.pk] if self.pk else []).exists()):
             raise ValidationError(_("Unfortunately the selected dates are already booked."))
@@ -106,56 +107,58 @@ class Booking(UniqueID, TimeStampedModel):
                 return
         except ObjectDoesNotExist:
             return
+        with transaction.atomic():
+            selected_listing = Listing.all_objects.select_for_update().get(pk=self.listing_id)
 
-        dates_changed = False
-        if self.pk:
-            old_dates = Booking.all_objects.filter(pk=self.pk).values('date_from', 'date_to').first()
-            if old_dates and (old_dates['date_from'] != self.date_from or old_dates['date_to'] != self.date_to):
-                dates_changed = True
+            dates_changed = False
+            if self.pk:
+                old_dates = Booking.all_objects.filter(pk=self.pk).values('date_from', 'date_to').first()
+                if old_dates and (old_dates['date_from'] != self.date_from or old_dates['date_to'] != self.date_to):
+                    dates_changed = True
 
-        if self.date_to and self.date_from and self.listing:
+            if self.date_to and self.date_from and selected_listing:
+                if self._state.adding or dates_changed:
+                    nights = (self.date_to - self.date_from).days
+                    self.total_price = nights * selected_listing.final_price_per_night if nights > 0 else Decimal("0.00")
+
             if self._state.adding or dates_changed:
-                nights = (self.date_to - self.date_from).days
-                self.total_price = nights * self.listing.final_price_per_night if nights > 0 else Decimal("0.00")
+                snapshot_data = {'Tenant': {
+                    'email': self.user.email or "No data",
+                    'phone': self.user.phone or "No data",
+                    'first_name': self.user.first_name or "No data",
+                    'last_name': self.user.last_name or "No data",
+                    'birth_date': str(self.user.birth_date) if self.user.birth_date else "No data",
+                }}
 
-        if self._state.adding or dates_changed:
-            snapshot_data = {'Tenant': {
-                'email': self.user.email or "No data",
-                'phone': self.user.phone or "No data",
-                'first_name': self.user.first_name or "No data",
-                'last_name': self.user.last_name or "No data",
-                'birth_date': str(self.user.birth_date) if self.user.birth_date else "No data",
-            }}
+                if self.listing:
+                    snapshot_data['property_data'] = {
+                        'title': selected_listing.title or "No data",
+                        'country': selected_listing.get_country_display() or "No data",
+                        'district': selected_listing.district or "No data",
+                        'city': selected_listing.city or "No data",
+                        'street': selected_listing.street or "No data",
+                        'house_number': selected_listing.house_number or "No data",
+                        'apartment_number': selected_listing.apartment_number or "No data",
+                        'max_guests': selected_listing.get_max_guests_display() or "No data",
+                        'property_type': selected_listing.get_property_type_display() or "No data",
+                        'price_per_night': str(selected_listing.price_per_night) if selected_listing.price_per_night is not None
+                        else "No data",
+                        'discount': str(selected_listing.discount),
+                        'rooms': selected_listing.get_rooms_display() or "No data",
+                    }
+                if self.date_from and self.date_to:
+                    snapshot_data['booking_details'] = {'date_from': str(self.date_from),
+                                                        'date_to': str(self.date_to),
+                                                        'nights': str((self.date_to - self.date_from).days),
+                                                        'guests_number': str(self.guests_number)}
 
-            if self.listing:
-                snapshot_data['property_data'] = {
-                    'title': self.listing.title or "No data",
-                    'country': self.listing.get_country_display() or "No data",
-                    'district': self.listing.district or "No data",
-                    'city': self.listing.city or "No data",
-                    'street': self.listing.street or "No data",
-                    'house_number': self.listing.house_number or "No data",
-                    'apartment_number': self.listing.apartment_number or "No data",
-                    'max_guests': self.listing.get_max_guests_display() or "No data",
-                    'property_type': self.listing.get_property_type_display() or "No data",
-                    'price_per_night': str(self.listing.price_per_night) if self.listing.price_per_night is not None
-                    else "No data",
-                    'discount': str(self.listing.discount),
-                    'rooms': self.listing.get_rooms_display() or "No data",
-                }
-            if self.date_from and self.date_to:
-                snapshot_data['booking_details'] = {'date_from': str(self.date_from),
-                                                    'date_to': str(self.date_to),
-                                                    'nights': str((self.date_to - self.date_from).days),
-                                                    'guests_number': str(self.guests_number)}
+                if self.total_price:
+                    snapshot_data['total_price'] = str(self.total_price)
 
-            if self.total_price:
-                snapshot_data['total_price'] = str(self.total_price)
+                self.snapshot_data = snapshot_data
 
-            self.snapshot_data = snapshot_data
-
-        self.full_clean(exclude=['snapshot_data'])
-        super().save(*args, **kwargs)
+            self.full_clean(exclude=['snapshot_data'])
+            super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Booking's Title: {self.listing.title}"
