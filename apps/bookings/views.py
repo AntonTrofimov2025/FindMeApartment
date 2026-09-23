@@ -16,7 +16,6 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
 from django.db import transaction
-from .permissions.is_landlord import IsLandLord
 
 @extend_schema(summary='Approve booking', description='Approval of booking provided its status is PENDING')
 @api_view(['POST'])
