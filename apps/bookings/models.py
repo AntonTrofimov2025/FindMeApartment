@@ -99,7 +99,7 @@ class Booking(UniqueID, TimeStampedModel):
 
 
     def save(self, *args, **kwargs):
-        if not self.listing or not self.user_id:
+        if not self.listing_id or not self.user_id:
             return
         with transaction.atomic():
             selected_listing = Listing.all_objects.select_for_update().get(pk=self.listing_id)
@@ -124,7 +124,7 @@ class Booking(UniqueID, TimeStampedModel):
                     'birth_date': str(self.user.birth_date) if self.user.birth_date else "No data",
                 }}
 
-                if self.listing:
+                if selected_listing:
                     snapshot_data['property_data'] = {
                         'title': selected_listing.title or "No data",
                         'country': selected_listing.get_country_display() or "No data",
