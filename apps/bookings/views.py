@@ -197,10 +197,12 @@ class BookingViewSet(viewsets.ModelViewSet):
 
         stats = landlord_bookings.aggregate(
             total_earnings=Sum('total_price',
-                               filter=Q(booking_status__in=[StatusChoices.CONFIRMED, StatusChoices.COMPLETED])),
+                               filter=Q(booking_status__in=[StatusChoices.CONFIRMED, StatusChoices.COMPLETED,
+                                                            StatusChoices.CHECKED_IN])),
             total_bookings_count=Count('id'),
             pending_count=Count('id', filter=Q(booking_status=StatusChoices.PENDING)),
             confirmed_count=Count('id', filter=Q(booking_status=StatusChoices.CONFIRMED)),
+            checked_in_count=Count('id', filter=Q(booking_status=StatusChoices.CHECKED_IN)),
             completed_count=Count('id', filter=Q(booking_status=StatusChoices.COMPLETED)),
             cancelled_count=Count('id', filter=Q(booking_status=StatusChoices.CANCELLED))
         )
@@ -216,6 +218,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 "total_bookings": stats['total_bookings_count'],
                 "pending": stats['pending_count'],
                 "confirmed": stats['confirmed_count'],
+                "checked_in": stats['checked_in_count'],
                 "completed": stats['completed_count'],
                 "cancelled": stats['cancelled_count']
             },
