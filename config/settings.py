@@ -117,12 +117,9 @@ REST_FRAMEWORK = {
     }
 }
 
-#############################################################################
-# DO NOT FORGET TO UNCOMMENT AFTER DEPLOYMENT!!
 DRF_STANDARDIZED_ERRORS = {"ENABLE_IN_DEBUG_FOR_UNHANDLED_EXCEPTIONS": True,
                            "ENABLE_IN_OPENAPI_SCHEMA": True,
                            "EXCEPTION_HANDLER_CLASS": "apps.core.exceptions.CustomDRFStandardizedErrorsExceptionHandler"}
-#############################################################################
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'FindMeApartment API',
