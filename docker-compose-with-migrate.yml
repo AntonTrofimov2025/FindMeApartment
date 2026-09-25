@@ -3,6 +3,7 @@ services:
   db:
     image: mysql:8
     container_name: fma_db
+    restart: always
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
@@ -38,6 +39,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: fma_web
+    restart: always
     expose:
       - "8000"
     depends_on:
@@ -52,6 +54,7 @@ services:
     volumes:
       - .:/fma
       - ./static:/fma/static
+      - ./media:/fma/media:ro
     healthcheck:
       # Проверяем, отвечает ли веб-сервер на порту 8000 (внутри контейнера)
       test: [ "CMD", "curl", "-f", "http://localhost:8000/ping/" ]
@@ -60,9 +63,21 @@ services:
       retries: 3
       start_period: "15s"
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fma_frontend
+    restart: always
+    expose:
+      - "80"
+    depends_on:
+      - web
+
   nginx:
     image: nginx:latest
     container_name: fma_nginx
+    restart: always
     ports:
       - "80:80"
     volumes:
@@ -71,3 +86,4 @@ services:
       - ./media:/fma/media:ro
     depends_on:
       - web
+      - frontend

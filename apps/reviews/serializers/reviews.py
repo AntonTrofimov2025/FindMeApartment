@@ -37,15 +37,16 @@ class ReviewCreateUpdateSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'deleted_at']
 
     def validate(self, attrs):
-        booking = attrs.get('booking') or (self.instance.booking if self.instance else None)
+        booking = attrs.get('booking') or getattr(self.instance, 'booking', None)
         request = self.context.get('request')
 
         if booking and request:
             if booking.user != request.user:
                 raise serializers.ValidationError('You can leave reviews for your own completed bookings only!')
 
-            if hasattr(booking, 'review'):
-                if not self.instance or booking.review.pk != self.instance.pk:
+            existing_review = Review.all_objects.filter(booking=booking).first()
+            if existing_review:
+                if not self.instance or existing_review.pk != self.instance.pk:
                     raise serializers.ValidationError('You can leave only one review for the booking!')
 
         return attrs

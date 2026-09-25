@@ -11,12 +11,12 @@ WORKDIR /fma
 
 COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
-#RUN mkdir -p logs media
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "config.wsgi:application"]
-#CMD ["sh", "-c", "python manage.py runserver 0.0.0.0:8000"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "config.wsgi:application", "--workers", "2", "--access-logfile", "-", \
+ "--error-logfile", "-", "--max-requests", "1000", "--max-requests-jitter", "50", "--forwarded-allow-ips", \
+ "nginx,fma_nginx"]

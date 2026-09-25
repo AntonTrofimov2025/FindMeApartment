@@ -67,7 +67,7 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        if self.instance is None or 'password' in attrs or 're_password' in attrs:
+        if not self.instance or 'password' in attrs or 're_password' in attrs:
             if not attrs.get('password') or not attrs.get('re_password'):
                 raise serializers.ValidationError({'password': 'Password fields are required for registration!!'})
             if attrs.get('password') != attrs.get('re_password'):
