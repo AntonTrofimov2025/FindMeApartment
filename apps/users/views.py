@@ -2,14 +2,15 @@ from rest_framework.generics import CreateAPIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from .serializers.users import UserListSerializer, RegisterUserSerializer
+from django.db import transaction
+from .serializers.users import UserListSerializer, RegisterUserSerializer, ChangePasswordSerializer
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, APIView
-from rest_framework.generics import GenericAPIView
 from drf_spectacular.utils import extend_schema
 from rest_framework_simplejwt.serializers import TokenBlacklistSerializer
 
@@ -47,6 +48,41 @@ class UserMeView(APIView):
         """
         serializer = UserListSerializer(request.user, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="Securely change current user's password",
+        request=ChangePasswordSerializer,
+        responses={"200": "Password changed successfully."},
+        tags=["User Profile"]
+    )
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        """
+        Secure password mutation endpoint.
+        Verifies historic token context, updates the cryptographic pbkdf2 hash,
+        and blacklists the previous session context if necessary.
+        """
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        user.set_password(serializer.validated_data['new_password'])
+
+        old_refresh = serializer.validated_data['refresh']
+        try:
+            token = RefreshToken(old_refresh)
+            token.blacklist()
+        except TokenError:
+            raise ValidationError({'refresh': 'Provided refresh token is invalid or already expired.'})
+
+        refresh = RefreshToken.for_user(user)
+
+        user.save(update_fields=['password'])
+        return Response({'msg': 'Password has been successfully updated.',
+                             'tokens': {
+                                 'refresh': str(refresh),
+                                 'access': str(refresh.access_token)
+                             }}, status=status.HTTP_200_OK)
 
     @extend_schema(summary="Fully updates current user's profile (such as avatar, phone number, etc.)", request=RegisterUserSerializer,
                    responses={'200': UserListSerializer}, tags=["User Profile"])
@@ -147,13 +183,13 @@ def logout(request, *args, **kwargs):
     """
     refresh_token = request.data.get('refresh')
     if not refresh_token:
-        return Response({'detail': 'Refresh token is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        raise ValidationError({'detail': 'Refresh token is required.'})
     try:
         token = RefreshToken(refresh_token)
         token.blacklist()
         return Response({'msg': 'You have been logged out.'}, status=status.HTTP_200_OK)
     except TokenError:
-        return Response({'detail': 'Token is invalid or expired.'}, status=status.HTTP_400_BAD_REQUEST)
+        raise ValidationError({'detail': 'Token is invalid or expired.'})
 
 
 class UserReadOnlyViewSet(ReadOnlyModelViewSet):
@@ -168,27 +204,5 @@ class UserReadOnlyViewSet(ReadOnlyModelViewSet):
     queryset = get_user_model().all_objects.all()
     serializer_class = UserListSerializer
     permission_classes = [IsAdminUser]
-
-# class LogOutApiView(GenericAPIView):
-#
-#     permission_classes = [IsAuthenticated]
-#     serializer_class = TokenBlacklistSerializer
-#
-#     @extend_schema(summary='Account Logout',
-#                    description='Logout authorized user by putting his REFRESH TOKEN to BLACKLIST.',
-#                    responses={
-#                        status.HTTP_200_OK: 'You have been logged out.',
-#                        status.HTTP_401_UNAUTHORIZED: 'You have not been logged in.'
-#                    })
-#     def post(self, request, *args, **kwargs):
-#         serializer = self.serializer_class(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         refresh_token = request.data.get('refresh')
-#         try:
-#             token = RefreshToken(refresh_token)
-#             token.blacklist()
-#             return Response({'msg': 'You have been logged out.'}, status=status.HTTP_200_OK)
-#         except TokenError:
-#             return Response({'detail': 'Token is invalid or expired.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
