@@ -1,3 +1,5 @@
+import shutil
+from django.conf import settings
 from rest_framework.test import APITestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -23,8 +25,36 @@ class FMATesting(APITestCase):
     def setUp(self):
         return self.create_db()
 
+    @classmethod
+    def tearDownClass(cls):
+        """
+        Automated test environment cleanup pipeline.
+
+        Executes immediately after the execution of the final test case sequence.
+        Recursively targets and wipes out the isolated 'test_media' storage volume
+        to maintain local and container filesystem hygiene.
+        """
+        if hasattr(settings, 'MEDIA_ROOT') and settings.MEDIA_ROOT.exists():
+            try:
+                shutil.rmtree(settings.MEDIA_ROOT)
+                print(f"\n✨ [CLEANUP SUCCESS] Isolated directory '{settings.MEDIA_ROOT}' was cleanly wiped out!")
+            except Exception as e:
+                print(f"\n⚠️ [CLEANUP WARNING] Failed to remove test media directory: {e}")
+
     @staticmethod
     def create_db():
+        """
+        Database orchestration workflow designed to seed the isolated test database environment.
+
+        Leverages the Faker library alongside structural procedural generation loops to programmatically
+        instantiate a full-scale platform ecosystem schema:
+          - Users: Generates 10 high-privilege staff profiles with structured cryptographic password salts.
+          - Listings: Populates 20 diverse real estate properties enforcing systemic model bounds.
+          - Photos: Attaches mock multi-part binary image buffers validating custom format extensions.
+          - Bookings: Instantiates 30 chronological rental contracts executed iteratively via native model
+            `.save()` invocations to guarantee transaction logging, pricing evaluations, and snapshot logs.
+          - Reviews: Seeds 30 relational post-trip evaluation logs tied strictly to completed bookings.
+        """
         users = []
         for _ in range(10):
             user = User.objects.create_user(email=fake.unique.email(),
