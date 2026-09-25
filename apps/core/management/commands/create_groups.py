@@ -8,6 +8,14 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
+    """
+    Management command to initialize and seed system-wide Role-Based Access Control (RBAC) groups.
+
+    Parses the structured 'ROLE_PERMISSION' mapping schema from project settings,
+    automatically handles the atomic lookup or creation of target security groups (e.g., Tenant, Landlord),
+    and binds explicit Django auth application permissions to establish deterministic access boundaries.
+    """
+    help = 'Initializes default security groups and assigns respective permission constraints.'
 
     @staticmethod
     def add_permission(group, permissions: list[tuple[str, str]] | tuple[str, str]):
