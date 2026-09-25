@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     "drf_standardized_errors",
     'corsheaders',
+    'storages',
 
     'apps.core.apps.CoreConfig',
     'apps.users.apps.UsersConfig',
@@ -357,6 +358,22 @@ if IS_TESTING := 'test' in sys.argv:
     MEDIA_ROOT = BASE_DIR / 'test_media'
 else:
     print("🔒 [PROD/DEV MODE] SECURITY CHECK: Default Django Strong Encryption (PBKDF2) is Active.")
+
+# AWS S3 STORAGE CONFIGURATION (PRODUCTION)
+if not DEBUG and not IS_TESTING:
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+    AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME')
+    AWS_S3_REGION_NAME = env('AWS_S3_REGION_NAME', default='eu-central-1')
+
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+    AWS_S3_FILE_OVERWRITE = False  # Если имена файлов совпадут, S3 добавит уникальный суффикс
+    AWS_DEFAULT_ACL = None  # Используем современные Bucket Owner Enforced настройки AWS
+
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
