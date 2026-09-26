@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from apps.users.validators import validate_birth_date
 import os
 from apps.core.utils import validate_extension, validate_file_size
+from django.db import transaction
 
 
 def get_avatar_upload_path(instance, filename):
@@ -55,9 +56,19 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
     all_objects = AllUserSoftDeleteManager()
 
     def delete(self, *args, **kwargs):
-        self.deleted_at = timezone.now()
-        self.is_active = False
-        super().save(update_fields=['deleted_at', 'is_active', 'updated_at'])
+        """
+        Custom soft-deletion workflow for users.
+        Deactivates profile state and performs a cascading freeze on all owned property listings
+        to eliminate ghost properties in the directory catalog.
+        """
+        with transaction.atomic():
+            self.deleted_at = timezone.now()
+            self.is_active = False
+            self.listings.all().update(
+                is_active=False,
+                deleted_at=self.deleted_at
+            )
+            super().save(update_fields=['deleted_at', 'is_active', 'updated_at'])
 
     def save(self, *args, **kwargs):
         if self.phone == '' or (self.phone and not self.phone.strip()):

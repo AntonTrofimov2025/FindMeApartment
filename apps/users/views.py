@@ -3,7 +3,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db import transaction
-from .serializers.users import UserListSerializer, RegisterUserSerializer, ChangePasswordSerializer
+from .serializers import UserListSerializer, RegisterUserSerializer, ChangePasswordSerializer, ProfileUpdateSerializer
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
@@ -75,17 +75,17 @@ class UserMeView(APIView):
         except TokenError:
             raise ValidationError({'refresh': 'Provided refresh token is invalid or already expired.'})
 
+        user.save(update_fields=['password'])
         refresh = RefreshToken.for_user(user)
 
-        user.save(update_fields=['password'])
         return Response({'msg': 'Password has been successfully updated.',
                              'tokens': {
                                  'refresh': str(refresh),
                                  'access': str(refresh.access_token)
                              }}, status=status.HTTP_200_OK)
 
-    @extend_schema(summary="Fully updates current user's profile (such as avatar, phone number, etc.)", request=RegisterUserSerializer,
-                   responses={'200': UserListSerializer}, tags=["User Profile"])
+    @extend_schema(summary="Fully updates current user's profile (such as avatar, phone number, etc.)",
+                   request=ProfileUpdateSerializer, responses={'200': UserListSerializer}, tags=["User Profile"])
     def put(self, request, *args, partial=False, **kwargs):
         """
         Perform a full or partial data synchronization for the user's profile.
@@ -93,13 +93,13 @@ class UserMeView(APIView):
         Handles phone formatting syntax checks, unique email validation, excludes
         and accepts profile updates without password re-entry on partial fields payload.
         """
-        serializer = RegisterUserSerializer(request.user, data=request.data, partial=partial, context={'request': request})
+        serializer = ProfileUpdateSerializer(request.user, data=request.data, partial=partial, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(UserListSerializer(request.user, context={'request': request}).data, status=status.HTTP_200_OK)
 
     @extend_schema(summary="Partially updates current user's profile (such as avatar, phone number, etc.)",
-                   request=RegisterUserSerializer,
+                   request=ProfileUpdateSerializer,
                    responses={'200': UserListSerializer}, tags=["User Profile"])
     def patch(self, request, *args, **kwargs):
         return self.put(request, partial=True)
@@ -142,8 +142,8 @@ class UserBecomeLandlordView(APIView):
         Upgrade the user's role from Tenant to Landlord.
 
         Removes the user from the system 'Tenant' group and re-assigns them to the 'Landlord' group.
-        Instantly generates and issues a fresh set of JWT Access and Refresh tokens with updated claims
-        to avoid forced application re-login cycles on the frontend UI layer.
+        Changes take effect immediately on the database level, allowing instant permission clearance
+        without enforcing frontend token mutation or forced application re-login cycles.
         """
         user = request.user
 
@@ -155,10 +155,8 @@ class UserBecomeLandlordView(APIView):
             landlord_group = Group.objects.get(name='Landlord')
             user.groups.remove(tenant_group)
             user.groups.add(landlord_group)
-            refresh = RefreshToken.for_user(user)
 
-            return Response({'msg': 'You are now a Landlord. You can host properties! :)',
-                             'tokens': {'refresh': str(refresh), 'access': str(refresh.access_token)}},
+            return Response({'msg': 'You are now a Landlord. You can host properties! :)'},
                             status=status.HTTP_200_OK)
 
         except Group.DoesNotExist:

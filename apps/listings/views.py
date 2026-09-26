@@ -12,7 +12,8 @@ from apps.listings.permissions import IsLandLordOrReadOnly
 from rest_framework.permissions import IsAdminUser
 from rest_framework.parsers import MultiPartParser, FormParser
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from django.db.models import Q
+from django.db.models import Q, Avg
+from django.db.models.functions import Round
 
 @extend_schema_view(
     list=extend_schema(summary='Get all listings', description='List of all listings'),
@@ -35,7 +36,10 @@ class ListingViewSet(viewsets.ModelViewSet):
         - Tenants / Guests: Restricted exclusively to active, non-deleted properties in the catalog.
     """
 
-    queryset = Listing.all_objects.select_related('user').prefetch_related('photos').all()
+    queryset = Listing.all_objects.select_related('user').prefetch_related('photos').annotate(
+            avg_rating=Round(Avg('bookings__review__property_rating',
+                                 filter=Q(bookings__review__deleted_at__isnull=True)), 2)
+        )
     serializer_class = ListingSerializer
     permission_classes = [IsLandLordOrReadOnly]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
@@ -55,13 +59,12 @@ class ListingViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_authenticated and (user.is_staff or user.is_superuser):
-            return self.queryset
+            return self.queryset.all()
         if user.is_authenticated and user.groups.filter(name='Landlord').exists():
-            return Listing.all_objects.select_related('user').prefetch_related('photos').filter(
-                Q(user=user) | Q(deleted_at__isnull=True, is_active=True))
-
-        return Listing.all_objects.select_related('user').prefetch_related(
-            'photos').filter(deleted_at__isnull=True, is_active=True)
+            return self.queryset.filter(deleted_at__isnull=True).filter(
+                Q(user=user) | Q(is_active=True)
+            )
+        return self.queryset.filter(deleted_at__isnull=True, is_active=True)
 
     @extend_schema(
         summary="Use to toggle the listing active status by providing its id",
@@ -116,7 +119,7 @@ class PhotoViewSet(viewsets.ModelViewSet):
         - Update: Locked globally to global Administrators only to protect metadata history integrity.
     """
 
-    queryset = Photo.all_objects.select_related('listing').all()
+    queryset = Photo.all_objects.select_related('listing')
     serializer_class = PhotoSerializer
     permission_classes = [IsLandLordOrReadOnly]
     parser_classes = [MultiPartParser, FormParser]
@@ -137,13 +140,13 @@ class PhotoViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_authenticated and (user.is_staff or user.is_superuser):
-            return self.queryset
+            return self.queryset.all()
 
         if user.is_authenticated and user.groups.filter(name='Landlord').exists():
-            return Photo.all_objects.select_related('listing').filter(
-                Q(listing__user=user) | Q(listing__deleted_at__isnull=True, listing__is_active=True))
+            return self.queryset.filter(listing__deleted_at__isnull=True).filter(
+                Q(listing__user=user) | Q(listing__is_active=True))
 
-        return Photo.objects.select_related('listing').filter(listing__is_active=True)
+        return self.queryset.filter(listing__deleted_at__isnull=True, listing__is_active=True)
 
     def perform_create(self, serializer):
         listing = serializer.validated_data.get('listing')
@@ -154,7 +157,7 @@ class PhotoViewSet(viewsets.ModelViewSet):
         serializer.save()
 
     def perform_destroy(self, instance):
-        if instance.listing.user != self.request.user and not self.request.user.is_staff:
+        if instance.listing.user != self.request.user and not self.request.user.is_staff and not self.request.user.is_superuser:
             raise PermissionDenied({'detail': 'You are not allowed to delete photos from not your own listings!'})
 
         instance.delete()

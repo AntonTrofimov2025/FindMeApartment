@@ -7,6 +7,18 @@ from rest_framework.exceptions import ValidationError as DRFValidationError
 from django.core.exceptions import ValidationError
 
 
+class ValidatePhoneMixin:
+    """
+    Reusable validation mixin encapsulating strict E.164 phone syntax logic.
+    """
+    def validate_phone(self, value):
+        if not value or value.strip() == '':
+            return None
+        if not re.match(r'^\+\d{10,75}$', value):
+            raise serializers.ValidationError(_('The phone number must consist of 10-75 symbols in total and start from + symbol!!\n'
+                                              'Example: +3423234455323'))
+        return value
+
 class UserListSerializer(serializers.ModelSerializer):
     """
     Read-only serializer for full user profile summaries.
@@ -23,7 +35,7 @@ class UserListSerializer(serializers.ModelSerializer):
                   'phone', 'last_login', 'date_joined', 'updated_at', 'is_deleted', 'deleted_at']
         read_only_fields = ['id', 'updated_at', 'deleted_at', 'date_joined', 'bookings', 'listings', 'last_login']
 
-class RegisterUserSerializer(serializers.ModelSerializer):
+class RegisterUserSerializer(ValidatePhoneMixin, serializers.ModelSerializer):
     """
     Write/Update serializer for user registration and profile modifications.
 
@@ -43,16 +55,7 @@ class RegisterUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ['email', 'username', 'first_name', 'last_name', 'birth_date', 'avatar',
-                  'phone', 'last_login', 'password', 're_password', 'deleted_at']
-        read_only_fields = ['id', 'deleted_at', 'last_login']
-
-    def validate_phone(self, value):
-        if not value or value.strip() == '':
-            return None
-        if not re.match(r'^\+\d{10,75}$', value):
-            raise serializers.ValidationError(_('The phone number must consist of 10-75 symbols in total and start from + symbol!!\n'
-                                              'Example: +3423234455323'))
-        return value
+                  'phone', 'password', 're_password']
 
     def validate_email(self, value):
         if get_user_model().all_objects.filter(email=value).exclude(id__in=[self.instance.pk] if self.instance else []).exists():
@@ -78,16 +81,29 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         validated_data.pop('re_password', None)
         return get_user_model().objects.create_user(**validated_data)
 
+class ProfileUpdateSerializer(ValidatePhoneMixin, serializers.ModelSerializer):
+    """
+    Dedicated serializer for safe profile mutations.
+
+    Strictly excludes sensitive credential tokens (password, email) to eliminate
+    unauthorized background account takeover and session hijacking security holes.
+    """
+
+    class Meta:
+        model = get_user_model()
+        fields = ['username', 'first_name', 'last_name', 'birth_date', 'avatar', 'phone']
+
     def update(self, instance, validated_data):
-        validated_data.pop('re_password', None)
-        password = validated_data.pop('password', None)
-        if password:
-            instance.set_password(password)
+        avatar = validated_data.pop('avatar', None)
+        if avatar is not None:
+            if instance.avatar:
+                instance.avatar.delete(save=False)
+            instance.avatar = avatar
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-        instance.save()
 
+        instance.save()
         return instance
 
 class ChangePasswordSerializer(serializers.Serializer):

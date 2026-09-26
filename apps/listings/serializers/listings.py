@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from apps.listings.models import Listing
 from .photos import PhotoSerializer
+from apps.bookings.models import Booking, StatusChoices
 
 
 class ListingSerializer(serializers.ModelSerializer):
@@ -20,6 +21,35 @@ class ListingSerializer(serializers.ModelSerializer):
                   'property_type', 'discount', 'overall_rating', 'apartment_number', 'max_guests', 'photos',
                   'price_per_night', 'final_price_per_night', 'rooms', 'is_active', 'is_deleted', 'deleted_at']
         read_only_fields = ['id', 'user', 'overall_rating', 'is_active', 'deleted_at', 'final_price_per_night']
+        
+    def to_representation(self, instance):
+        """
+        Dynamically filters out precise address localization vectors to prevent
+        unauthorized off-platform disintermediation and protect host privacy.
+        """
+        to_representation = super().to_representation(instance)
+        request = self.context.get('request')
+        user = request.user if request else None
+
+        is_owner = user and user.is_authenticated and instance.user_id == user.id
+        is_staff = user and user.is_authenticated and (user.is_staff or user.is_superuser)
+
+        if not is_owner and not is_staff:
+
+            has_confirmed_booking = False
+            if user and user.is_authenticated:
+                has_confirmed_booking = Booking.objects.filter(
+                    user=user,
+                    listing_id=instance.id,
+                    booking_status__in=[StatusChoices.CONFIRMED, StatusChoices.CHECKED_IN]
+                ).exists()
+
+            if not has_confirmed_booking:
+                to_representation['street'] = "Hidden until booking confirmation"
+                to_representation['house_number'] = "X"
+                to_representation['apartment_number'] = "X"
+
+        return to_representation
 
 
 class ListingCreateUpdateSerializer(serializers.ModelSerializer):

@@ -41,4 +41,19 @@ sleep 5
 docker compose exec db mysql -u root -p"${DB_ROOT_PASSWORD}" -e "GRANT ALL PRIVILEGES ON \
 test_${DB_NAME}.* TO '${DB_USER}'@'%'; FLUSH PRIVILEGES;"
 
+echo "Синхронизируем расписание административных задач в системном Cron..."
+sleep 2
+cat <<FMA_EOF > fma_crontab
+0 3 * * * cd /fma && /usr/bin/docker compose exec -T web python manage.py test --noinput >> /fma/logs/apitestcase_tests.log 2>&1
+0 4 * * * cd /fma && /usr/bin/docker compose exec -T web python manage.py flushexpiredtokens >> /fma/logs/blacklist_flush_logs.log 2>&1
+30 4 * * * cd /fma && /usr/bin/docker compose exec -T web python manage.py close_expired_bookings >> /fma/logs/close_bookings.log 2>&1
+FMA_EOF
+
+crontab fma_crontab
+
+rm fma_crontab
+
+echo "🎯 Cron-планировщик успешно обновлен! Текущие активные задачи:"
+crontab -l
+
 echo "Done!! :)"

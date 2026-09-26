@@ -25,21 +25,23 @@ from apps.core.serializers import CustomTokenObtainPairSerializer
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('apps.listings.urls')),
+    path('api/', include('apps.listings.urls')),
     path('api/auth/login/', TokenObtainPairView.as_view(serializer_class=CustomTokenObtainPairSerializer),
          name='token-obtain-pair-view'),
     path('api/auth/refresh/', TokenRefreshView.as_view(), name='token-refresh-view'),
-    path('', include('apps.users.urls')),
-    path('', include('apps.bookings.urls')),
-    path('', include('apps.reviews.urls')),
+    path('api/', include('apps.users.urls')),
+    path('api/', include('apps.bookings.urls')),
+    path('api/', include('apps.reviews.urls')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'), # SCHEME File Downloading (JSON)
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'), # Documentation (Without testing, reading only)
-    path('api/error_test/', test_django_standard_exceptions, name='django_standard_exception_test'),
     path('ping/', health_check)
 ]
 
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += [
+        path('api/error_test/', test_django_standard_exceptions, name='django_standard_exception_test')
+    ]
 

@@ -16,6 +16,7 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
 from django.db import transaction
+from django.utils.translation import gettext_lazy as _
 
 @extend_schema(summary='Approve booking', description='Approval of booking provided its status is PENDING')
 @api_view(['POST'])
@@ -105,18 +106,20 @@ def booking_check_in(request, pk, *args, **kwargs):
     """
     booking = get_object_or_404(Booking.all_objects, pk=pk)
     if request.user != booking.listing.user:
-        raise PermissionDenied({'detail': 'You are not the owner of this property!'})
+        raise PermissionDenied({'detail': _('You are not the owner of this property!')})
     if booking.booking_status != StatusChoices.CONFIRMED:
-        raise ValidationError({'detail': 'The booking status must be CONFIRMED only to check in your guest!'})
+        raise ValidationError({'detail': _('The booking status must be CONFIRMED only to check in your guest!')})
     if timezone.localdate() < booking.date_from:
-        raise ValidationError({'detail': f'You cannot check in your guest before the start date ({booking.date_from})!'})
+        raise ValidationError({'detail': _(f'You cannot check in your guest before the start date ({booking.date_from})!')})
+    if timezone.localdate() >= booking.date_to:
+        raise ValidationError({'detail': _('Too late! The booking period has already expired.')})
     try:
         booking.booking_status = StatusChoices.CHECKED_IN
         booking.save()
     except DjangoValidationError as e:
         error_data = e.message_dict if hasattr(e, 'message_dict') else e.messages
         raise ValidationError(error_data)
-    return Response({'msg': 'Your guest has successfully been checked in. :)'}, status=status.HTTP_200_OK)
+    return Response({'msg': _('Your guest has successfully been checked in. :)')}, status=status.HTTP_200_OK)
 
 @extend_schema_view(
     list=extend_schema(summary='Get all bookings', description='List of all bookings'),
@@ -172,15 +175,13 @@ class BookingViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
 
-        Booking.objects.filter(date_to__lt=timezone.localdate(),
-                               booking_status__in=[StatusChoices.CONFIRMED, StatusChoices.CHECKED_IN]
-                               ).update(booking_status=StatusChoices.COMPLETED)
-
         if user.is_staff or user.is_superuser:
             return Booking.all_objects.select_related('user', 'listing').all()
 
         if user.groups.filter(name='Landlord').exists():
-            return Booking.all_objects.select_related('user', 'listing').filter(listing__user=user)
+            return Booking.all_objects.select_related('user', 'listing').filter(
+                Q(listing__user=user) | Q(user=user)
+            )
 
         return Booking.objects.select_related('user', 'listing').filter(user=user)
 

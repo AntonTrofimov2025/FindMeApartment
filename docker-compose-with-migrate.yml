@@ -54,7 +54,7 @@ services:
     volumes:
       - .:/fma
       - ./static:/fma/static
-      - ./media:/fma/media:ro
+      - ./media:/fma/media
     healthcheck:
       # Проверяем, отвечает ли веб-сервер на порту 8000 (внутри контейнера)
       test: [ "CMD", "curl", "-f", "http://localhost:8000/ping/" ]

@@ -47,8 +47,8 @@ def send_booking_email_on_status_change(sender, instance, created, **kwargs):
         msg.send(fail_silently=True)
         return
 
-    updated_fields = kwargs.get('updated_fields')
-    if updated_fields and 'booking_status' not in updated_fields:
+    update_fields = kwargs.get('update_fields')
+    if update_fields and 'booking_status' not in update_fields:
         return
 
     if instance.booking_status == StatusChoices.CONFIRMED:

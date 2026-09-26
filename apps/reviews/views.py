@@ -27,8 +27,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     search_fields = [
-        'property_rating', 'location_rating', 'text', 'booking__user__first_name',
-        'booking__user__last_name', 'booking__user__email'
+        'text', 'booking__user__first_name', 'booking__user__last_name'
     ]
     filterset_fields = {
         'property_rating': ['exact', 'gte', 'lte'],
@@ -56,3 +55,17 @@ class ReviewViewSet(viewsets.ModelViewSet):
         if self.action in ['update', 'partial_update', 'destroy']:
             return [IsReviewAuthorOrAdmin()]
         return super().get_permissions()
+
+    def perform_create(self, serializer):
+        booking = serializer.validated_data.get('booking')
+        expired_review = Review.all_objects.filter(booking=booking, deleted_at__isnull=False).first()
+
+        if expired_review:
+            expired_review.deleted_at = None
+            expired_review.property_rating = serializer.validated_data.get('property_rating')
+            expired_review.location_rating = serializer.validated_data.get('location_rating')
+            expired_review.text = serializer.validated_data.get('text')
+            expired_review.save()
+            return
+
+        serializer.save()

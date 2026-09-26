@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from apps.core.models import UniqueID, TimeStampedModel, Countries, PropertyType, RoomCount, MaxGuests
 from django_extensions.db.fields import AutoSlugField
 from pytils.translit import slugify
+from apps.core.models import StatusChoices
 from django.utils import timezone
 from .managers.listings import ListingsSoftDeleteManager
 from .managers.photo_manager import PhotoSoftDeleteManager
@@ -71,7 +72,9 @@ class Listing(UniqueID, TimeStampedModel):
 
     @property
     def overall_rating(self):
-        overall_rating = self.bookings.aggregate(
+        if hasattr(self, 'avg_rating'):
+            return float(self.avg_rating) if self.avg_rating else 0.0
+        overall_rating = self.bookings.filter(review__deleted_at__isnull=True).aggregate(
             avg_rating=Round(Avg('review__property_rating'), 2))['avg_rating']
         return float(overall_rating) if overall_rating else 0.0
 
@@ -80,24 +83,55 @@ class Listing(UniqueID, TimeStampedModel):
         return self.deleted_at is not None
 
     def delete(self, *args, **kwargs):
+        """
+        Soft-deletes the listing instance.
+        Validates that no future confirmed or active reservation contracts exist
+        before allowing deactivation.
+        """
+        if self.bookings.filter(booking_status__in=[StatusChoices.CONFIRMED, StatusChoices.CHECKED_IN],
+                                date_to__gte=timezone.localdate()).exists():
+            raise ValidationError({
+                'listings': _(
+                    'Cannot delete a listing with active or confirmed future bookings! '
+                    'Please process client cancellations or completions first.')
+            })
         self.deleted_at = timezone.now()
-        super().save(update_fields=['deleted_at', 'updated_at'])
+        self.is_active = False
+        super().save(update_fields=['deleted_at', 'updated_at', 'is_active'])
 
     objects = ListingsSoftDeleteManager()
     all_objects = models.Manager()
 
     def clean(self):
         super().clean()
-        if not self.user_id:
-            return
         if self.property_type and self.property_type in [PropertyType.ROOM, PropertyType.APARTMENT] and not self.apartment_number:
             raise ValidationError(_('The apartment number is required for room/apartment property type'))
         if self.property_type and self.property_type in [PropertyType.HOUSE, PropertyType.STUDIO] and self.apartment_number:
             raise ValidationError(_('The house/studio property type can not have an apartment number.'))
 
+        base_filter = Listing.objects.filter(
+            user_id=self.user_id,
+            country=self.country,
+            city=self.city,
+            district=self.district,
+            street=self.street,
+            house_number=self.house_number
+        ).exclude(id=self.pk if self.pk else None)
+
+        if self.apartment_number:
+            if base_filter.filter(apartment_number=self.apartment_number).exists():
+                raise ValidationError({
+                    'apartment_number': _('You have already registered a property at this exact apartment address!')
+                })
+        else:
+            if base_filter.filter(apartment_number__isnull=True).exists():
+                raise ValidationError({
+                    'house_number': _('You have already registered a standalone property at this exact house address!')
+                })
+
     def save(self, *args, **kwargs):
         if not self.user_id:
-            return
+            raise ValidationError({'user': 'A valid landlord user instance must be assigned to create a listing!'})
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -115,11 +149,7 @@ class Listing(UniqueID, TimeStampedModel):
         verbose_name = 'Listing'
         verbose_name_plural = 'Listings'
         ordering = ('-created_at',)
-        constraints = [models.UniqueConstraint(fields=['user', 'country', 'city', 'district', 'street',
-                                                       'house_number'],
-                                               name='unique_user_address',
-                                               violation_error_message=_('Such an address combination already exists!')),
-                       models.CheckConstraint(name='discount_from_0.01_to_1',
+        constraints = [models.CheckConstraint(name='discount_from_0.01_to_1',
                                               condition=Q(discount__gt=Decimal("0")) & Q(discount__lte=Decimal("1")),
                                               violation_error_message='Discount is only allowed in range of (0.01 and 1.00).')]
         indexes = [models.Index(fields=['city', 'price_per_night'], name='fma_listings_city_price_idx'),
@@ -164,16 +194,31 @@ class Photo(UniqueID, TimeStampedModel):
         self.deleted_at = timezone.now()
         super().save(update_fields=['deleted_at', 'updated_at'])
 
+    def clean(self):
+        super().clean()
+
+        if Photo.objects.filter(
+            listing_id=self.listing_id,
+            photo_number=self.photo_number
+        ).exclude(id__in=[self.pk] if self.pk else []).exists():
+            raise ValidationError({
+                'photo_number': _('Photo with this number already exists for this active listing!')
+            })
+
+    def save(self, *args, **kwargs):
+        if not self.listing_id or not self.photo_number:
+            raise ValidationError({
+                'photo_number': 'Photo object requires a photo number!',
+                'listing': 'Photo object requires a target Listing destination context!'
+            })
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     class Meta:
         db_table = 'fma_photos'
         verbose_name = 'Photo'
         verbose_name_plural = 'Photos'
         ordering = ('-created_at',)
-        constraints = [models.UniqueConstraint(fields=['listing', 'photo_number'],
-                                name='unique_listing_photo_number',
-                                violation_error_message=_('Photo with this number already exists for this listing!')
-                            )
-                        ]
         indexes = [
             models.Index(fields=['listing'], name='fma_listing_idx')
         ]

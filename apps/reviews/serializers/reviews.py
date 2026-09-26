@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from apps.reviews.models import Review
-from apps.core.models import StatusChoices
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -51,3 +50,6 @@ class ReviewCreateUpdateSerializer(serializers.ModelSerializer):
 
         return attrs
 
+    def update(self, instance, validated_data):
+        validated_data.pop('booking', None)
+        return super().update(instance, validated_data)

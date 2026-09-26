@@ -66,8 +66,6 @@ class Booking(UniqueID, TimeStampedModel):
 
     def clean(self):
         super().clean()
-        if not self.listing_id or not self.user_id:
-            return
         if self.date_to and self.date_from and self.date_to <= self.date_from:
             raise ValidationError(_('Booking start date can not be greater than end date!'))
         if (Booking.objects.filter(listing_id=self.listing_id,
@@ -77,14 +75,26 @@ class Booking(UniqueID, TimeStampedModel):
                 exclude(id__in=[self.pk] if self.pk else []).exists()):
             raise ValidationError(_("Unfortunately the selected dates are already booked."))
 
-        if self.date_from and self.date_from < timezone.localdate():
-            raise ValidationError(_('Booking start date cannot be in the past.'))
-        if self.date_from and self.date_from > timezone.localdate() + relativedelta(years=1):
-            raise ValidationError(_('You cannot book more than 1 year in advance.'))
-        if self.date_to and self.date_to > timezone.localdate() + relativedelta(years=1):
-            raise ValidationError(_('Booking end date cannot exceed 1 year from today.'))
-        if self.date_from and self.date_to and (self.date_to - self.date_from).days > 30:
-            raise ValidationError(_("You cannot book this property for more than 30 nights."))
+        if not self.listing.is_active:
+            raise ValidationError({
+                'listing': _('This property listing is currently inactive and cannot accept new reservations.')
+            })
+        if self.user_id == self.listing.user_id:
+            raise ValidationError({
+                'listing': _('Landlords are strictly prohibited from booking their own property listings!')
+            })
+
+        is_new = self._state.adding
+        dates_changed = getattr(self, '_dates_changed', False)
+        if is_new or dates_changed:
+            if self.date_from and self.date_from < timezone.localdate():
+                raise ValidationError(_('Booking start date cannot be in the past.'))
+            if self.date_from and self.date_from > timezone.localdate() + relativedelta(years=1):
+                raise ValidationError(_('You cannot book more than 1 year in advance.'))
+            if self.date_to and self.date_to > timezone.localdate() + relativedelta(years=1):
+                raise ValidationError(_('Booking end date cannot exceed 1 year from today.'))
+            if self.date_from and self.date_to and (self.date_to - self.date_from).days > 30:
+                raise ValidationError(_("You cannot book this property for more than 30 nights."))
 
         if self.guests_number is not None and self.guests_number > self.listing.max_guests:
             raise ValidationError(_(f"The number of guests cannot exceed the listing's maximum capacity. (max: {self.listing.max_guests})"))
@@ -100,28 +110,30 @@ class Booking(UniqueID, TimeStampedModel):
 
     def save(self, *args, **kwargs):
         if not self.listing_id or not self.user_id:
-            return
+            raise ValidationError({
+                'user': 'Booking transaction requires a valid Tenant user instance!',
+                'listing': 'Booking transaction requires a target Listing destination context!'
+            })
         with transaction.atomic():
             selected_listing = Listing.all_objects.select_for_update().get(pk=self.listing_id)
 
-            dates_changed = False
+            self._dates_changed = False
             if self.pk:
                 old_dates = Booking.all_objects.filter(pk=self.pk).values('date_from', 'date_to').first()
                 if old_dates and (old_dates['date_from'] != self.date_from or old_dates['date_to'] != self.date_to):
-                    dates_changed = True
+                    self._dates_changed = True
 
             if self.date_to and self.date_from and selected_listing:
-                if self._state.adding or dates_changed:
+                if self._state.adding or self._dates_changed:
                     nights = (self.date_to - self.date_from).days
                     self.total_price = nights * selected_listing.final_price_per_night if nights > 0 else Decimal("0.00")
 
-            if self._state.adding or dates_changed:
+            if self._state.adding or self._dates_changed:
                 snapshot_data = {'Tenant': {
                     'email': self.user.email or "No data",
                     'phone': self.user.phone or "No data",
                     'first_name': self.user.first_name or "No data",
-                    'last_name': self.user.last_name or "No data",
-                    'birth_date': str(self.user.birth_date) if self.user.birth_date else "No data",
+                    'last_name': self.user.last_name or "No data"
                 }}
 
                 if selected_listing:

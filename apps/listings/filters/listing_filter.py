@@ -15,7 +15,7 @@ class ListingFilter(filters.FilterSet):
     max_price = filters.NumberFilter(field_name='price_per_night', lookup_expr='lte')
     min_rooms = filters.NumberFilter(field_name='rooms', lookup_expr='gte')
     max_rooms = filters.NumberFilter(field_name='rooms', lookup_expr='lte')
-    city = filters.CharFilter(field_name='city', lookup_expr='exact')
+    city = filters.CharFilter(field_name='city', lookup_expr='istartswith')
     country = filters.ChoiceFilter(field_name='country', lookup_expr='exact', choices=Countries.choices)
     rooms = filters.ChoiceFilter(field_name='rooms', lookup_expr='exact',
                                  choices=RoomCount.choices)
