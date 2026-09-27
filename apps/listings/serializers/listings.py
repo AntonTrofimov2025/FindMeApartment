@@ -36,13 +36,7 @@ class ListingSerializer(serializers.ModelSerializer):
 
         if not is_owner and not is_staff:
 
-            has_confirmed_booking = False
-            if user and user.is_authenticated:
-                has_confirmed_booking = Booking.objects.filter(
-                    user=user,
-                    listing_id=instance.id,
-                    booking_status__in=[StatusChoices.CONFIRMED, StatusChoices.CHECKED_IN]
-                ).exists()
+            has_confirmed_booking = getattr(instance, 'has_confirmed_booking', False)
 
             if not has_confirmed_booking:
                 to_representation['street'] = "Hidden until booking confirmation"

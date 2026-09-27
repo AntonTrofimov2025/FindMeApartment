@@ -1,5 +1,7 @@
 from rest_framework import viewsets, status
 from apps.listings.models import Listing, Photo
+from apps.bookings.models import Booking
+from apps.core.models import StatusChoices
 from .serializers import ListingSerializer, ListingCreateUpdateSerializer
 from .serializers import PhotoSerializer
 from rest_framework.decorators import action
@@ -12,7 +14,7 @@ from apps.listings.permissions import IsLandLordOrReadOnly
 from rest_framework.permissions import IsAdminUser
 from rest_framework.parsers import MultiPartParser, FormParser
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from django.db.models import Q, Avg
+from django.db.models import Q, Avg, OuterRef, Exists
 from django.db.models.functions import Round
 
 @extend_schema_view(
@@ -60,11 +62,22 @@ class ListingViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if user.is_authenticated and (user.is_staff or user.is_superuser):
             return self.queryset.all()
+
+        queryset = self.queryset.filter(deleted_at__isnull=True)
+
+        if user.is_authenticated:
+            has_confirmed_booking_subquery = Booking.objects.filter(
+                user=user,
+                listing_id=OuterRef('pk'),
+                booking_status__in=[StatusChoices.CONFIRMED, StatusChoices.CHECKED_IN]
+            )
+            queryset = queryset.annotate(has_confirmed_booking=Exists(has_confirmed_booking_subquery))
+
         if user.is_authenticated and user.groups.filter(name='Landlord').exists():
-            return self.queryset.filter(deleted_at__isnull=True).filter(
+            return queryset.filter(
                 Q(user=user) | Q(is_active=True)
             )
-        return self.queryset.filter(deleted_at__isnull=True, is_active=True)
+        return queryset.filter(is_active=True)
 
     @extend_schema(
         summary="Use to toggle the listing active status by providing its id",
