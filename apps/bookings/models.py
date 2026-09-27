@@ -80,15 +80,6 @@ class Booking(UniqueID, TimeStampedModel):
                 exclude(id__in=[self.pk] if self.pk else []).exists()):
             raise ValidationError(_("Unfortunately the selected dates are already booked."))
 
-        if not self.listing.is_active:
-            raise ValidationError({
-                'listing': _('This property listing is currently inactive and cannot accept new reservations.')
-            })
-        if self.user_id == self.listing.user_id:
-            raise ValidationError({
-                'listing': _('Landlords are strictly prohibited from booking their own property listings!')
-            })
-
         is_new = self._state.adding
 
         self._dates_changed = False
@@ -98,6 +89,15 @@ class Booking(UniqueID, TimeStampedModel):
                 self._dates_changed = True
 
         if is_new or self._dates_changed:
+            if not self.listing.is_active:
+                raise ValidationError({
+                    'listing': _('This property listing is currently inactive and cannot accept new reservations.')
+                })
+            if self.user_id == self.listing.user_id:
+                raise ValidationError({
+                    'listing': _('Landlords are strictly prohibited from booking their own property listings!')
+                })
+
             if self.date_from and self.date_from < timezone.localdate():
                 raise ValidationError(_('Booking start date cannot be in the past.'))
             if self.date_from and self.date_from > timezone.localdate() + relativedelta(years=1):
