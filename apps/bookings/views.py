@@ -11,7 +11,7 @@ from rest_framework import viewsets
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
 from .serializers.bookings import BookingSerializer, BookingCreateUpdateSerializer
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticated, DjangoModelPermissions
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
@@ -143,7 +143,7 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     queryset = Booking.all_objects.select_related('user').all()
     serializer_class = BookingSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     search_fields = [
         'listing__title', 'listing__city', 'user__first_name', 'user__last_name', 'user__email'

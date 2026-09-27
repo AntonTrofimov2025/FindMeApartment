@@ -120,7 +120,7 @@ class Booking(UniqueID, TimeStampedModel):
 
 
     def save(self, *args, **kwargs):
-        self.full_clean()
+        self.full_clean(exclude=['snapshot_data', 'total_price'])
         with transaction.atomic():
             selected_listing = Listing.all_objects.select_for_update().get(pk=self.listing_id)
 
