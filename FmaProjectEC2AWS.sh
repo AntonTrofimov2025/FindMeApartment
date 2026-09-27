@@ -39,4 +39,9 @@ echo "Удаляем первичный скрипт инициализации.
 sleep 2
 rm FmaProjectEC2AWS.sh
 
+echo "Устанавливаем время на сервере на Европа/Берлин..."
+sleep 1
+sudo timedatectl set-timezone Europe/Berlin
+sleep 1
+
 echo "Script worked well! AWS EC2 Server has been successfully deployed! :)"
