@@ -43,7 +43,7 @@ class ReviewCreateUpdateSerializer(serializers.ModelSerializer):
             if booking.user != request.user:
                 raise serializers.ValidationError('You can leave reviews for your own completed bookings only!')
 
-            existing_review = Review.all_objects.filter(booking=booking).first()
+            existing_review = Review.objects.filter(booking=booking).first()
             if existing_review:
                 if not self.instance or existing_review.pk != self.instance.pk:
                     raise serializers.ValidationError('You can leave only one review for the booking!')

@@ -66,6 +66,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
             expired_review.location_rating = serializer.validated_data.get('location_rating')
             expired_review.text = serializer.validated_data.get('text')
             expired_review.save()
+            serializer.instance = expired_review
             return
 
         serializer.save()
