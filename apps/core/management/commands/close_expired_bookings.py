@@ -31,6 +31,7 @@ class Command(BaseCommand):
                         booking.booking_status = StatusChoices.CANCELLED
                     else:
                         booking.booking_status = StatusChoices.COMPLETED
+                    booking._skip_signal_email = True
                     booking.save(update_fields=['booking_status', 'updated_at'])
                     success_count += 1
                 except Exception as e:
