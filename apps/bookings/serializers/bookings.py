@@ -22,6 +22,28 @@ class BookingSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'total_price', 'snapshot_data', 'booking_status',
                             'created_at', 'updated_at', 'deleted_at']
 
+    def to_representation(self, instance):
+        """
+        Dynamically masks precise address vectors inside snapshot_data for Tenants
+        if the booking transaction has not been officially confirmed by the host yet.
+        """
+        to_representation = super().to_representation(instance)
+        request = self.context.get('request')
+        user = request.user if request else None
+
+        is_owner = user and user.is_authenticated and instance.listing.user_id == user.id
+        is_staff = user and user.is_authenticated and (user.is_staff or user.is_superuser)
+
+        if not is_owner and not is_staff:
+            if instance.booking_status not in [StatusChoices.CONFIRMED, StatusChoices.CHECKED_IN,
+                                               StatusChoices.COMPLETED]:
+                if ('snapshot_data' in to_representation
+                        and to_representation['snapshot_data'] and 'property_data' in to_representation['snapshot_data']):
+                    to_representation['snapshot_data']['property_data']['street'] = "Hidden until booking confirmation"
+                    to_representation['snapshot_data']['property_data']['house_number'] = "X"
+                    to_representation['snapshot_data']['property_data']['apartment_number'] = "X"
+
+        return to_representation
 
 class BookingCreateUpdateSerializer(serializers.ModelSerializer):
     """
