@@ -16,7 +16,8 @@ class Command(BaseCommand):
         self.stdout.write("⏳ Scanning database for expired rental contracts...")
         with transaction.atomic():
             expired_bookings = list(Booking.objects.select_for_update().filter(date_to__lt=timezone.localdate(),
-                                   booking_status__in=[StatusChoices.CONFIRMED, StatusChoices.CHECKED_IN]))
+                                   booking_status__in=[StatusChoices.CONFIRMED, StatusChoices.CHECKED_IN,
+                                                       StatusChoices.PENDING]))
 
             if not expired_bookings:
                 self.stdout.write(self.style.SUCCESS("✨ No expired bookings found. Database is synchronized."))
@@ -26,7 +27,10 @@ class Command(BaseCommand):
 
             for booking in expired_bookings:
                 try:
-                    booking.booking_status = StatusChoices.COMPLETED
+                    if booking.booking_status == StatusChoices.PENDING:
+                        booking.booking_status = StatusChoices.CANCELLED
+                    else:
+                        booking.booking_status = StatusChoices.COMPLETED
                     booking.save(update_fields=['booking_status', 'updated_at'])
                     success_count += 1
                 except Exception as e:
