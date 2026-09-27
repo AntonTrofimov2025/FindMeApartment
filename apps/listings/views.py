@@ -156,10 +156,10 @@ class PhotoViewSet(viewsets.ModelViewSet):
             return self.queryset.all()
 
         if user.is_authenticated and user.groups.filter(name='Landlord').exists():
-            return self.queryset.filter(listing__deleted_at__isnull=True).filter(
+            return self.queryset.filter(deleted_at__isnull=True, listing__deleted_at__isnull=True).filter(
                 Q(listing__user=user) | Q(listing__is_active=True))
 
-        return self.queryset.filter(listing__deleted_at__isnull=True, listing__is_active=True)
+        return self.queryset.filter(deleted_at__isnull=True, listing__deleted_at__isnull=True, listing__is_active=True)
 
     def perform_create(self, serializer):
         listing = serializer.validated_data.get('listing')
