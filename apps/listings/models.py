@@ -1,5 +1,6 @@
 from django.conf import settings
-from django.db import models
+from django.contrib.auth import get_user_model
+from django.db import models, transaction
 from django.core.validators import MinLengthValidator, MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
 from apps.core.models import UniqueID, TimeStampedModel, Countries, PropertyType, RoomCount, MaxGuests
@@ -131,7 +132,10 @@ class Listing(UniqueID, TimeStampedModel):
                     'house_number': _('You have already registered a standalone property at this exact house address!')
                 })
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
+        if self.user_id:
+            get_user_model().objects.select_for_update().get(pk=self.user_id)
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -210,7 +214,11 @@ class Photo(UniqueID, TimeStampedModel):
                 'photo_number': _('Photo with this number already exists for this active listing!')
             })
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
+        if self.listing_id:
+            Listing.all_objects.select_for_update().get(pk=self.listing_id)
+
         self.full_clean()
         super().save(*args, **kwargs)
 

@@ -5,6 +5,8 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from django.core.exceptions import ValidationError
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class ValidatePhoneMixin:
@@ -122,7 +124,39 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError("Current password verification failed! Please try again.")
         return value
 
+    def validate_new_password(self, value):
+        """
+        Enforces strict built-in Django password validators (length, common passwords, attributes).
+        """
+        user = self.context.get('request').user
+        try:
+            validate_password(value, user=user)
+        except ValidationError as e:
+            e = e.message_dict if hasattr(e, 'message_dict') else e.messages
+            raise serializers.ValidationError(e)
+        return value
+
     def validate(self, attrs):
         if attrs['new_password'] != attrs['re_new_password']:
             raise serializers.ValidationError({"re_new_password": "New passwords do not match!!"})
+
+        request = self.context.get('request')
+        if not request or not request.user:
+            raise serializers.ValidationError(_("Authentication context missing."))
+
+        user = request.user
+        refresh_token = attrs.get('refresh')
+
+        try:
+            refresh = RefreshToken(refresh_token)
+            token_user_id = refresh.get('user_id')
+            if str(token_user_id) != str(user.id):
+                raise serializers.ValidationError({
+                    'refresh': _('Security breach: Provided refresh token does not belong to your account session!')
+                })
+        except TokenError:
+            raise serializers.ValidationError({
+                'refresh': _('Provided refresh token is invalid or already expired.')
+            })
+
         return attrs

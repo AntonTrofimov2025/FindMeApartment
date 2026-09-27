@@ -7,6 +7,7 @@ from .serializers import UserListSerializer, RegisterUserSerializer, ChangePassw
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from rest_framework import status
@@ -67,15 +68,12 @@ class UserMeView(APIView):
 
         user = request.user
         user.set_password(serializer.validated_data['new_password'])
-
-        old_refresh = serializer.validated_data['refresh']
-        try:
-            token = RefreshToken(old_refresh)
-            token.blacklist()
-        except TokenError:
-            raise ValidationError({'refresh': 'Provided refresh token is invalid or already expired.'})
-
         user.save(update_fields=['password'])
+
+        user_live_tokens = OutstandingToken.objects.filter(user=user)
+        for token in user_live_tokens:
+            BlacklistedToken.objects.get_or_create(token=token)
+
         refresh = RefreshToken.for_user(user)
 
         return Response({'msg': 'Password has been successfully updated.',
