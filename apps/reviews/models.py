@@ -39,12 +39,12 @@ class Review(UniqueID, TimeStampedModel):
 
     def clean(self):
         super().clean()
+        if not self.booking_id:
+            raise ValidationError({'booking': 'A review cannot exist without a verified underlying booking contract!'})
         if self.booking.booking_status != StatusChoices.COMPLETED:
             raise ValidationError(_('You can only leave a review after the booking is completed!'))
 
     def save(self, *args, **kwargs):
-        if not self.booking_id:
-            raise ValidationError({'booking': 'A review cannot exist without a verified underlying booking contract!'})
         self.full_clean()
         super().save(*args, **kwargs)
 

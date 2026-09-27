@@ -66,6 +66,11 @@ class Booking(UniqueID, TimeStampedModel):
 
     def clean(self):
         super().clean()
+        if not self.listing_id or not self.user_id:
+            raise ValidationError({
+                'user': 'Booking transaction requires a valid Tenant user instance!',
+                'listing': 'Booking transaction requires a target Listing destination context!'
+            })
         if self.date_to and self.date_from and self.date_to <= self.date_from:
             raise ValidationError(_('Booking start date can not be greater than end date!'))
         if (Booking.objects.filter(listing_id=self.listing_id,
@@ -85,8 +90,14 @@ class Booking(UniqueID, TimeStampedModel):
             })
 
         is_new = self._state.adding
-        dates_changed = getattr(self, '_dates_changed', False)
-        if is_new or dates_changed:
+
+        self._dates_changed = False
+        if self.pk:
+            old_dates = Booking.all_objects.filter(pk=self.pk).values('date_from', 'date_to').first()
+            if old_dates and (old_dates['date_from'] != self.date_from or old_dates['date_to'] != self.date_to):
+                self._dates_changed = True
+
+        if is_new or self._dates_changed:
             if self.date_from and self.date_from < timezone.localdate():
                 raise ValidationError(_('Booking start date cannot be in the past.'))
             if self.date_from and self.date_from > timezone.localdate() + relativedelta(years=1):
@@ -109,19 +120,9 @@ class Booking(UniqueID, TimeStampedModel):
 
 
     def save(self, *args, **kwargs):
-        if not self.listing_id or not self.user_id:
-            raise ValidationError({
-                'user': 'Booking transaction requires a valid Tenant user instance!',
-                'listing': 'Booking transaction requires a target Listing destination context!'
-            })
+        self.full_clean()
         with transaction.atomic():
             selected_listing = Listing.all_objects.select_for_update().get(pk=self.listing_id)
-
-            self._dates_changed = False
-            if self.pk:
-                old_dates = Booking.all_objects.filter(pk=self.pk).values('date_from', 'date_to').first()
-                if old_dates and (old_dates['date_from'] != self.date_from or old_dates['date_to'] != self.date_to):
-                    self._dates_changed = True
 
             if self.date_to and self.date_from and selected_listing:
                 if self._state.adding or self._dates_changed:
@@ -163,7 +164,6 @@ class Booking(UniqueID, TimeStampedModel):
 
                 self.snapshot_data = snapshot_data
 
-            self.full_clean(exclude=['snapshot_data'])
             super().save(*args, **kwargs)
 
     def __str__(self):

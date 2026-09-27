@@ -103,6 +103,8 @@ class Listing(UniqueID, TimeStampedModel):
     all_objects = models.Manager()
 
     def clean(self):
+        if not self.user_id:
+            raise ValidationError({'user': 'A valid landlord user instance must be assigned to create a listing!'})
         super().clean()
         if self.property_type and self.property_type in [PropertyType.ROOM, PropertyType.APARTMENT] and not self.apartment_number:
             raise ValidationError(_('The apartment number is required for room/apartment property type'))
@@ -130,8 +132,6 @@ class Listing(UniqueID, TimeStampedModel):
                 })
 
     def save(self, *args, **kwargs):
-        if not self.user_id:
-            raise ValidationError({'user': 'A valid landlord user instance must be assigned to create a listing!'})
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -196,6 +196,11 @@ class Photo(UniqueID, TimeStampedModel):
 
     def clean(self):
         super().clean()
+        if not self.listing_id or not self.photo_number:
+            raise ValidationError({
+                'photo_number': 'Photo object requires a photo number!',
+                'listing': 'Photo object requires a target Listing destination context!'
+            })
 
         if Photo.objects.filter(
             listing_id=self.listing_id,
@@ -206,11 +211,6 @@ class Photo(UniqueID, TimeStampedModel):
             })
 
     def save(self, *args, **kwargs):
-        if not self.listing_id or not self.photo_number:
-            raise ValidationError({
-                'photo_number': 'Photo object requires a photo number!',
-                'listing': 'Photo object requires a target Listing destination context!'
-            })
         self.full_clean()
         super().save(*args, **kwargs)
 
