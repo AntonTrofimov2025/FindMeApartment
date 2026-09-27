@@ -1,6 +1,6 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserManager
-from apps.core.models import UniqueID, TimeStampedModel
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from apps.core.models import UniqueID, TimeStampedModel, StatusChoices
 from django.utils import timezone
 from .managers.users import UserSoftDeleteManager, AllUserSoftDeleteManager
 from django.utils.translation import gettext_lazy as _
@@ -8,6 +8,8 @@ from apps.users.validators import validate_birth_date
 import os
 from apps.core.utils import validate_extension, validate_file_size
 from django.db import transaction
+from apps.bookings.models import Booking
+from django.core.exceptions import ValidationError
 
 
 def get_avatar_upload_path(instance, filename):
@@ -60,7 +62,20 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
         Custom soft-deletion workflow for users.
         Deactivates profile state and performs a cascading freeze on all owned property listings
         to eliminate ghost properties in the directory catalog.
+        Validates that if the user is a Landlord, they do not possess any active
+        or confirmed future reservation contracts across all their managed listings.
         """
+        if self.groups.filter(name='Landlord').exists():
+            if Booking.objects.filter(listing__user=self,
+                                                     booking_status__in=[StatusChoices.CONFIRMED, StatusChoices.CHECKED_IN],
+                                                     date_to__gte=timezone.localdate()).exists():
+                raise ValidationError({
+                    'user': _(
+                        'Cannot delete your landlord account while you have active or confirmed future guest bookings! '
+                        'Please process client cancellations or completions first through your dashboard.'
+                    )
+                })
+
         with transaction.atomic():
             self.deleted_at = timezone.now()
             self.is_active = False
