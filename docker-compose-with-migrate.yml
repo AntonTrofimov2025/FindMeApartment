@@ -10,7 +10,7 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     ports:
-      - "127.0.0.1:3306:3306"
+      - "3306:3306"
     volumes:
       - ./db:/var/lib/mysql
 #      - /opt/homebrew/var/mysql/rental_mysqldb:/var/lib/mysql
@@ -23,6 +23,7 @@ services:
   migrate:
     build: .
     container_name: fma_migrate
+    restart: no
     command: python manage.py migrate
     depends_on:
       db:
@@ -31,8 +32,8 @@ services:
       - .env
     environment:
       - DB_URL=${DB_URL}
-    volumes:
-      - .:/fma
+#    volumes:
+#      - .:/fma
 
   web:
     build:
@@ -52,7 +53,7 @@ services:
     environment:
       - DB_URL=${DB_URL}
     volumes:
-      - .:/fma
+#      - .:/fma
       - ./static:/fma/static
       - ./media:/fma/media
     healthcheck:
@@ -84,6 +85,10 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./static:/fma/static:ro
       - ./media:/fma/media:ro
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "5"
     depends_on:
       - web
       - frontend
