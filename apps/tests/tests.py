@@ -234,11 +234,13 @@ class FMATesting(APITestCase):
         self.assertIn('File size is too big! Maximum allowed size is 2 MB.', response.data['errors'][0]['detail'])
 
     def test_photos_per_week_day(self):
-        current_day = timezone.now().isoweekday()
-        photos = Photo.all_objects.annotate(day_of_week=ExtractIsoWeekDay('created_at')).filter(day_of_week=current_day)
+        current_day = timezone.localdate(timezone.now()).isoweekday()
+        photos = (Photo.all_objects.annotate(day_of_week=ExtractIsoWeekDay('created_at',
+                                                                          tzinfo=timezone.get_current_timezone())).
+                  filter(day_of_week=current_day))
         self.assertTrue(photos.exists())
         for photo in photos:
-            self.assertEqual(photo.created_at.isoweekday(), current_day)
+            self.assertEqual(timezone.localdate(photo.created_at).isoweekday(), current_day)
             self.assertEqual(photo.day_of_week, current_day)
 
     def test_age_greater_120(self):
