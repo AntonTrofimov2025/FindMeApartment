@@ -375,5 +375,5 @@ logs/db_logs.log
 media/
 test_media/
 
-**/migrations/*.py
-!**/migrations/__init__.py
+#**/migrations/*.py
+#!**/migrations/__init__.py
