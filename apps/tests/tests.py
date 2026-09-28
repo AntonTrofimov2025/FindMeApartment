@@ -77,6 +77,7 @@ class FMATesting(APITestCase):
                       username=fake.user_name(),
                       first_name=fake.unique.first_name(),
                       last_name=fake.unique.last_name(),
+                      phone=fake.unique.numerify(text="+###########"),
                       birth_date=date(year=random.randint(1970, 2008), month=9, day=19),
                       password=fake.password(length=random.randrange(8, 129, 8)),
                       is_staff=True)
