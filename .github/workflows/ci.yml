@@ -7,7 +7,7 @@ on:
     branches: [ "main", "master" ]
 
 jobs:
-  test:
+  beckend-tests:
     runs-on: ubuntu-latest
 
     services:
@@ -39,15 +39,42 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Check Missing Migrations Guardrail
+      env:
+        DB_URL: mysql://root:root_test_password@127.0.0.1:3306/fma_test_db
+        SECRET_KEY: test_secret_key_for_ci_pipeline
+        DEBUG: "False"
+      run: |
+        python manage.py makemigrations --check --dry-run
+
     - name: Run Steirly Isolated Monolith Tests
       env:
-        DB_ENGINE: django.db.backends.mysql
-        DB_NAME: fma_test_db
-        DB_USER: root
-        DB_PASSWORD: root_test_password
-        DB_HOST: 127.0.0.1
-        DB_PORT: 3306
+        DB_URL: mysql://root:root_test_password@127.0.0.1:3306/fma_test_db
         SECRET_KEY: test_secret_key_for_ci_pipeline
         DEBUG: False
       run: |
         python manage.py test
+# FRONT NOT READY YET!!!
+#  frontend-validation:
+#      runs-on: ubuntu-latest
+#      steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Set up Node.js
+#        uses: actions/setup-node@v4
+#        with:
+#          node-version: '24.x'
+#          cache: 'npm'
+#          cache-dependency-path: './frontend/package-lock.json'
+#
+#      - name: Install Frontend Dependencies
+#        run: |
+#          cd frontend && npm ci
+#
+#      - name: Run TypeScript Typecheck
+#        run: |
+#          cd frontend && npm run typecheck || echo "Skip, if typecheck script still not in package.json"
+#
+#      - name: Run Production Bundle Build
+#        run: |
+#          cd frontend && npm run build
