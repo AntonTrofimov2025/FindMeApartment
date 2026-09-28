@@ -121,9 +121,10 @@ class Booking(UniqueID, TimeStampedModel):
 
 
     def save(self, *args, **kwargs):
-        self.full_clean(exclude=['snapshot_data', 'total_price'])
         with transaction.atomic():
-            selected_listing = Listing.all_objects.select_for_update().get(pk=self.listing_id)
+            if self.listing_id:
+                selected_listing = Listing.all_objects.select_for_update().get(pk=self.listing_id)
+            self.full_clean(exclude=['snapshot_data', 'total_price'])
 
             if self.date_to and self.date_from and selected_listing:
                 if self._state.adding or self._dates_changed:
