@@ -14,9 +14,9 @@ sudo find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
 docker compose -f docker-compose.yml -f docker-compose-with-migrate.yml down
 sudo rm -rf ./db/*
 
-docker compose -f docker-compose-with-migrate.yml build --no-cache
-
 mkdir -p logs media
+
+docker compose -f docker-compose-with-migrate.yml build --no-cache
 
 echo "Ожидаем инициализацию MySQL..."
 docker compose -f docker-compose-with-migrate.yml up -d db
@@ -43,9 +43,14 @@ test_${DB_NAME}.* TO '${DB_USER}'@'%'; FLUSH PRIVILEGES;"
 
 echo "Синхронизируем расписание административных задач в системном Cron..."
 sleep 2
+DOCKER_PATH=$(which docker)
+CURRENT_PATH=$PATH
+
 cat <<FMA_EOF > fma_crontab
-0 4 * * * cd /fma && /usr/bin/docker compose exec -T web python manage.py flushexpiredtokens >> /fma/logs/blacklist_flush_logs.log 2>&1
-30 4 * * * cd /fma && /usr/bin/docker compose exec -T web python manage.py close_expired_bookings >> /fma/logs/close_bookings.log 2>&1
+PATH=$CURRENT_PATH:/usr/local/bin
+
+0 4 * * * cd /fma && $DOCKER_PATH compose exec -T web python manage.py flushexpiredtokens >> /fma/logs/blacklist_flush_logs.log 2>&1
+30 4 * * * cd /fma && $DOCKER_PATH compose exec -T web python manage.py close_expired_bookings >> /fma/logs/close_bookings.log 2>&1
 FMA_EOF
 
 crontab fma_crontab

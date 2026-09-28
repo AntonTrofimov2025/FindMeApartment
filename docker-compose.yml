@@ -36,9 +36,9 @@ services:
     environment:
       - DB_URL=${DB_URL}
     volumes:
-#      - .:/fma
       - ./static:/fma/static
       - ./media:/fma/media
+      - ./logs:/fma/logs
     healthcheck:
       # Проверяем, отвечает ли веб-сервер на порту 8000 (внутри контейнера)
       test: [ "CMD", "curl", "-f", "http://localhost:8000/ping/" ]
