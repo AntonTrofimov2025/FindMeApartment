@@ -28,8 +28,4 @@ class Migration(migrations.Migration):
             model_name='listing',
             index=models.Index(fields=['title'], name='fma_listings_title_idx'),
         ),
-        migrations.AddIndex(
-            model_name='listing',
-            index=models.Index(fields=['description'], name='fma_listings_description_idx'),
-        ),
     ]
