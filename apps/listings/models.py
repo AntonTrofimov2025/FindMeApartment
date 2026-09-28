@@ -165,8 +165,7 @@ class Listing(UniqueID, TimeStampedModel):
                    models.Index(fields=['district'], name='fma_listings_district_idx'),
                    models.Index(fields=['street'], name='fma_listings_street_idx'),
                    models.Index(fields=['country'], name='fma_listings_country_idx'),
-                   models.Index(fields=['title'], name='fma_listings_title_idx'),
-                   models.Index(Length('description', length=500), name='fma_listings_description_idx')]
+                   models.Index(fields=['title'], name='fma_listings_title_idx')]
 
 def get_upload_path(instance, filename):
     listing_id = instance.listing.id if instance.listing_id else 'Unknown'

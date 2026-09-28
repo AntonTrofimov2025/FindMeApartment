@@ -1,12 +1,12 @@
 # FindMeApartment (FMA) 🏢 Rent & Vacation Platform Backend
 
-FMA is a fully containerized vacation rental platform (an Airbnb / Booking.com–style clone) built with **Django 6.1**, **Django REST Framework**, and **MySQL 8**. Traffic is routed by **Nginx** — API and admin requests go to **Gunicorn**, everything else to a **React + TypeScript** single-page frontend — and every error leaves the API in one standardized JSON shape.
+FMA is a fully containerized vacation rental platform (an Airbnb / Booking.com–style clone) built with **Django 6.1**, **Django REST Framework**, and **MySQL 8.4**. Traffic is routed by **Nginx** — API and admin requests go to **Gunicorn**, everything else to a **React + TypeScript** single-page frontend — and every error leaves the API in one standardized JSON shape.
 
 ---
 
 ## 🛠️ Tech Stack & Core Infrastructure
 * **Backend Framework:** Django 6.1.1 & Django REST Framework 3.18.1 (Python 3.13)
-* **Database engine:** MySQL 8.0 (with container health check monitoring)
+* **Database engine:** MySQL 8.4 (with container health check monitoring)
 * **WSGI HTTP Server:** Gunicorn 26.2.0 (2 workers, automatic worker recycling via `--max-requests`)
 * **Reverse Proxy & Static Router:** Nginx — serves `/static/` and `/media/`, proxies `^/(api|admin)/` to Gunicorn, forwards all other routes to the frontend container
 * **Frontend:** React + TypeScript + Tailwind CSS, built in a multi-stage Docker image and served by `nginx:alpine`
@@ -95,7 +95,7 @@ To execute the entire integration test suite, trigger the following task within 
 ```bash
 docker compose exec web python manage.py test
 ```
-The same suite runs automatically in **GitHub Actions** (`.github/workflows/ci.yml`) against a MySQL 8 service container on every push and pull request to `main`/`master`.
+The same suite runs automatically in **GitHub Actions** (`.github/workflows/ci.yml`) against a MySQL 8.4 service container on every push and pull request to `main`/`master`.
 
 ---
 
