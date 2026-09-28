@@ -92,7 +92,7 @@ class Listing(UniqueID, TimeStampedModel):
         if self.bookings.filter(booking_status__in=[StatusChoices.CONFIRMED, StatusChoices.CHECKED_IN],
                                 date_to__gte=timezone.localdate()).exists():
             raise ValidationError({
-                'listings': _(
+                'listing': _(
                     'Cannot delete a listing with active or confirmed future bookings! '
                     'Please process client cancellations or completions first.')
             })

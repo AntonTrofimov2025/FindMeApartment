@@ -108,7 +108,8 @@ class Booking(UniqueID, TimeStampedModel):
                 raise ValidationError(_("You cannot book this property for more than 30 nights."))
 
         if self.guests_number is not None and self.guests_number > self.listing.max_guests:
-            raise ValidationError(_(f"The number of guests cannot exceed the listing's maximum capacity. (max: {self.listing.max_guests})"))
+            raise ValidationError(_("The number of guests cannot exceed the listing's maximum capacity. (max: {})").
+                                  format(self.listing.max_guests))
 
         if self.booking_status == StatusChoices.CANCELLED:
             if self.pk:

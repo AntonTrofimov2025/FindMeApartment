@@ -16,6 +16,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from django.db.models import Q, Avg, OuterRef, Exists
 from django.db.models.functions import Round
+from django.utils import timezone
 
 @extend_schema_view(
     list=extend_schema(summary='Get all listings', description='List of all listings'),
@@ -102,12 +103,13 @@ class ListingViewSet(viewsets.ModelViewSet):
             return Response({'msg': 'Cannot toggle active status on a deleted listing!'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        if listing.user != request.user and not request.user.is_staff:
+        if listing.user != request.user and not (request.user.is_staff or request.user.is_superuser):
             raise PermissionDenied('You are not allowed to manage this listing!')
 
         listing.is_active = not listing.is_active
-        listing.save(update_fields=['is_active'])
-        return Response({'id': listing.id, 'is_active': listing.is_active,
+        listing.updated_at = timezone.now()
+        listing.save(update_fields=['is_active', 'updated_at'])
+        return Response({'id': listing.id, 'is_active': listing.is_active, 'updated_at': listing.updated_at,
                          'msg': f"Status has been changed to {'active' if listing.is_active else 'not active'}"},
                         status=status.HTTP_200_OK)
 

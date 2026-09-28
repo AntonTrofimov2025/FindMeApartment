@@ -77,4 +77,4 @@ docker compose exec web python manage.py test
 ## 🔗 Main API Navigation Index
 * **Interactive Open API Specification:** `http://localhost/api/docs/` (Swagger UI Dashboard)
 * **Static Reference Schema Catalog:** `http://localhost/api/redoc/`
-* **Healthcheck Heartbeat Route:** `http://localhost/ping/`
+* **Internal Docker Infrastructure Heartbeat:** Isolated at container level (`http://localhost:8000/ping/`). Monitored strictly via Docker Engine Healthcheck matrix.

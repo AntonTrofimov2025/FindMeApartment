@@ -110,7 +110,8 @@ def booking_check_in(request, pk, *args, **kwargs):
     if booking.booking_status != StatusChoices.CONFIRMED:
         raise ValidationError({'detail': _('The booking status must be CONFIRMED only to check in your guest!')})
     if timezone.localdate() < booking.date_from:
-        raise ValidationError({'detail': _(f'You cannot check in your guest before the start date ({booking.date_from})!')})
+        raise ValidationError({'detail': _('You cannot check in your guest before the start date ({})!').
+                              format(booking.date_from)})
     if timezone.localdate() >= booking.date_to:
         raise ValidationError({'detail': _('Too late! The booking period has already expired.')})
     try:
