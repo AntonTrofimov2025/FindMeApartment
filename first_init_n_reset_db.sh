@@ -9,8 +9,6 @@ fi
 
 set -e
 
-sudo find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
-
 docker compose -f docker-compose.yml -f docker-compose-with-migrate.yml down
 sudo rm -rf ./db/*
 
@@ -21,8 +19,8 @@ docker compose -f docker-compose-with-migrate.yml build --no-cache
 echo "Ожидаем инициализацию MySQL..."
 docker compose -f docker-compose-with-migrate.yml up -d db
 
-docker compose -f docker-compose-with-migrate.yml run --rm migrate sh -c "python manage.py makemigrations users && \
- python manage.py makemigrations && python manage.py migrate users && python manage.py migrate"
+echo "Применяем базу данных из репозитория..."
+docker compose -f docker-compose-with-migrate.yml run --rm migrate sh -c "python manage.py migrate users && python manage.py migrate"
 
 echo "Поднимаем весь проект..."
 echo "Ожидаем полную готовность веб-сервера..."
