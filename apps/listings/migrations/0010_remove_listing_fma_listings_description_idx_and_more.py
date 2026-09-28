@@ -13,12 +13,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveIndex(
-            model_name='listing',
-            name='fma_listings_description_idx',
-        ),
-        migrations.AddIndex(
-            model_name='listing',
-            index=models.Index(django.db.models.functions.text.Length('description', length=500), name='fma_listings_description_idx'),
-        ),
+
     ]
