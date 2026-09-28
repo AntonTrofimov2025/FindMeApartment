@@ -39,6 +39,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Create Missing Logs Directory
+      run: |
+        mkdir -p logs
+
     - name: Check Missing Migrations Guardrail
       env:
         DB_URL: mysql://root:root_test_password@127.0.0.1:3306/fma_test_db
