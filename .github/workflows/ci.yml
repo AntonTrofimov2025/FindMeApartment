@@ -43,6 +43,9 @@ jobs:
       env:
         DB_URL: mysql://root:root_test_password@127.0.0.1:3306/fma_test_db
         SECRET_KEY: test_secret_key_for_ci_pipeline
+        AWS_ACCESS_KEY_ID: ci_mock_key_id
+        AWS_SECRET_ACCESS_KEY: ci_mock_secret_key
+        AWS_STORAGE_BUCKET_NAME: fma-server-bucket
         DEBUG: "False"
       run: |
         python manage.py makemigrations --check --dry-run
