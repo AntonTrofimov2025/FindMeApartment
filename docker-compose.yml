@@ -1,7 +1,7 @@
 #version: '3.8'
 services:
   db:
-    image: mysql:8
+    image: mysql:8.4
     container_name: fma_db
     restart: always
     environment:
