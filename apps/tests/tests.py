@@ -3,6 +3,7 @@ from django.conf import settings
 from rest_framework.test import APITestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group, Permission
 from datetime import date, timedelta
 from apps.listings.models import Listing, Photo
 from apps.bookings.models import Booking
@@ -55,6 +56,21 @@ class FMATesting(APITestCase):
             `.save()` invocations to guarantee transaction logging, pricing evaluations, and snapshot logs.
           - Reviews: Seeds 30 relational post-trip evaluation logs tied strictly to completed bookings.
         """
+        permissions = [
+        'listings.view_listing',
+        'bookings.add_booking', 'bookings.view_booking', 'bookings.change_booking',
+        'reviews.add_review', 'reviews.change_review', 'reviews.view_review',
+        'listings.view_photo'
+        ]
+        tenant_group, _ = Group.objects.get_or_create(name='Tenant')
+        permission_list = [tuple(permission.split('.', 1)) for permission in permissions]
+
+        for app_label, codename in permission_list:
+            matched_permissions = Permission.objects.filter(content_type__app_label=app_label.lower(),
+                                                            codename=codename.lower())
+            if matched_permissions.exists():
+                tenant_group.permissions.add(*matched_permissions)
+
         users = []
         for _ in range(10):
             user = User.objects.create_user(email=fake.unique.email(),
@@ -77,26 +93,30 @@ class FMATesting(APITestCase):
                       property_type=random.choice(PropertyType.values),
                       discount=random.uniform(0.01, 1),
                       apartment_number=random.randint(1, 10),
-                      max_guests=10,
+                      max_guests=random.randint(1, 10),
                       price_per_night=Decimal(random.randint(3000, 25000)),
                       rooms=random.choice(RoomCount.values)
                     ) for i in range(20)]
         Listing.objects.bulk_create(listings)
         all_listings = list(Listing.objects.all())
+        buffer = BytesIO()
+        image = Image.new(mode='RGB', size=(100, 100), color='white')
+        image.save(buffer, format='PNG', quality=100, subsampling='4:4:4')
         photos = [Photo(listing=listing,
-                          photo=SimpleUploadedFile('our_photo.png', content=b"0" * 1024 * 1024,
+                        photo=SimpleUploadedFile('our_photo.png', content=buffer.getvalue(),
                                                    content_type="image/png"),
-                          photo_number=random.randint(1, 50)) for listing in all_listings]
-        Photo.objects.bulk_create(photos)
+                        photo_number=1) for listing in all_listings]
+        for photo in photos:
+            photo.save()
         all_users = list(User.objects.all())
         random.shuffle(all_listings)
         random.shuffle(all_users)
         bookings = [Booking(
-                      user=random.choice(all_users),
-                      listing=random.choice(all_listings),
+                      listing=(selected_listing := random.choice(all_listings)),
+                      user=random.choice([user for user in all_users if user.id != selected_listing.user_id]),
                       date_from=timezone.localdate() + timedelta(days=i),
                       date_to=timezone.localdate() + timedelta(days=i + 1),
-                      guests_number=random.randint(2, 10),
+                      guests_number=random.randint(1, selected_listing.max_guests),
                       booking_status=StatusChoices.COMPLETED
                     ) for i in range(30)]
         for booking in bookings:
@@ -233,14 +253,15 @@ class FMATesting(APITestCase):
         self.assertIn('You are so old my friend! :D Try again :)', response.data['errors'][0]['detail'])
 
     def test_overlapping_dates(self):
-        listing_id = Listing.objects.first().id
         user = User.objects.last()
+        listing = Listing.objects.exclude(user_id=user.id).first()
+        listing_id = listing.id
         self.client.force_authenticate(user)
         data = {
               'listing': listing_id,
               'date_from': (timezone.localdate() + timedelta(days=41)).strftime('%Y-%m-%d'),
               'date_to': (timezone.localdate() + timedelta(days=43)).strftime('%Y-%m-%d'),
-              'guests_number': random.randint(2, 10)
+              'guests_number': random.randint(1, listing.max_guests)
             }
         response = self.client.post(reverse('booking-list'), data=data, format='json')
         self.assertEqual(response.status_code, 201)
