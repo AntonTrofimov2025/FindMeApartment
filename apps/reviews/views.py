@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from .models import Review
 from .serializers.reviews import ReviewSerializer, ReviewCreateUpdateSerializer
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
 from .permissions import IsReviewAuthorOrAdmin
@@ -22,7 +22,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
           to the original review author (Tenant) or system Administrators.
     """
 
-    queryset = Review.all_objects.select_related('booking', 'booking__user', 'booking__listing').all()
+    queryset = Review.all_objects.select_related('booking', 'booking__user', 'booking__listing')
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
@@ -48,12 +48,14 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_authenticated and (user.is_staff or user.is_superuser):
-            return self.queryset
+            return Review.all_objects.select_related('booking', 'booking__user', 'booking__listing').all()
         return Review.objects.select_related('booking', 'booking__user', 'booking__listing').all()
 
     def get_permissions(self):
-        if self.action in ['update', 'partial_update', 'destroy']:
+        if self.action in ['destroy']:
             return [IsReviewAuthorOrAdmin()]
+        elif self.action in ['update', 'partial_update']:
+            return [IsAdminUser()]
         return super().get_permissions()
 
     def perform_create(self, serializer):

@@ -40,7 +40,7 @@ class ReviewCreateUpdateSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
 
         if booking and request:
-            if booking.user != request.user:
+            if booking.user != request.user and not (request.user.is_staff or request.user.is_superuser):
                 raise serializers.ValidationError('You can leave reviews for your own completed bookings only!')
 
             existing_review = Review.objects.filter(booking=booking).first()
@@ -49,7 +49,3 @@ class ReviewCreateUpdateSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError('You can leave only one review for the booking!')
 
         return attrs
-
-    def update(self, instance, validated_data):
-        validated_data.pop('booking', None)
-        return super().update(instance, validated_data)
