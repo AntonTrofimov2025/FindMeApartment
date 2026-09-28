@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # 1. Создаем пустой файл подкачки размером 512 МБ
 sudo dd if=/dev/zero of=/swapfile bs=1M count=512
@@ -15,3 +16,5 @@ sudo swapon /swapfile
 # 5. Добавляем в автозагрузку
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 
+sleep 5
+echo "DONE! Virtual RAM has been successfully extended :)"
