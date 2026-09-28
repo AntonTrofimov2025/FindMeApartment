@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ "main", "master" ]
 
+env:
+  TZ: 'Europe/Berlin'
+
 jobs:
   beckend-tests:
     runs-on: ubuntu-latest
@@ -16,6 +19,7 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: root_test_password
           MYSQL_DATABASE: fma_test_db
+          TZ: 'Europe/Berlin'
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
