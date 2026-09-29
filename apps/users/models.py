@@ -80,7 +80,7 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
 
         elif Booking.all_objects.filter(user=self,
                                     booking_status__in=[StatusChoices.CONFIRMED, StatusChoices.CHECKED_IN],
-                                    date_to__ge=timezone.localdate()
+                                    date_to__gte=timezone.localdate()
                                 ).exists():
             raise ValidationError({
                 "detail": "Cannot delete account! You have active or confirmed upcoming reservations. "

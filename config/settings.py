@@ -307,7 +307,6 @@ ROLE_PERMISSION = {
         'listings.delete_listing',
         'listings.view_listing',
 
-        'bookings.change_booking',
         'bookings.view_booking',
 
         'reviews.view_review',
@@ -322,7 +321,6 @@ ROLE_PERMISSION = {
 
         'bookings.add_booking',
         'bookings.view_booking',
-        'bookings.change_booking',
 
         'reviews.add_review',
         'reviews.change_review',

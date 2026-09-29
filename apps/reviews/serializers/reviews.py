@@ -48,4 +48,4 @@ class ReviewCreateUpdateSerializer(serializers.ModelSerializer):
                 if not self.instance or existing_review.pk != self.instance.pk:
                     raise serializers.ValidationError('You can leave only one review for the booking!')
 
-        return attrs
+        return super().validate(attrs)

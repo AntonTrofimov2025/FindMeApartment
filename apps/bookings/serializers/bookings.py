@@ -64,22 +64,12 @@ class BookingCreateUpdateSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'total_price', 'user', 'booking_status', 'deleted_at']
 
     def validate(self, attrs):
-        if self.instance:
-            if self.instance.booking_status != StatusChoices.PENDING:
-                raise serializers.ValidationError(_("You can only modify bookings that are in 'Pending' status!"))
-        #     instance = copy.deepcopy(self.instance)
-        #     for field, value in attrs.items():
-        #         setattr(instance, field, value)
-        # else:
-        #     instance = Booking(**attrs)
-        #     if 'request' in self.context:
-        #         instance.user = self.context['request'].user
-
-        # try:
-        #     instance.clean()
-        # except ValidationError as e:
-        #     e = e.message_dict if hasattr(e, 'message_dict') else e.messages
-        #     raise serializers.ValidationError(e)
-
-        return attrs
-
+        # if self.instance:
+        #     if self.instance.booking_status != StatusChoices.PENDING:
+        #         raise serializers.ValidationError(_("You can only modify bookings that are in 'Pending' status!"))
+        request = self.context.get('request')
+        if request and request.user.groups.filter(name='Landlord').exists():
+            raise serializers.ValidationError({
+                "detail": "Landlords are strictly prohibited from creating rental reservation contracts!"
+            })
+        return super().validate(attrs)

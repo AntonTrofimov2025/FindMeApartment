@@ -77,7 +77,7 @@ class RegisterUserSerializer(ValidatePhoneMixin, serializers.ModelSerializer):
                 raise serializers.ValidationError({'password': 'Password fields are required for registration!!'})
             if attrs.get('password') != attrs.get('re_password'):
                 raise DRFValidationError({'re_password': 'Passwords do not match!!'})
-        return attrs
+        return super().validate(attrs)
 
     def create(self, validated_data):
         validated_data.pop('re_password', None)
@@ -159,4 +159,4 @@ class ChangePasswordSerializer(serializers.Serializer):
                 'refresh': _('Provided refresh token is invalid or already expired.')
             })
 
-        return attrs
+        return super().validate(attrs)
