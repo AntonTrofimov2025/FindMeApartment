@@ -70,11 +70,22 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
                                                      booking_status__in=[StatusChoices.CONFIRMED, StatusChoices.CHECKED_IN],
                                                      date_to__gte=timezone.localdate()).exists():
                 raise ValidationError({
-                    'user': _(
+                    'detail': _(
                         'Cannot delete your landlord account while you have active or confirmed future guest bookings! '
                         'Please process client cancellations or completions first through your dashboard.'
                     )
                 })
+            unapproved_bookings = Booking.all_objects.filter(listing__user=self, booking_status=StatusChoices.PENDING)
+            unapproved_bookings.update(booking_status=StatusChoices.CANCELLED, updated_at=timezone.now())
+
+        elif Booking.all_objects.filter(user=self,
+                                    booking_status__in=[StatusChoices.CONFIRMED, StatusChoices.CHECKED_IN],
+                                    date_to__ge=timezone.localdate()
+                                ).exists():
+            raise ValidationError({
+                "detail": "Cannot delete account! You have active or confirmed upcoming reservations. "
+                          "Please cancel your bookings first before deleting your profile."
+            })
 
         with transaction.atomic():
             self.deleted_at = timezone.now()
