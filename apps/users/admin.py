@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -34,5 +35,10 @@ class Admin(admin.ModelAdmin):
         users = queryset.update(deleted_at=None, is_active=True)
         self.message_user(request, f"Successfully restored {users} users. 🎉")
 
-    actions = [restore_users]
+    @admin.action(description="Soft delete selected users")
+    def soft_delete_users(self, request, queryset):
+        users = queryset.update(deleted_at=timezone.now(), is_active=False)
+        self.message_user(request, f"Successfully soft deleted {users} users.")
+
+    actions = [restore_users, soft_delete_users]
 

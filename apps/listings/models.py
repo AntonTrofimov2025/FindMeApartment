@@ -135,7 +135,7 @@ class Listing(UniqueID, TimeStampedModel):
     @transaction.atomic
     def save(self, *args, **kwargs):
         if self.user_id:
-            get_user_model().objects.select_for_update().get(pk=self.user_id)
+            get_user_model().all_objects.select_for_update().get(pk=self.user_id)
         self.full_clean()
         super().save(*args, **kwargs)
 
