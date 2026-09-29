@@ -59,9 +59,9 @@ class BookingCreateUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Booking
-        fields = ['id', 'listing', 'user', 'date_from', 'date_to', 'booking_status', 'guests_number', 'snapshot_data',
+        fields = ['id', 'listing', 'user', 'date_from', 'date_to', 'booking_status', 'guests_number',
                   'total_price', 'deleted_at']
-        read_only_fields = ['id', 'total_price', 'user', 'booking_status', 'snapshot_data', 'deleted_at']
+        read_only_fields = ['id', 'total_price', 'user', 'booking_status', 'deleted_at']
 
     def validate(self, attrs):
         if self.instance:
