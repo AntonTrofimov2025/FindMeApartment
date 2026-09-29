@@ -10,7 +10,6 @@ fi
 set -e
 
 docker compose down
-sudo rm -rf ./db/*
 
 mkdir -p logs media
 

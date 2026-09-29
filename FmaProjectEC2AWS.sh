@@ -35,10 +35,6 @@ cd /fma
 git clone https://github.com/AntonTrofimov2025/FindMeApartment.git .
 sudo chown -R ec2-user:ec2-user /fma
 
-echo "Удаляем первичный скрипт инициализации..."
-sleep 2
-rm FmaProjectEC2AWS.sh
-
 echo "Устанавливаем время на сервере на Европа/Берлин..."
 sleep 1
 sudo timedatectl set-timezone Europe/Berlin
