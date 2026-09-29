@@ -16,4 +16,12 @@ env/
 
 .git
 .gitignore
+.github/
 .DS_Store
+
+frontend/
+
+logs/
+media/
+static/
+*.log
