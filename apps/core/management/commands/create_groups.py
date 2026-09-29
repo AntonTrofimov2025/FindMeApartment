@@ -2,6 +2,8 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group, Permission
 from config.settings import ROLE_PERMISSION
 from django.contrib.auth import get_user_model
+from typing import Generator
+from django.db.models import Q
 
 
 User = get_user_model()
@@ -18,26 +20,26 @@ class Command(BaseCommand):
     help = 'Initializes default security groups and assigns respective permission constraints.'
 
     @staticmethod
-    def add_permission(group, permissions: list[tuple[str, str]] | tuple[str, str]):
-        if isinstance(permissions, tuple):
-            permissions = [permissions]
-        for app_label, codename in permissions:
-            try:
-                matched_permissions = Permission.objects.filter(content_type__app_label=app_label.lower(),
-                                                                codename=codename.lower())
-                if matched_permissions.exists():
-                    group.permissions.add(*matched_permissions)
-                else:
-                    print(f"The requested right has not been added: {app_label}.{codename} (Not found in db.)")
-            except (ValueError, Permission.DoesNotExist):
-                print(f"The requested right has not been added: {app_label}.{codename}")
+    def add_permission(group, permissions: Generator[str]):
+        matched_permissions = Q()
+        for permission in permissions:
+            app_label, codename = permission.split('.', 1)
+            matched_permissions |= Q(content_type__app_label=app_label.lower(), codename=codename.lower())
+        try:
+            matched_permissions = Permission.objects.filter(matched_permissions)
+            if matched_permissions.exists():
+                group.permissions.set(matched_permissions)
+            else:
+                print(f"The requested rights have not been added: (Not found in db.)")
+        except (ValueError, Permission.DoesNotExist):
+            print(f"The requested rights have not been added.")
 
     @staticmethod
     def create_permission():
-        for key, value in ROLE_PERMISSION.items():
-            group, _ = Group.objects.get_or_create(name=key)
-            permission_list = [tuple(permission.split('.', 1)) for permission in value]
-            Command.add_permission(group, permission_list)
+        for group_name, permissions in ROLE_PERMISSION.items():
+            group, _ = Group.objects.get_or_create(name=group_name)
+            permission_gen = (permission for permission in permissions)
+            Command.add_permission(group, permission_gen)
 
     def handle(self, *args, **kwargs):
         self.create_permission()

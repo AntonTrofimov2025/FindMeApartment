@@ -14,6 +14,7 @@ from faker import Faker
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from django.db.models.functions import ExtractIsoWeekDay
+from django.db.models import Q
 from io import BytesIO
 from PIL import Image
 from apps.core.models import Countries, StatusChoices, PropertyType, RoomCount
@@ -56,20 +57,30 @@ class FMATesting(APITestCase):
             `.save()` invocations to guarantee transaction logging, pricing evaluations, and snapshot logs.
           - Reviews: Seeds 30 relational post-trip evaluation logs tied strictly to completed bookings.
         """
-        permissions = [
+        permissions_tenant = [
         'listings.view_listing',
         'bookings.add_booking', 'bookings.view_booking', 'bookings.change_booking',
         'reviews.add_review', 'reviews.change_review', 'reviews.view_review',
         'listings.view_photo'
         ]
+        permissions_landlord = [
+            'listings.add_listing', 'listings.change_listing', 'listings.delete_listing', 'listings.view_listing',
+            'bookings.change_booking', 'bookings.view_booking',
+            'reviews.view_review',
+            'listings.add_photo', 'listings.change_photo', 'listings.delete_photo', 'listings.view_photo'
+        ]
         tenant_group, _ = Group.objects.get_or_create(name='Tenant')
-        permission_list = [tuple(permission.split('.', 1)) for permission in permissions]
+        landlord_group, _ = Group.objects.get_or_create(name='Landlord')
 
-        for app_label, codename in permission_list:
-            matched_permissions = Permission.objects.filter(content_type__app_label=app_label.lower(),
-                                                            codename=codename.lower())
-            if matched_permissions.exists():
-                tenant_group.permissions.add(*matched_permissions)
+        def get_your_permissions(permission_list: list[str]):
+            matched_permissions = Q()
+            for permission in permission_list:
+                app_label, codename = permission.split('.', 1)
+                matched_permissions |= Q(content_type__app_label=app_label.lower(), codename=codename.lower())
+            return Permission.objects.filter(matched_permissions) if matched_permissions else Permission.objects.none()
+
+        tenant_group.permissions.set(get_your_permissions(permissions_tenant))
+        landlord_group.permissions.set(get_your_permissions(permissions_landlord))
 
         users = []
         for _ in range(10):
@@ -198,6 +209,10 @@ class FMATesting(APITestCase):
         self.assertEqual(response.data['count'], 20)
         for photo in response.data['results']:
             self.assertEqual(photo['photo'],f'http://testserver/media/listings/{str(photo['listing'])}/our_photo.png')
+
+    def test_post_listing_not_landlord(self):
+        ...
+        # GET BACK!!!
 
     def test_txt_file_is_forbidden(self):
         self.client.force_authenticate(User.objects.first())
