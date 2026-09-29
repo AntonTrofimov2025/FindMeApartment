@@ -3,6 +3,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db import transaction
+from django.utils import timezone
 from .serializers import UserListSerializer, RegisterUserSerializer, ChangePasswordSerializer, ProfileUpdateSerializer
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -70,9 +71,10 @@ class UserMeView(APIView):
         user.set_password(serializer.validated_data['new_password'])
         user.save(update_fields=['password'])
 
-        user_live_tokens = OutstandingToken.objects.filter(user=user)
-        for token in user_live_tokens:
-            BlacklistedToken.objects.get_or_create(token=token)
+        user_live_tokens = OutstandingToken.objects.filter(user=user, expires_at__gt=timezone.now())
+        tokens_to_blacklist = [BlacklistedToken(token=token) for token in user_live_tokens]
+        if tokens_to_blacklist:
+            BlacklistedToken.objects.bulk_create(tokens_to_blacklist, ignore_conflicts=True)
 
         refresh = RefreshToken.for_user(user)
 
