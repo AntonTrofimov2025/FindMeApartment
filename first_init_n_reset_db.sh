@@ -9,22 +9,22 @@ fi
 
 set -e
 
-docker compose -f docker-compose.yml -f docker-compose-with-migrate.yml down
+docker compose down
 sudo rm -rf ./db/*
 
 mkdir -p logs media
 
-docker compose -f docker-compose-with-migrate.yml build --no-cache
+docker compose build --no-cache
 
 echo "Ожидаем инициализацию MySQL..."
-docker compose -f docker-compose-with-migrate.yml up -d db
+docker compose up -d db
 
-echo "Применяем базу данных из репозитория..."
-docker compose -f docker-compose-with-migrate.yml run --rm migrate sh -c "python manage.py migrate users && python manage.py migrate"
+echo "Применяем миграции базы данных из репозитория..."
+docker compose run --rm web sh -c "python manage.py migrate users && python manage.py migrate"
 
 echo "Поднимаем весь проект..."
 echo "Ожидаем полную готовность веб-сервера..."
-docker compose -f docker-compose.yml up -d
+docker compose up -d
 
 echo "Настраиваем стили для NGINX..."
 sleep 5
