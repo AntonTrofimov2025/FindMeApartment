@@ -8,6 +8,13 @@ if [ -z "$bucket_name" ]; then
     bucket_name="fma-server-bucket"
 fi
 
+echo "Deactivating Block Public Access constraints for '$bucket_name'..."
+aws s3api put-public-access-block \
+    --bucket "$bucket_name" \
+    --public-access-block-configuration "BlockPublicAcls=true,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
+
+sleep 2
+
 echo "Generating and injecting secure Bucket Policy for '$bucket_name'..."
 
 POLICY_JSON=$(cat <<FMA_EOF
