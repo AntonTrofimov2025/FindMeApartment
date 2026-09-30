@@ -84,7 +84,7 @@ jobs:
 #
 #      - name: Run TypeScript Typecheck
 #        run: |
-#          cd frontend && npm run typecheck || echo "Skip, if typecheck script still not in package.json"
+#          cd frontend && npm run typecheck
 #
 #      - name: Run Production Bundle Build
 #        run: |
