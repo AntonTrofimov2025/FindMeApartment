@@ -39,9 +39,9 @@ def booking_approve(request, pk, *args, **kwargs):
         raise PermissionDenied({'detail': 'You are not the owner of this property!'})
     if booking.booking_status != StatusChoices.PENDING:
         raise ValidationError({'detail': 'The booking status must be PENDING only to be approved!'})
-    if booking.date_from <= timezone.localdate():
+    if booking.date_from < timezone.localdate():
         raise ValidationError({
-            "detail": "Cannot approve this booking! The check-in date has already arrived or passed. This request is expired."
+            "detail": "Cannot approve this booking! The check-in date has already passed. This request is expired."
         })
     try:
         booking.booking_status = StatusChoices.CONFIRMED
