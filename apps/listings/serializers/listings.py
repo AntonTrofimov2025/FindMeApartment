@@ -11,8 +11,9 @@ class ListingSerializer(serializers.ModelSerializer):
     Exposes comprehensive read-only property fields including computed aggregates
     such as `overall_rating` and the quantized Decimal `final_price_per_night`.
     """
-    overall_rating = serializers.ReadOnlyField()
-    is_deleted = serializers.ReadOnlyField()
+    overall_rating = serializers.FloatField(read_only=True)
+    final_price_per_night = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    is_deleted = serializers.BooleanField(read_only=True)
     photos = PhotoSerializer(many=True, read_only=True)
 
     class Meta:
@@ -53,7 +54,7 @@ class ListingCreateUpdateSerializer(serializers.ModelSerializer):
     Locks critical system ownership fields as `read_only` to guarantee that
     the active authenticated user is automatically bound as the property host.
     """
-    overall_rating = serializers.ReadOnlyField()
+    overall_rating = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Listing

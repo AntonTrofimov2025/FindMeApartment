@@ -9,7 +9,7 @@ class ReviewSerializer(serializers.ModelSerializer):
     Transforms qualitative user review texts, property metrics, and location stars
     into standard consumer-facing JSON arrays.
     """
-    is_deleted = serializers.ReadOnlyField()
+    is_deleted = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Review

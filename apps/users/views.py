@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, APIView
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework_simplejwt.serializers import TokenBlacklistSerializer
 
 @extend_schema(summary='Register new user', description='New user registration')
@@ -39,7 +39,7 @@ class UserMeView(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(summary="Get current user's profile.", responses={'200': UserListSerializer},
+    @extend_schema(summary="Get current user's profile.", responses={200: UserListSerializer},
                    tags=["User Profile"])
     def get(self, request, *args, **kwargs):
         """
@@ -54,7 +54,9 @@ class UserMeView(APIView):
     @extend_schema(
         summary="Securely change current user's password",
         request=ChangePasswordSerializer,
-        responses={"200": "Password changed successfully."},
+        responses={
+            200: OpenApiResponse(description="Password changed successfully.")
+        },
         tags=["User Profile"]
     )
     @transaction.atomic
@@ -85,7 +87,7 @@ class UserMeView(APIView):
                              }}, status=status.HTTP_200_OK)
 
     @extend_schema(summary="Fully updates current user's profile (such as avatar, phone number, etc.)",
-                   request=ProfileUpdateSerializer, responses={'200': UserListSerializer}, tags=["User Profile"])
+                   request=ProfileUpdateSerializer, responses={200: UserListSerializer}, tags=["User Profile"])
     def put(self, request, *args, partial=False, **kwargs):
         """
         Perform a full or partial data synchronization for the user's profile.
@@ -100,14 +102,16 @@ class UserMeView(APIView):
 
     @extend_schema(summary="Partially updates current user's profile (such as avatar, phone number, etc.)",
                    request=ProfileUpdateSerializer,
-                   responses={'200': UserListSerializer}, tags=["User Profile"])
+                   responses={200: UserListSerializer}, tags=["User Profile"])
     def patch(self, request, *args, **kwargs):
         return self.put(request, partial=True)
 
     @extend_schema(
         summary="Delete current user's account",
         description="Soft deletes the authenticated user profile, deactivates access, and logs the timestamp.",
-        responses={"200": "Your account has been successfully deleted."},
+        responses={
+            200: OpenApiResponse(description="Your account has been successfully deleted.")
+        },
         tags=["User Profile"]
     )
     def delete(self, request, *args, **kwargs):
@@ -134,7 +138,10 @@ class UserBecomeLandlordView(APIView):
     @extend_schema(
         summary="Become a Landlord",
         description="Switch current user group from Tenant to Landlord to allow property listing.",
-        responses={'200': 'Successfully became a landlord.'},
+        request=None,
+        responses={
+            200: OpenApiResponse(description='Successfully became a landlord.')
+        },
         tags=["User Profile"]
     )
     def post(self, request, *args, **kwargs):
@@ -166,8 +173,8 @@ class UserBecomeLandlordView(APIView):
 @extend_schema(summary='Account Logout',
                description='Logout authorized user by putting his REFRESH TOKEN to BLACKLIST.',
                responses={
-                   "200": 'You have been logged out.',
-                   "401": 'You have not been logged in.'
+                   200: OpenApiResponse(description='You have been logged out.'),
+                   401: OpenApiResponse(description='You have not been logged in.')
                },
                request=TokenBlacklistSerializer)
 @api_view(['POST'])

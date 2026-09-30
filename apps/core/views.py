@@ -1,14 +1,19 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework.permissions import AllowAny
 
 
 
 @extend_schema(summary='Exception Handler Test',
                description='Assurance of proper working of custom django standard exceptions handler.',
-               tags=['Testing / System'])
+               tags=['Testing / System'],
+               request=None,
+               responses={
+                   500: OpenApiResponse(
+                       description="Standardized 500 Server Error JSON response triggered by ZeroDivisionError.")
+               })
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def test_django_standard_exceptions(request):
@@ -23,6 +28,15 @@ def test_django_standard_exceptions(request):
     x = 1 / 0
     return Response({'msg': x})
 
+@extend_schema(
+    summary="System Health Check",
+    description="Provides container orchestration tools with a simple mechanism to verify that the application instance is live.",
+    tags=['Testing / System'],
+    request=None,
+    responses={
+        200: OpenApiResponse(description="Server works fine :)")
+    }
+)
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def health_check(request):

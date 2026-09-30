@@ -13,7 +13,7 @@ class BookingSerializer(serializers.ModelSerializer):
     extracted from `snapshot_data`.
     """
 
-    is_deleted = serializers.ReadOnlyField()
+    is_deleted = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Booking

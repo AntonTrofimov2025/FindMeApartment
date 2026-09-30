@@ -29,7 +29,7 @@ class UserListSerializer(serializers.ModelSerializer):
     associated listings and bookings. Used for rendering accounts in directories
     and the personal profile dashboard.
     """
-    is_deleted = serializers.ReadOnlyField()
+    is_deleted = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = get_user_model()

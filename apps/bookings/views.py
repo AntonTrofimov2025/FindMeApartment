@@ -12,13 +12,18 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
 from .serializers.bookings import BookingSerializer, BookingCreateUpdateSerializer
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, DjangoModelPermissions
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 
-@extend_schema(summary='Approve booking', description='Approval of booking provided its status is PENDING')
+@extend_schema(summary='Approve booking', description='Approval of booking provided its status is PENDING',
+               request=None,
+               responses={
+                   200: OpenApiResponse(description='The booking has successfully been confirmed.'),
+                   400: OpenApiResponse(description='Validation error data')
+               })
 @api_view(['POST'])
 @permission_classes([IsLandLord])
 @transaction.atomic
@@ -46,7 +51,12 @@ def booking_approve(request, pk, *args, **kwargs):
         raise ValidationError(error_data)
     return Response({'msg': 'The booking has successfully been confirmed.'}, status=status.HTTP_200_OK)
 
-@extend_schema(summary='Reject booking', description='Rejection of booking, provided its status is PENDING')
+@extend_schema(summary='Reject booking', description='Rejection of booking, provided its status is PENDING',
+               request=None,
+               responses={
+                   200: OpenApiResponse(description='The booking has successfully been rejected.'),
+                   400: OpenApiResponse(description='Validation error data')
+               })
 @api_view(['POST'])
 @permission_classes([IsLandLord])
 @transaction.atomic
@@ -70,7 +80,12 @@ def booking_reject(request, pk, *args, **kwargs):
         raise ValidationError(error_data)
     return Response({'msg': 'The booking has successfully been rejected.'}, status=status.HTTP_200_OK)
 
-@extend_schema(summary='Cancel booking', description='Cancellation of booking provided its status is CONFIRMED')
+@extend_schema(summary='Cancel booking', description='Cancellation of booking provided its status is CONFIRMED',
+               request=None,
+               responses={
+                   200: OpenApiResponse(description='The booking has successfully been cancelled.'),
+                   400: OpenApiResponse(description='Validation error data')
+               })
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @transaction.atomic
@@ -96,7 +111,12 @@ def booking_cancel(request, pk, *args, **kwargs):
     return Response({'msg': 'The booking has successfully been cancelled.'}, status=status.HTTP_200_OK)
 
 @extend_schema(summary='CHECK IN your guest',
-               description='Change status of booking to CHECKED IN provided its status is CONFIRMED')
+               description='Change status of booking to CHECKED IN provided its status is CONFIRMED',
+               request=None,
+               responses={
+                   200: OpenApiResponse(description='Your guest has successfully been checked in. :)'),
+                   400: OpenApiResponse(description='Validation error data')
+               })
 @api_view(['POST'])
 @permission_classes([IsLandLord])
 @transaction.atomic

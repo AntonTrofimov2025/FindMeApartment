@@ -9,7 +9,7 @@ class PhotoSerializer(serializers.ModelSerializer):
     Maps structural binary file payloads to designated asset foreign key relations.
     Protects administrative historical records by locking modification dates as read-only.
     """
-    is_deleted = serializers.ReadOnlyField()
+    is_deleted = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Photo
