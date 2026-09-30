@@ -323,7 +323,6 @@ ROLE_PERMISSION = {
         'bookings.view_booking',
 
         'reviews.add_review',
-        'reviews.change_review',
         'reviews.view_review',
 
         'listings.view_photo'
