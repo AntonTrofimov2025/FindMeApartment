@@ -10,6 +10,7 @@ from apps.core.utils import validate_extension, validate_file_size
 from django.db import transaction
 from apps.bookings.models import Booking
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 
 
 def get_avatar_upload_path(instance, filename):
@@ -57,6 +58,7 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
     objects = UserSoftDeleteManager()
     all_objects = AllUserSoftDeleteManager()
 
+    @transaction.atomic
     def delete(self, *args, **kwargs):
         """
         Custom soft-deletion workflow for users.
@@ -65,7 +67,8 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
         Validates that if the user is a Landlord, they do not possess any active
         or confirmed future reservation contracts across all their managed listings.
         """
-        if self.groups.filter(name='Landlord').exists():
+        is_landlord = self.groups.filter(name='Landlord').exists()
+        if is_landlord:
             if Booking.objects.filter(listing__user=self,
                                                      booking_status__in=[StatusChoices.CONFIRMED, StatusChoices.CHECKED_IN],
                                                      date_to__gte=timezone.localdate()).exists():
@@ -75,10 +78,8 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
                         'Please process client cancellations or completions first through your dashboard.'
                     )
                 })
-            unapproved_bookings = Booking.all_objects.filter(listing__user=self, booking_status=StatusChoices.PENDING)
-            unapproved_bookings.update(booking_status=StatusChoices.CANCELLED, updated_at=timezone.now())
 
-        elif Booking.all_objects.filter(user=self,
+        if Booking.all_objects.filter(user=self,
                                     booking_status__in=[StatusChoices.CONFIRMED, StatusChoices.CHECKED_IN],
                                     date_to__gte=timezone.localdate()
                                 ).exists():
@@ -87,14 +88,23 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
                           "Please cancel your bookings first before deleting your profile."
             })
 
-        with transaction.atomic():
-            self.deleted_at = timezone.now()
-            self.is_active = False
-            self.listings.all().update(
-                is_active=False,
-                deleted_at=self.deleted_at
-            )
-            super().save(update_fields=['deleted_at', 'is_active', 'updated_at'])
+        filter_attrs = Q(listing__user=self, booking_status=StatusChoices.PENDING) | Q(
+            user=self, booking_status=StatusChoices.PENDING)\
+            if is_landlord else Q(user=self, booking_status=StatusChoices.PENDING)
+
+        unapproved_bookings = Booking.all_objects.filter(filter_attrs)
+        for booking in unapproved_bookings:
+            booking.booking_status=StatusChoices.CANCELLED
+            booking.updated_at=timezone.now()
+            booking.save()
+
+        self.deleted_at = timezone.now()
+        self.is_active = False
+        self.listings.all().update(
+            is_active=False,
+            deleted_at=self.deleted_at
+        )
+        super().save(update_fields=['deleted_at', 'is_active', 'updated_at'])
 
     def save(self, *args, **kwargs):
         if self.phone == '' or (self.phone and not self.phone.strip()):
