@@ -80,15 +80,15 @@ class FMATesting(APITestCase):
         tenant_group.permissions.set(get_your_permissions(permissions_tenant))
         landlord_group.permissions.set(get_your_permissions(permissions_landlord))
 
-        admin_user = User(email=fake.unique.email(),
+        admin_user = User.objects.create_superuser(email=fake.unique.email(),
                                  username=fake.user_name(),
                                  first_name=fake.unique.first_name(),
                                  last_name=fake.unique.last_name(),
                                  phone=fake.unique.numerify(text="+###########"),
                                  birth_date=date(year=random.randint(1970, 2008), month=9, day=19),
                                  password=fake.password(length=random.randrange(8, 129, 8)),
-                                 is_staff=True)
-        admin_user.save()
+                                 is_staff=True,
+                                 is_superuser=True)
         cls.admin_user = admin_user
 
         tenants = []
@@ -126,7 +126,7 @@ class FMATesting(APITestCase):
                       street=fake.street_address(),
                       house_number=f"{i}",
                       property_type=(prop_type := random.choice(PropertyType.values)),
-                      discount=Decimal(str(round(random.uniform(0.01, 1), 2))),
+                      discount=Decimal(f"{random.uniform(0.01, 1):.2f}"),
                       apartment_number=random.randint(1, 10) if prop_type not
                                                                 in [PropertyType.STUDIO, PropertyType.HOUSE] else None,
                       max_guests=random.randint(1, 10),
@@ -272,7 +272,7 @@ class FMATesting(APITestCase):
                 "street": fake.street_address(),
                 "house_number": f"{random.randint(1, 100)}",
                 "property_type": PropertyType.APARTMENT,
-                "discount": Decimal(str(round(random.uniform(0.01, 1), 2))),
+                "discount": Decimal(f"{random.uniform(0.01, 1):.2f}"),
                 "apartment_number": random.randint(1, 10),
                 "max_guests": random.randint(1, 10),
                 "price_per_night": float(Decimal(random.randint(3000, 25000))),
@@ -300,7 +300,7 @@ class FMATesting(APITestCase):
                 "street": fake.street_address(),
                 "house_number": f"{random.randint(1, 100)}",
                 "property_type": PropertyType.APARTMENT,
-                "discount": Decimal(str(round(random.uniform(0.01, 1), 2))),
+                "discount": Decimal(f"{random.uniform(0.01, 1):.2f}"),
                 "apartment_number": random.randint(1, 10),
                 "max_guests": random.randint(1, 10),
                 "price_per_night": float(Decimal(random.randint(3000, 25000))),
@@ -501,7 +501,7 @@ class FMATesting(APITestCase):
             "street": fake.street_address(),
             "house_number": f"{random.randint(1, 100)}",
             "property_type": PropertyType.APARTMENT,
-            "discount": Decimal(str(round(random.uniform(0.01, 1), 2))),
+            "discount": Decimal(f"{random.uniform(0.01, 1):.2f}"),
             "apartment_number": random.randint(1, 10),
             "max_guests": random.randint(1, 10),
             "price_per_night": float(Decimal(random.randint(3000, 25000))),
