@@ -519,8 +519,8 @@ class FMATesting(APITestCase):
 
         book_data = {
             'listing': response_listing.data['id'],
-            'date_from': (timezone.localdate() + timedelta(days=2)).strftime('%Y-%m-%d'),
-            'date_to': (timezone.localdate() + timedelta(days=4)).strftime('%Y-%m-%d'),
+            'date_from': (timezone.localdate() + timedelta(days=1)).strftime('%Y-%m-%d'),
+            'date_to': (timezone.localdate() + timedelta(days=3)).strftime('%Y-%m-%d'),
             'guests_number': 1
         }
         response = self.client.post(reverse('booking-list'), data=book_data, format='json')
@@ -535,12 +535,16 @@ class FMATesting(APITestCase):
         }
         response_for_check_in = self.client.post(reverse('booking-list'), data=book_to_check_in, format='json')
         self.assertEqual(response_for_check_in.status_code, 201)
-        Booking.objects.filter(pk=response_for_check_in.data['id']).update(booking_status=StatusChoices.CONFIRMED)
-        Listing.objects.filter(pk=response_listing.data['id']).update(is_active=False)
 
         self.client.force_authenticate(None)
         self.client.logout()
         self.client.force_authenticate(user)
+        approve_booking = self.client.post(reverse('booking-approve-view', args=[response_for_check_in.data['id']]), format='json')
+        self.assertEqual(approve_booking.status_code, 200)
+        patch_listing = self.client.patch(reverse('listing-detail', args=[response_listing.data['id']]), data={'is_active': False},
+                         format='json')
+        self.assertEqual(patch_listing.status_code, 200)
+
         response_approval = self.client.post(reverse('booking-approve-view', args=[response.data['id']]), format='json')
         self.assertEqual(response_approval.status_code, 200)
         response = self.client.post(reverse('booking-check-in-view', args=[response.data['id']]),
