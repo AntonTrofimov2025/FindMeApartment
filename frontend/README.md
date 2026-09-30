@@ -1,7 +1,7 @@
 # FindMeApartment — Frontend
 
 React + TypeScript + Tailwind CSS фронтенд для DRF-бэкенда FindMeApartment (Django 6.1 + Gunicorn +
-Nginx + MySQL 8, всё в Docker). Тема оформления —
+Nginx + MySQL 8.4, всё в Docker). Тема оформления —
 в стиле Booking.com: тёмно-синяя навигация, яркий синий CTA, белые и серые поверхности.
 
 ## Запуск
