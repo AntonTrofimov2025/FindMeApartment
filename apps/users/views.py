@@ -154,14 +154,13 @@ class UserBecomeLandlordView(APIView):
         """
         user = request.user
 
-        if user.groups.filter(name='Landlord').exists():
-            return Response({'detail': 'You are already a Landlord!'}, status=status.HTTP_400_BAD_REQUEST)
-
         try:
-            tenant_group = Group.objects.get(name='Tenant')
-            landlord_group = Group.objects.get(name='Landlord')
-            user.groups.remove(tenant_group)
-            user.groups.add(landlord_group)
+            landlord_group_id = Group.objects.values_list('id', flat=True).get(name='Landlord')
+
+            if user.groups.filter(pk=landlord_group_id).exists():
+                return Response({'detail': 'You are already a Landlord!'}, status=status.HTTP_400_BAD_REQUEST)
+
+            user.groups.set([landlord_group_id])
 
             return Response({'msg': 'You are now a Landlord. You can host properties! :)'},
                             status=status.HTTP_200_OK)
