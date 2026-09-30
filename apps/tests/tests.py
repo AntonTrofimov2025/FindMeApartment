@@ -446,8 +446,8 @@ class FMATesting(APITestCase):
         self.client.force_authenticate(self.admin_user)
         response = self.client.get(reverse('user-detail', args=[user.id]))
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.data['is_deleted'] is True)
-        self.assertTrue(response.data['deleted_at'] is not None)
+        self.assertTrue(response.data['is_deleted'])
+        self.assertIsNotNone(response.data['deleted_at'])
 
         alive_users_after = User.objects.count()
         self.assertEqual(alive_users_after, 10)
@@ -456,6 +456,46 @@ class FMATesting(APITestCase):
         admin_response = self.client.get(reverse('user-list'))
         self.assertEqual(admin_response.status_code, 200)
         self.assertEqual(admin_response.data['count'], 11)
+
+    def test_user_registration(self):
+        data = {"email": "neu_user@beispiel.com",
+              "username": "Heyhey :)",
+              "first_name": "Tony",
+              "last_name": "Kwark",
+              "birth_date": "1976-04-12",
+              "password": "fish_sword_223",
+              "re_password": "fish_sword_223"}
+        response = self.client.post(reverse('user-create-view'), data=data, format='json')
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['email'], 'neu_user@beispiel.com')
+        self.assertEqual(response.data['username'], 'Heyhey :)')
+        self.assertIsNone(response.data.get('password'))
+        self.assertIsNone (response.data.get('re_password'))
+
+    def test_user_self_delete(self):
+        data = {"email": "neu_user_to_be_soft_deleted@beispiel.com",
+                "birth_date": "1976-04-12",
+                "password": "fish_sword_223",
+                "re_password": "fish_sword_223"}
+        response = self.client.post(reverse('user-create-view'), data=data, format='json')
+        self.assertEqual(response.status_code, 201)
+        user = User.objects.get(email="neu_user_to_be_soft_deleted@beispiel.com", birth_date="1976-04-12")
+        self.client.force_authenticate(user)
+        response = self.client.delete(reverse('user-profile-view'), format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Your account has been successfully deleted."
+                      " We'd like to kindly thank you for being with us! :)", response.data['msg'])
+
+        self.client.force_authenticate(None)
+        self.client.logout()
+        self.client.force_authenticate(self.admin_user)
+        response = self.client.get(reverse('user-detail', args=[user.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['email'], 'neu_user_to_be_soft_deleted@beispiel.com')
+        self.assertIsNotNone(response.data['deleted_at'])
+        self.assertTrue(response.data['is_deleted'])
+        self.assertIsNone(response.data.get('password'))
+        self.assertIsNone(response.data.get('re_password'))
 
     def test_review_revival(self):
         self.client.force_authenticate(random.choice(self.tenants))
