@@ -63,18 +63,8 @@ class FMATesting(APITestCase):
             `.save()` invocations to guarantee transaction logging, pricing evaluations, and snapshot logs.
           - Reviews: Seeds 30 relational post-trip evaluation logs tied strictly to completed bookings.
         """
-        permissions_tenant = [
-        'listings.view_listing',
-        'bookings.add_booking', 'bookings.view_booking',
-        'reviews.add_review', 'reviews.change_review', 'reviews.view_review',
-        'listings.view_photo'
-        ]
-        permissions_landlord = [
-            'listings.add_listing', 'listings.change_listing', 'listings.delete_listing', 'listings.view_listing',
-            'bookings.view_booking',
-            'reviews.view_review',
-            'listings.add_photo', 'listings.change_photo', 'listings.delete_photo', 'listings.view_photo'
-        ]
+        permissions_tenant = settings.ROLE_PERMISSION['Tenant']
+        permissions_landlord = settings.ROLE_PERMISSION['Landlord']
         tenant_group, _ = Group.objects.get_or_create(name='Tenant')
         landlord_group, _ = Group.objects.get_or_create(name='Landlord')
         cls.tenant_group = tenant_group
