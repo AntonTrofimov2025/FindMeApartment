@@ -122,7 +122,7 @@ class FMATesting(APITestCase):
                       birth_date=date(year=random.randint(1970, 2008), month=9, day=19),
                       password=fake.password(length=random.randrange(8, 129, 8)),
                       is_staff=False)
-            landlord.groups.add(landlord_group)
+            landlord.groups.set([landlord_group])
             landlords.append(landlord)
         cls.tenants = tenants
         cls.landlords = landlords
@@ -135,14 +135,16 @@ class FMATesting(APITestCase):
                       city=fake.city(),
                       street=fake.street_address(),
                       house_number=f"{i}",
-                      property_type=random.choice(PropertyType.values),
-                      discount=random.uniform(0.01, 1),
-                      apartment_number=random.randint(1, 10),
+                      property_type=(prop_type := random.choice(PropertyType.values)),
+                      discount=Decimal(str(round(random.uniform(0.01, 1), 2))),
+                      apartment_number=random.randint(1, 10) if prop_type not
+                                                                in [PropertyType.STUDIO, PropertyType.HOUSE] else None,
                       max_guests=random.randint(1, 10),
                       price_per_night=Decimal(random.randint(3000, 25000)),
                       rooms=random.choice(RoomCount.values)
                     ) for i in range(20)]
-        Listing.objects.bulk_create(listings)
+        for listing in listings:
+            listing.save()
         all_listings = list(Listing.objects.all())
         buffer = BytesIO()
         image = Image.new(mode='RGB', size=(100, 100), color='white')
@@ -163,17 +165,22 @@ class FMATesting(APITestCase):
                       date_to=timezone.localdate() + timedelta(days=i + 3),
                       guests_number=random.randint(1, selected_listing.max_guests),
                       booking_status=StatusChoices.CONFIRMED
-                    ) for i in range(30)]
+                    ) for i in range(60)]
+        bookings_completed, bookings = bookings[:30], bookings[30:]
+        for b in bookings_completed:
+            b.booking_status = StatusChoices.COMPLETED
+        bookings += bookings_completed
         for booking in bookings:
             booking.save()
-        all_bookings = list(Booking.objects.all())
+        all_bookings = list(Booking.objects.filter(booking_status=StatusChoices.COMPLETED))
         random.shuffle(all_bookings)
         reviews = [Review(booking=all_bookings.pop(),
                           property_rating=random.randint(1, 5),
                           location_rating=random.randint(1, 5),
                           text=fake.lexify(text='?' * 1500)
                         ) for _ in range(30)]
-        Review.objects.bulk_create(reviews)
+        for review in reviews:
+            review.save()
 
     def test_pagination_structure(self):
         pagination_keys = ('count', 'next', 'previous', 'results')
@@ -248,7 +255,7 @@ class FMATesting(APITestCase):
         self.client.force_authenticate(self.admin_user)
         response = self.client.get(reverse('booking-list'))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['count'], 30)
+        self.assertEqual(response.data['count'], 60)
 
     def test_get_all_listings(self):
         response = self.client.get(reverse('listing-list'))
@@ -275,7 +282,7 @@ class FMATesting(APITestCase):
                 "street": fake.street_address(),
                 "house_number": f"{random.randint(1, 100)}",
                 "property_type": PropertyType.APARTMENT,
-                "discount": round(random.uniform(0.01, 1), 2),
+                "discount": Decimal(str(round(random.uniform(0.01, 1), 2))),
                 "apartment_number": random.randint(1, 10),
                 "max_guests": random.randint(1, 10),
                 "price_per_night": float(Decimal(random.randint(3000, 25000))),
@@ -303,7 +310,7 @@ class FMATesting(APITestCase):
                 "street": fake.street_address(),
                 "house_number": f"{random.randint(1, 100)}",
                 "property_type": PropertyType.APARTMENT,
-                "discount": round(random.uniform(0.01, 1), 2),
+                "discount": Decimal(str(round(random.uniform(0.01, 1), 2))),
                 "apartment_number": random.randint(1, 10),
                 "max_guests": random.randint(1, 10),
                 "price_per_night": float(Decimal(random.randint(3000, 25000))),
@@ -320,8 +327,8 @@ class FMATesting(APITestCase):
         listing = Listing.objects.first()
         data = {
               'listing': listing.id,
-              'date_from': (timezone.localdate() + timedelta(days=41)).strftime('%Y-%m-%d'),
-              'date_to': (timezone.localdate() + timedelta(days=43)).strftime('%Y-%m-%d'),
+              'date_from': (timezone.localdate() + timedelta(days=71)).strftime('%Y-%m-%d'),
+              'date_to': (timezone.localdate() + timedelta(days=73)).strftime('%Y-%m-%d'),
               'guests_number': random.randint(1, listing.max_guests)
             }
         response = self.client.post(reverse('booking-list'), data=data, format='json')
@@ -341,8 +348,8 @@ class FMATesting(APITestCase):
             'guests_number': random.randint(1, listing.max_guests)
         }
         response = self.client.post(reverse('booking-list'), data=data, format='json')
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Landlords are strictly prohibited from creating rental reservation contracts!',
+        self.assertEqual(response.status_code, 403)
+        self.assertIn('You do not have permission to perform this action.',
                       response.data['errors'][0]['detail'])
 
     def test_tenant_post_review(self):
@@ -350,8 +357,8 @@ class FMATesting(APITestCase):
         listing = Listing.objects.last()
         booking_data = {
             'listing': listing.id,
-            'date_from': (timezone.localdate() + timedelta(days=41)).strftime('%Y-%m-%d'),
-            'date_to': (timezone.localdate() + timedelta(days=43)).strftime('%Y-%m-%d'),
+            'date_from': (timezone.localdate() + timedelta(days=71)).strftime('%Y-%m-%d'),
+            'date_to': (timezone.localdate() + timedelta(days=73)).strftime('%Y-%m-%d'),
             'guests_number': random.randint(1, listing.max_guests)
         }
         response = self.client.post(reverse('booking-list'), data=booking_data, format='json')
@@ -429,8 +436,8 @@ class FMATesting(APITestCase):
         self.client.force_authenticate(user)
         data = {
               'listing': listing_id,
-              'date_from': (timezone.localdate() + timedelta(days=41)).strftime('%Y-%m-%d'),
-              'date_to': (timezone.localdate() + timedelta(days=43)).strftime('%Y-%m-%d'),
+              'date_from': (timezone.localdate() + timedelta(days=71)).strftime('%Y-%m-%d'),
+              'date_to': (timezone.localdate() + timedelta(days=73)).strftime('%Y-%m-%d'),
               'guests_number': random.randint(1, listing.max_guests)
             }
         response = self.client.post(reverse('booking-list'), data=data, format='json')
@@ -465,8 +472,8 @@ class FMATesting(APITestCase):
         listing = Listing.objects.last()
         booking_data = {
             'listing': listing.id,
-            'date_from': (timezone.localdate() + timedelta(days=41)).strftime('%Y-%m-%d'),
-            'date_to': (timezone.localdate() + timedelta(days=43)).strftime('%Y-%m-%d'),
+            'date_from': (timezone.localdate() + timedelta(days=71)).strftime('%Y-%m-%d'),
+            'date_to': (timezone.localdate() + timedelta(days=73)).strftime('%Y-%m-%d'),
             'guests_number': random.randint(1, listing.max_guests)
         }
         response = self.client.post(reverse('booking-list'), data=booking_data, format='json')
@@ -504,7 +511,7 @@ class FMATesting(APITestCase):
             "street": fake.street_address(),
             "house_number": f"{random.randint(1, 100)}",
             "property_type": PropertyType.APARTMENT,
-            "discount": round(random.uniform(0.01, 1), 2),
+            "discount": Decimal(str(round(random.uniform(0.01, 1), 2))),
             "apartment_number": random.randint(1, 10),
             "max_guests": random.randint(1, 10),
             "price_per_night": float(Decimal(random.randint(3000, 25000))),
