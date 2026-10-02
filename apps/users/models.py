@@ -79,7 +79,7 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
                     )
                 })
 
-        if Booking.all_objects.filter(user=self,
+        if Booking.objects.filter(user=self,
                                     booking_status__in=[StatusChoices.CONFIRMED, StatusChoices.CHECKED_IN],
                                     date_to__gte=timezone.localdate()
                                 ).exists():
