@@ -42,7 +42,7 @@ services:
       - ./logs:/fma/logs
     healthcheck:
       # Проверяем, отвечает ли веб-сервер на порту 8000 (внутри контейнера)
-      test: [ "CMD", "curl", "-f", "http://localhost:8000/ping/" ]
+      test: [ "CMD", "curl", "--noproxy", "*", "-f", "http://localhost:8000/ping/" ]
       interval: "30s"
       timeout: "5s"
       retries: 3
