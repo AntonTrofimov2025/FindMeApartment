@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group, Permission
-from config.settings import ROLE_PERMISSION
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from typing import Generator
 from django.db.models import Q
@@ -36,7 +36,7 @@ class Command(BaseCommand):
 
     @staticmethod
     def create_permission():
-        for group_name, permissions in ROLE_PERMISSION.items():
+        for group_name, permissions in settings.ROLE_PERMISSION.items():
             group, _ = Group.objects.get_or_create(name=group_name)
             permission_gen = (permission for permission in permissions)
             Command.add_permission(group, permission_gen)
