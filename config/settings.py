@@ -369,8 +369,8 @@ if not DEBUG and not IS_TESTING:
 
     AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID', default=None)
     AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY', default=None)
-    AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME', default='fma-server-bucket')
-    AWS_S3_REGION_NAME = env('AWS_S3_REGION_NAME', default='eu-north-1')
+    AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME')
+    AWS_S3_REGION_NAME = env('AWS_S3_REGION_NAME')
 
     AWS_S3_SIGNATURE_VERSION = 's3v4'
     AWS_S3_FILE_OVERWRITE = False  # Если имена файлов совпадут, S3 добавит уникальный суффикс

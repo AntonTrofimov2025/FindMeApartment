@@ -41,7 +41,7 @@ docker compose exec db mysql -u root -p"${DB_ROOT_PASSWORD}" -e "DROP USER IF EX
 echo "Выдаем полные права пользования на MySQL пользователю ${DB_USER}..."
 sleep 2
 docker compose exec db mysql -u root -p"${DB_ROOT_PASSWORD}" -e "GRANT ALL PRIVILEGES ON \
-${DB_NAME}.* TO '${DB_USER}'@'%'; FLUSH PRIVILEGES;"
+test_${DB_NAME}.* TO '${DB_USER}'@'%'; FLUSH PRIVILEGES;"
 
 echo "Синхронизируем расписание административных задач в системном Cron..."
 sleep 2
