@@ -57,14 +57,12 @@ Ensure that you have **Docker** and **Docker Compose** installed on your hosting
 On a fresh **AWS EC2** instance (Amazon Linux), `FmaProjectEC2AWS.sh` installs Docker, Docker Compose, Buildx, Git and cron, sets the server time zone to Europe/Berlin, and clones the repository into `/fma`. Create `.env` there before running the setup script below.
 
 ### ⚡ Automatic Setup & Database Initialization
-To reset the database, apply migrations, collect static files, create the user roles, and schedule maintenance jobs, run the setup script from the project root:
+To apply migrations, collect static files, create the user roles, and schedule maintenance jobs, run the setup script from the project root:
 ```bash
 chmod +x project_first_initialization.sh
 ./project_first_initialization.sh
 ```
 The script registers two nightly cron jobs: `flushexpiredtokens` (clears expired JWT blacklist entries) and `close_expired_bookings` (completes finished stays and cancels expired requests).
-
-> ⚠️ This script **wipes the database**. Use it only for a first deployment or a deliberate full reset.
 
 ### 🐋 Operational Commands
 * **Start infrastructure in background mode:**
