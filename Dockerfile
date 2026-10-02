@@ -22,4 +22,4 @@ EXPOSE 8000
 
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "config.wsgi:application", "--workers", "2", "--access-logfile", "-", \
  "--error-logfile", "-", "--max-requests", "1000", "--max-requests-jitter", "50", "--forwarded-allow-ips", \
- "nginx,fma_nginx"]
+ "127.0.0.1,172.16.0.0/12"]
