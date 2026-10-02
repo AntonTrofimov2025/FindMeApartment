@@ -33,10 +33,15 @@ echo "Создаем группы Tenant и Landlord с соответствую
 sleep 5
 docker compose exec -T web python manage.py create_groups
 
+echo "Удаляем стандартный root@'%' профиль из таблицы MySQL user..."
+sleep 2
+docker compose exec db mysql -u root -p"${DB_ROOT_PASSWORD}" -e "SELECT user, host FROM mysql.user;"
+docker compose exec db mysql -u root -p"${DB_ROOT_PASSWORD}" -e "DROP USER IF EXISTS 'root'@'%';"
+
 echo "Выдаем полные права пользования на MySQL пользователю ${DB_USER}..."
-sleep 5
+sleep 2
 docker compose exec db mysql -u root -p"${DB_ROOT_PASSWORD}" -e "GRANT ALL PRIVILEGES ON \
-test_${DB_NAME}.* TO '${DB_USER}'@'%'; FLUSH PRIVILEGES;"
+${DB_NAME}.* TO '${DB_USER}'@'%'; FLUSH PRIVILEGES;"
 
 echo "Синхронизируем расписание административных задач в системном Cron..."
 sleep 2
