@@ -172,6 +172,28 @@ class FMATesting(APITestCase):
         for review in reviews:
             review.save()
 
+    def create_fresh_test_listing(self, landlord):
+        """Used for one fresh listing creation."""
+        data = {
+            "title": fake.sentence(nb_words=3),
+            "user": landlord.id,
+            "description": fake.paragraph(nb_sentences=random.randint(3, 5)),
+            "country": random.choice(Countries.values),
+            "district": fake.state(),
+            "city": fake.city(),
+            "street": fake.street_address(),
+            "house_number": f"{random.randint(1, 100)}",
+            "property_type": PropertyType.APARTMENT,
+            "discount": Decimal(f"{random.uniform(0.01, 1):.2f}"),
+            "apartment_number": random.randint(1, 10),
+            "max_guests": random.randint(1, 10),
+            "price_per_night": float(Decimal(random.randint(3000, 25000))),
+            "rooms": random.choice(RoomCount.values)
+        }
+        response_listing = self.client.post(reverse('listing-list'), data=data, format='json')
+        self.assertEqual(response_listing.status_code, 201)
+        return response_listing.data['id']
+
     def test_pagination_structure(self):
         pagination_keys = ('count', 'next', 'previous', 'results')
         response = self.client.get(reverse('listing-list'))
@@ -362,6 +384,7 @@ class FMATesting(APITestCase):
                 }
         response = self.client.post(reverse('review-list'), data=data, format='json')
         self.assertEqual(response.status_code, 201)
+        return response.data['id']
 
     def test_txt_file_is_forbidden(self):
         self.client.force_authenticate(random.choice(self.landlords))
@@ -531,31 +554,14 @@ class FMATesting(APITestCase):
     def test_not_active_listing_n_booking_approval_n_check_in_only_between_stay_dates(self):
         user = random.choice(self.landlords)
         self.client.force_authenticate(user)
-        data = {
-            "title": fake.sentence(nb_words=3),
-            "user": user.id,
-            "description": fake.paragraph(nb_sentences=random.randint(3, 5)),
-            "country": random.choice(Countries.values),
-            "district": fake.state(),
-            "city": fake.city(),
-            "street": fake.street_address(),
-            "house_number": f"{random.randint(1, 100)}",
-            "property_type": PropertyType.APARTMENT,
-            "discount": Decimal(f"{random.uniform(0.01, 1):.2f}"),
-            "apartment_number": random.randint(1, 10),
-            "max_guests": random.randint(1, 10),
-            "price_per_night": float(Decimal(random.randint(3000, 25000))),
-            "rooms": random.choice(RoomCount.values)
-        }
-        response_listing = self.client.post(reverse('listing-list'), data=data, format='json')
-        self.assertEqual(response_listing.status_code, 201)
+        response_listing_id = self.create_fresh_test_listing(user)
 
         self.client.force_authenticate(None)
         self.client.logout()
         self.client.force_authenticate(random.choice(self.tenants))
 
         book_data = {
-            'listing': response_listing.data['id'],
+            'listing': response_listing_id,
             'date_from': (timezone.localdate() + timedelta(days=1)).strftime('%Y-%m-%d'),
             'date_to': (timezone.localdate() + timedelta(days=3)).strftime('%Y-%m-%d'),
             'guests_number': 1
@@ -565,7 +571,7 @@ class FMATesting(APITestCase):
         self.assertEqual(response.data['booking_status'], StatusChoices.PENDING)
 
         book_to_check_in = {
-            'listing': response_listing.data['id'],
+            'listing': response_listing_id,
             'date_from': (timezone.localdate()).strftime('%Y-%m-%d'),
             'date_to': (timezone.localdate() + timedelta(days=1)).strftime('%Y-%m-%d'),
             'guests_number': 1
@@ -580,10 +586,10 @@ class FMATesting(APITestCase):
         self.assertEqual(approve_booking.status_code, 200)
 
         toggle_listing = self.client.post(reverse('listing-toggle_is_active',
-                                                  args=[response_listing.data['id']]), format='json')
+                                                  args=[response_listing_id]), format='json')
         self.assertEqual(toggle_listing.status_code, 200)
         self.assertFalse(toggle_listing.data['is_active'])
-        self.assertEqual(toggle_listing.data['msg'], 'Status has been changed to not active')
+        self.assertIn('Status has been changed to not active', toggle_listing.data['msg'])
 
         response_approval = self.client.post(reverse('booking-approve-view', args=[response.data['id']]), format='json')
         self.assertEqual(response_approval.status_code, 200)
@@ -594,4 +600,282 @@ class FMATesting(APITestCase):
         response_checked_in = self.client.post(reverse('booking-check-in-view', args=[response_for_check_in.data['id']]),
                                     format='json')
         self.assertEqual(response_checked_in .status_code, 200)
+
+    def two_days_cancellation_rule_first_test(self, x_days):
+        landlord = random.choice(self.landlords)
+        self.client.force_authenticate(landlord)
+        response_listing_id = self.create_fresh_test_listing(landlord)
+
+        self.client.force_authenticate(None)
+        self.client.logout()
+        tenant = random.choice(self.tenants)
+        self.client.force_authenticate(tenant)
+
+        book_x_days_before = {
+            'listing': response_listing_id,
+            'date_from': (date_from_test := (timezone.localdate() + timedelta(days=x_days))).strftime('%Y-%m-%d'),
+            'date_to': (date_from_test + timedelta(days=1)).strftime('%Y-%m-%d'),
+            'guests_number': 1
+        }
+        response = self.client.post(reverse('booking-list'), data=book_x_days_before, format='json')
+        self.assertEqual(response.status_code, 201)
+
+        self.client.force_authenticate(None)
+        self.client.logout()
+        self.client.force_authenticate(landlord)
+        approve_booking = self.client.post(reverse('booking-approve-view', args=[response.data['id']]),
+                                           format='json')
+        self.assertEqual(approve_booking.status_code, 200)
+
+        self.client.force_authenticate(None)
+        self.client.logout()
+        self.client.force_authenticate(tenant)
+
+        booking_cancellation = self.client.post(reverse('booking-cancel-view', args=[response.data['id']]), format='json')
+        self.assertEqual(booking_cancellation.status_code, 200 if x_days > 1 else 400)
+        self.assertIn('The booking has successfully been cancelled.' if x_days > 1
+                      else 'You cannot cancel this booking less than 2 days before the start date.',
+                      booking_cancellation.data['msg'] if x_days > 1 else booking_cancellation.data['errors'][0]['detail'])
+
+    def test_two_days_before_arrival(self):
+        self.two_days_cancellation_rule_first_test(x_days=2)
+
+    def test_only_one_day_before_arrival(self):
+        self.two_days_cancellation_rule_first_test(x_days=1)
+
+    def test_tenant_booking_approve(self):
+        user = random.choice(self.landlords)
+        self.client.force_authenticate(user)
+        response_listing_id = self.create_fresh_test_listing(user)
+
+        self.client.force_authenticate(None)
+        self.client.logout()
+        self.client.force_authenticate(random.choice(self.tenants))
+
+        book_data = {
+            'listing': response_listing_id,
+            'date_from': (timezone.localdate() + timedelta(days=1)).strftime('%Y-%m-%d'),
+            'date_to': (timezone.localdate() + timedelta(days=3)).strftime('%Y-%m-%d'),
+            'guests_number': 1
+        }
+        response = self.client.post(reverse('booking-list'), data=book_data, format='json')
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['booking_status'], StatusChoices.PENDING)
+
+        approve_booking = self.client.post(reverse('booking-approve-view', args=[response.data['id']]),
+                                           format='json')
+        self.assertEqual(approve_booking.status_code, 403)
+        self.assertIn('Only Landlords can access this resource!', approve_booking.data['errors'][0]['detail'])
+
+    def test_unknown_landlord_booking_approve(self):
+        user = random.choice(self.landlords)
+        self.client.force_authenticate(user)
+        response_listing_id = self.create_fresh_test_listing(user)
+
+        self.client.force_authenticate(None)
+        self.client.logout()
+        self.client.force_authenticate(random.choice(self.tenants))
+
+        book_data = {
+            'listing': response_listing_id,
+            'date_from': (timezone.localdate() + timedelta(days=1)).strftime('%Y-%m-%d'),
+            'date_to': (timezone.localdate() + timedelta(days=3)).strftime('%Y-%m-%d'),
+            'guests_number': 1
+        }
+        response_book = self.client.post(reverse('booking-list'), data=book_data, format='json')
+        self.assertEqual(response_book.status_code, 201)
+        self.assertEqual(response_book.data['booking_status'], StatusChoices.PENDING)
+
+        self.client.force_authenticate(None)
+        self.client.logout()
+        self.client.force_authenticate(random.choice([l for l in self.landlords if l.id != user.id]))
+
+        approve_booking = self.client.post(reverse('booking-approve-view', args=[response_book.data['id']]),
+                                           format='json')
+        self.assertEqual(approve_booking.status_code, 403)
+        self.assertIn('You are not the owner of this property!', approve_booking.data['errors'][0]['detail'])
+
+    def test_tenant_activates_listing_toggle(self):
+        user = random.choice(self.landlords)
+        self.client.force_authenticate(user)
+        response_listing_id = self.create_fresh_test_listing(user)
+
+        self.client.force_authenticate(None)
+        self.client.logout()
+        self.client.force_authenticate(random.choice(self.tenants))
+
+        toggle_listing = self.client.post(reverse('listing-toggle_is_active',
+                                                  args=[response_listing_id]), format='json')
+        self.assertEqual(toggle_listing.status_code, 403)
+        self.assertIn('Only Landlords can access this resource!', toggle_listing.data['errors'][0]['detail'])
+
+    def test_anonym_tries_to_delete_any_review(self):
+        review_id = self.test_tenant_post_review()
+        self.client.force_authenticate(None)
+        self.client.logout()
+        response = self.client.delete(reverse('review-detail', args=[review_id]), format='json')
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('Authentication credentials were not provided.', response.data['errors'][0]['detail'])
+
+    def test_tenant_deletes_his_review(self):
+        review_id = self.test_tenant_post_review()
+        response = self.client.delete(reverse('review-detail', args=[review_id]), format='json')
+        self.assertEqual(response.status_code, 204)
+        self.assertIsNone(response.data)
+
+    def test_full_address_hiding_in_not_approved_bookings(self):
+        user = random.choice(self.landlords)
+        self.client.force_authenticate(user)
+        response_listing_id = self.create_fresh_test_listing(user)
+        get_this_listing = self.client.get(reverse('listing-detail', args=[response_listing_id]))
+        self.assertEqual(get_this_listing.status_code, 200)
+
+        self.client.force_authenticate(None)
+        self.client.logout()
+        tenant = random.choice(self.tenants)
+        self.client.force_authenticate(tenant)
+
+        book_data = {
+            'listing': response_listing_id,
+            'date_from': (timezone.localdate() + timedelta(days=1)).strftime('%Y-%m-%d'),
+            'date_to': (timezone.localdate() + timedelta(days=3)).strftime('%Y-%m-%d'),
+            'guests_number': 1
+        }
+        response_book = self.client.post(reverse('booking-list'), data=book_data, format='json')
+        self.assertEqual(response_book.status_code, 201)
+        self.assertEqual(response_book.data['booking_status'], StatusChoices.PENDING)
+        response = self.client.get(reverse('booking-detail', args=[response_book.data['id']]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['snapshot_data']['property_data']['apartment_number'], 'X')
+        self.assertEqual(response.data['snapshot_data']['property_data']['house_number'], 'X')
+        self.assertEqual(response.data['snapshot_data']['property_data']['street'],
+                         'Hidden until booking confirmation')
+
+        self.client.force_authenticate(None)
+        self.client.logout()
+        self.client.force_authenticate(user)
+        approve_booking = self.client.post(reverse('booking-approve-view', args=[response_book.data['id']]),
+                                    format='json')
+        self.assertEqual(approve_booking.status_code, 200)
+
+        self.client.force_authenticate(None)
+        self.client.logout()
+        self.client.force_authenticate(tenant)
+        response = self.client.get(reverse('booking-detail', args=[response_book.data['id']]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['snapshot_data']['property_data']['apartment_number'], get_this_listing.data['apartment_number'])
+        self.assertEqual(response.data['snapshot_data']['property_data']['house_number'], get_this_listing.data['house_number'])
+        self.assertEqual(response.data['snapshot_data']['property_data']['street'], get_this_listing.data['street'])
+        self.assertTrue(bool(response.data['snapshot_data']['property_data']['apartment_number']))
+        self.assertTrue(bool(response.data['snapshot_data']['property_data']['house_number']))
+        self.assertTrue(bool(response.data['snapshot_data']['property_data']['street']))
+
+    def test_after_refresh_401_n_400_for_another_user(self):
+        landlord = random.choice(self.landlords)
+        old_refresh = RefreshToken.for_user(landlord)
+        response_success = self.client.post(reverse('token-refresh-view'), data={'refresh': str(old_refresh)}, format='json')
+        self.assertEqual(response_success.status_code, 200)
+        response = self.client.post(reverse('token-refresh-view'), data={'refresh': str(old_refresh)}, format='json')
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('Token is blacklisted', response.data['errors'][0]['detail'])
+
+        self.client.force_authenticate(None)
+        self.client.logout()
+        tenant_user = random.choice(self.tenants)
+        tenant_user.set_password('tenant_password_123')
+        tenant_user.save(update_fields=['password'])
+        self.client.force_authenticate(tenant_user)
+        change_password_data = {
+            'old_password': 'tenant_password_123',
+            'new_password': 'NewSecureTenantPass123!',
+            're_new_password': 'NewSecureTenantPass123!',
+            'refresh': response_success.data['refresh']
+        }
+        response = self.client.post(reverse('user-profile-view'), data=change_password_data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Security breach: Provided refresh token does not belong to your account session!',
+                      response.data['errors'][0]['detail'])
+
+    def test_delete_landlord_success(self):
+        landlord = User.objects.create_user(email=fake.unique.email(),
+                                 username=fake.user_name(),
+                                 first_name=fake.unique.first_name(),
+                                 last_name=fake.unique.last_name(),
+                                 phone=fake.unique.numerify(text="+###########"),
+                                 birth_date=date(year=random.randint(1970, 2008), month=9, day=19),
+                                 password=fake.password(length=random.randrange(8, 129, 8)))
+        landlord.groups.set([self.landlord_group])
+        refresh = RefreshToken.for_user(landlord)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(refresh.access_token)}')
+        listing_id = self.create_fresh_test_listing(landlord)
+        check_listing = self.client.get(reverse('listing-detail', args=[listing_id]))
+        self.assertEqual(check_listing.status_code, 200)
+        self.assertTrue(check_listing.data['is_active'])
+
+        self.client.force_authenticate(None)
+        self.client.logout()
+        self.client.force_authenticate(random.choice(self.tenants))
+
+        for i in range(10):
+            book_data = {
+                'listing': listing_id,
+                'date_from': (dt_fr := timezone.localdate() + timedelta(days=i + 1)).strftime('%Y-%m-%d'),
+                'date_to': (dt_fr + timedelta(days=1)).strftime('%Y-%m-%d'),
+                'guests_number': 1
+            }
+            response = self.client.post(reverse('booking-list'), data=book_data, format='json')
+            self.assertEqual(response.status_code, 201)
+            self.assertEqual(response.data['booking_status'], StatusChoices.PENDING)
+
+        self.client.force_authenticate(None)
+        self.client.logout()
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(refresh.access_token)}')
+
+        response = self.client.delete(reverse('user-profile-view'), format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Your account has been successfully deleted. We'd like to kindly thank you for being with us! :)",
+                      response.data['msg'])
+
+        for booking in Booking.all_objects.filter(listing__user_id=landlord.id):
+            self.assertEqual(booking.booking_status, StatusChoices.CANCELLED)
+
+        for listing in Listing.all_objects.filter(user_id=landlord.id):
+            self.assertFalse(listing.is_active)
+
+        response_auth_expired = self.client.get(reverse('user-profile-view'), format='json')
+        self.assertEqual(response_auth_expired.status_code, 401)
+        self.assertIn('User not found', response_auth_expired.data['errors'][0]['detail'])
+
+    def test_delete_landlord_400(self):
+        landlord = random.choice(self.landlords)
+        self.client.force_authenticate(landlord)
+        listing_id = self.create_fresh_test_listing(landlord)
+
+        self.client.force_authenticate(None)
+        self.client.logout()
+        self.client.force_authenticate(random.choice(self.tenants))
+
+        book_data = {
+            'listing': listing_id,
+            'date_from': (timezone.localdate() + timedelta(days=5)).strftime('%Y-%m-%d'),
+            'date_to': (timezone.localdate() + timedelta(days=7)).strftime('%Y-%m-%d'),
+            'guests_number': 1
+        }
+        response = self.client.post(reverse('booking-list'), data=book_data, format='json')
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['booking_status'], StatusChoices.PENDING)
+
+        self.client.force_authenticate(None)
+        self.client.logout()
+        self.client.force_authenticate(landlord)
+
+        response_approve = self.client.post(reverse('booking-approve-view', args=[response.data['id']]),
+                                            format='json')
+        self.assertEqual(response_approve.status_code, 200)
+
+        response = self.client.delete(reverse('user-profile-view'), format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Cannot delete your landlord account while you have active or confirmed future guest bookings!'
+                    ' Please process client cancellations or completions first through your dashboard.',
+                      response.data['errors'][0]['detail'])
 
