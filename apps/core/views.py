@@ -1,4 +1,4 @@
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK
 from drf_spectacular.utils import extend_schema, OpenApiResponse
@@ -38,6 +38,7 @@ def test_django_standard_exceptions(request):
     }
 )
 @api_view(['GET'])
+@throttle_classes([])
 @permission_classes([AllowAny])
 def health_check(request):
     """
