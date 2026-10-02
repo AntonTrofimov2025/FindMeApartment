@@ -578,9 +578,12 @@ class FMATesting(APITestCase):
         self.client.force_authenticate(user)
         approve_booking = self.client.post(reverse('booking-approve-view', args=[response_for_check_in.data['id']]), format='json')
         self.assertEqual(approve_booking.status_code, 200)
-        patch_listing = self.client.patch(reverse('listing-detail', args=[response_listing.data['id']]), data={'is_active': False},
-                         format='json')
-        self.assertEqual(patch_listing.status_code, 200)
+
+        toggle_listing = self.client.post(reverse('listing-toggle_is_active',
+                                                  args=[response_listing.data['id']]), format='json')
+        self.assertEqual(toggle_listing.status_code, 200)
+        self.assertFalse(toggle_listing.data['is_active'])
+        self.assertEqual(toggle_listing.data['msg'], 'Status has been changed to not active')
 
         response_approval = self.client.post(reverse('booking-approve-view', args=[response.data['id']]), format='json')
         self.assertEqual(response_approval.status_code, 200)
