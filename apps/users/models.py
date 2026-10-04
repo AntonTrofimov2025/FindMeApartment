@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from apps.core.models import UniqueID, TimeStampedModel, StatusChoices
 from django.utils import timezone
-from .managers.users import UserSoftDeleteManager, AllUserSoftDeleteManager
+from .managers import UserSoftDeleteManager, AllUserSoftDeleteManager
 from django.utils.translation import gettext_lazy as _
 from apps.users.validators import validate_birth_date
 import os

@@ -2,6 +2,8 @@ from django.contrib import admin
 from apps.listings.models import Listing, Photo
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from django.db.models import Count
+from django.utils import timezone
 
 
 @admin.register(Listing)
@@ -29,7 +31,7 @@ class ListingAdmin(admin.ModelAdmin):
 
     @admin.display(description=_("Number of bookings"))
     def booking_count(self, obj):
-        return obj.bookings.count()
+        return obj._booking_count
 
     @admin.display(description=_('Description'))
     def short_description(self, obj):
@@ -38,7 +40,20 @@ class ListingAdmin(admin.ModelAdmin):
         return obj.description
 
     def get_queryset(self, request):
-        return Listing.all_objects.get_queryset().select_related('user').prefetch_related('photos', 'bookings')
+        return super().get_queryset(request).model.all_objects.get_queryset().select_related(
+            'user').prefetch_related('photos').annotate(_booking_count=Count('bookings'))
+
+    @admin.action(description="Restore selected deleted listings")
+    def restore_listings(self, request, queryset):
+        listings = queryset.update(deleted_at=None, is_active=True)
+        self.message_user(request, f"Successfully restored {listings} listings. 🎉")
+
+    @admin.action(description="Soft delete selected listings")
+    def soft_delete_listings(self, request, queryset):
+        listings = queryset.update(deleted_at=timezone.now(), is_active=False)
+        self.message_user(request, f"Successfully soft deleted {listings} listings.")
+
+    actions = [restore_listings, soft_delete_listings]
 
 
 
@@ -79,5 +94,16 @@ class PhotoAdmin(admin.ModelAdmin):
         return mark_safe('<span style="color: #999; font-style: italic;">- No image -</span>')
 
     def get_queryset(self, request):
-        return Photo.all_objects.get_queryset().select_related('listing__user')
+        return super().get_queryset(request).model.all_objects.select_related('listing__user')
 
+    @admin.action(description="Restore selected deleted photos")
+    def restore_photos(self, request, queryset):
+        photos = queryset.update(deleted_at=None)
+        self.message_user(request, f"Successfully restored {photos} photos. 🎉")
+
+    @admin.action(description="Soft delete selected photos")
+    def soft_delete_photos(self, request, queryset):
+        photos = queryset.update(deleted_at=timezone.now())
+        self.message_user(request, f"Successfully soft deleted {photos} photos.")
+
+    actions = [restore_photos, soft_delete_photos]

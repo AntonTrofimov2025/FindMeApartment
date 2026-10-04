@@ -23,6 +23,8 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, Sp
 from apps.core.views import test_django_standard_exceptions, health_check
 from apps.core.serializers import CustomTokenObtainPairSerializer
 
+admin.site.disable_action('delete_selected')
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('apps.listings.urls')),

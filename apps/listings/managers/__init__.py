@@ -1,0 +1,2 @@
+from .listings import ListingsSoftDeleteManager, ListingsSoftDeleteQuerySet
+from .photo_manager import PhotoSoftDeleteManager, PhotoSoftDeleteQuerySet

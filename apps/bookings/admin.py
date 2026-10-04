@@ -2,6 +2,7 @@ from django.contrib import admin
 from apps.bookings.models import Booking
 from django.utils.translation import gettext_lazy as _
 from simple_history.admin import SimpleHistoryAdmin
+from django.utils import timezone
 
 
 @admin.register(Booking)
@@ -21,5 +22,16 @@ class BookingAdmin(SimpleHistoryAdmin):
         return booking.is_deleted
 
     def get_queryset(self, request):
-        return Booking.all_objects.get_queryset().select_related('listing', 'user')
+        return super().get_queryset(request).model.all_objects.select_related('listing', 'user')
 
+    @admin.action(description="Restore selected deleted bookings")
+    def restore_bookings(self, request, queryset):
+        bookings = queryset.update(deleted_at=None)
+        self.message_user(request, f"Successfully restored {bookings} bookings. 🎉")
+
+    @admin.action(description="Soft delete selected bookings")
+    def soft_delete_bookings(self, request, queryset):
+        bookings = queryset.update(deleted_at=timezone.now())
+        self.message_user(request, f"Successfully soft deleted {bookings} bookings.")
+
+    actions = [restore_bookings, soft_delete_bookings]

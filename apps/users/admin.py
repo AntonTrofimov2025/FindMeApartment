@@ -28,7 +28,7 @@ class Admin(admin.ModelAdmin):
         return user.is_deleted
 
     def get_queryset(self, request):
-        return User.all_objects.get_queryset()
+        return super().get_queryset(request).model.all_objects.get_queryset()
 
     @admin.action(description="Restore selected deleted users")
     def restore_users(self, request, queryset):

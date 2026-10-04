@@ -8,11 +8,11 @@ from django_extensions.db.fields import AutoSlugField
 from pytils.translit import slugify
 from apps.core.models import StatusChoices
 from django.utils import timezone
-from .managers.listings import ListingsSoftDeleteManager
-from .managers.photo_manager import PhotoSoftDeleteManager
+from .managers import ListingsSoftDeleteManager, ListingsSoftDeleteQuerySet
+from .managers import PhotoSoftDeleteManager, PhotoSoftDeleteQuerySet
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Avg, Q
-from django.db.models.functions import Round, Length
+from django.db.models.functions import Round
 import os
 from decimal import Decimal
 from apps.core.utils import validate_extension, validate_file_size
@@ -101,7 +101,7 @@ class Listing(UniqueID, TimeStampedModel):
         super().save(update_fields=['deleted_at', 'updated_at', 'is_active'])
 
     objects = ListingsSoftDeleteManager()
-    all_objects = models.Manager()
+    all_objects = ListingsSoftDeleteQuerySet.as_manager()
 
     def clean(self):
         if not self.user_id:
@@ -187,7 +187,7 @@ class Photo(UniqueID, TimeStampedModel):
 
 
     objects = PhotoSoftDeleteManager()
-    all_objects = models.Manager()
+    all_objects = PhotoSoftDeleteQuerySet.as_manager()
 
     @property
     def is_deleted(self):

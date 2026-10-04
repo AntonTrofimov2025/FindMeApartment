@@ -1,14 +1,14 @@
 from django.db import models
 from apps.listings.models import Listing
 from apps.core.models import UniqueID, TimeStampedModel
-from .managers.reviews import ReviewsSoftDeleteManager
+from .managers import ReviewsSoftDeleteManager, ReviewsSoftDeleteQuerySet
 from django.utils import timezone
 from apps.bookings.models import Booking
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import Q
 from apps.core.models import StatusChoices
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 
 
 class Review(UniqueID, TimeStampedModel):
@@ -49,7 +49,7 @@ class Review(UniqueID, TimeStampedModel):
         super().save(*args, **kwargs)
 
     objects = ReviewsSoftDeleteManager()
-    all_objects = models.Manager()
+    all_objects = ReviewsSoftDeleteQuerySet.as_manager()
 
     def __str__(self):
         return f"Review from user: {self.booking.user_id}"

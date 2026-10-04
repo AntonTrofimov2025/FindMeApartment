@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from apps.core.models import UniqueID, TimeStampedModel
 from apps.listings.models import Listing
 from django.utils import timezone
-from .managers.bookings import BookingsSoftDeleteManager
+from .managers import BookingsSoftDeleteManager, BookingsSoftDeleteQuerySet
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models import Q, F
 from django.utils.translation import gettext_lazy as _
@@ -54,7 +54,7 @@ class Booking(UniqueID, TimeStampedModel):
     )
 
     objects = BookingsSoftDeleteManager()
-    all_objects = models.Manager()
+    all_objects = BookingsSoftDeleteQuerySet.as_manager()
 
     @property
     def is_deleted(self):

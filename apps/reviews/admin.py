@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from .models import Review
+from django.utils import timezone
 
 
 @admin.register(Review)
@@ -49,4 +50,17 @@ class ReviewAdmin(admin.ModelAdmin):
         return review.is_deleted
 
     def get_queryset(self, request):
-        return Review.all_objects.get_queryset().select_related('booking__user', 'booking__listing')
+        return super().get_queryset(request).model.all_objects.select_related('booking__user', 'booking__listing')
+
+    @admin.action(description="Restore selected deleted reviews")
+    def restore_reviews(self, request, queryset):
+        reviews = queryset.update(deleted_at=None)
+        self.message_user(request, f"Successfully restored {reviews} reviews. 🎉")
+
+    @admin.action(description="Soft delete selected reviews")
+    def soft_delete_reviews(self, request, queryset):
+        reviews = queryset.update(deleted_at=timezone.now())
+        self.message_user(request, f"Successfully soft deleted {reviews} reviews.")
+
+    actions = [restore_reviews, soft_delete_reviews]
+
