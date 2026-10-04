@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 import re
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth import password_validation
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from django.core.exceptions import ValidationError
 from rest_framework_simplejwt.exceptions import TokenError
@@ -66,7 +66,7 @@ class RegisterUserSerializer(ValidatePhoneMixin, serializers.ModelSerializer):
 
     def validate_password(self, value):
         try:
-            validate_password(value)
+            password_validation.validate_password(value)
         except ValidationError as e:
             raise serializers.ValidationError(list(e.messages))
         return value

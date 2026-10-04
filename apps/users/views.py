@@ -173,7 +173,8 @@ class UserBecomeLandlordView(APIView):
                description='Logout authorized user by putting his REFRESH TOKEN to BLACKLIST.',
                responses={
                    200: OpenApiResponse(description='You have been logged out.'),
-                   401: OpenApiResponse(description='You have not been logged in.')
+                   400: OpenApiResponse(description='Token is invalid or expired.'),
+                   401: OpenApiResponse(description='Authentication credentials were not provided.')
                },
                request=TokenBlacklistSerializer)
 @api_view(['POST'])
