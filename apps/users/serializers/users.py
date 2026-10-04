@@ -130,7 +130,7 @@ class ChangePasswordSerializer(serializers.Serializer):
         """
         user = self.context.get('request').user
         try:
-            validate_password(value, user=user)
+            password_validation.validate_password(value, user=user)
         except ValidationError as e:
             e = e.message_dict if hasattr(e, 'message_dict') else e.messages
             raise serializers.ValidationError(e)
