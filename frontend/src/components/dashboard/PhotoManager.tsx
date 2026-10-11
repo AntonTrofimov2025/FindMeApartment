@@ -6,12 +6,14 @@ import { fetchListingPhotos, uploadPhoto, deletePhoto } from '@/api/photos';
 import { Spinner } from '@/components/ui/Spinner';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { parseApiError } from '@/lib/errors';
+import { useI18n } from '@/i18n';
 
 export function PhotoManager({ listingId }: { listingId: string }) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useI18n();
 
   async function load() {
     setIsLoading(true);
@@ -46,7 +48,7 @@ export function PhotoManager({ listingId }: { listingId: string }) {
       const nextNumber = Math.max(0, ...photos.map((p) => p.photo_number)) + 1;
       const photo = await uploadPhoto(listingId, file, nextNumber);
       setPhotos((prev) => [...prev, photo]);
-      toast.success('Фото загружено');
+      toast.success(t('photos.uploaded'));
     } catch (err) {
       setError(parseApiError(err).message);
     } finally {
@@ -80,7 +82,7 @@ export function PhotoManager({ listingId }: { listingId: string }) {
             <button
               onClick={() => handleDelete(photo.id)}
               className="absolute right-1.5 top-1.5 rounded-full bg-white/90 p-1.5 text-red-600 opacity-0 shadow-sm transition-opacity group-hover:opacity-100"
-              aria-label="Удалить фото"
+              aria-label={t('photos.delete')}
             >
               <Trash2 size={14} />
             </button>
@@ -93,7 +95,7 @@ export function PhotoManager({ listingId }: { listingId: string }) {
         {photos.length === 0 && (
           <div className="col-span-full flex flex-col items-center gap-2 py-6 text-neutral-300">
             <ImageOff size={28} />
-            <span className="text-xs text-neutral-400">Фото пока нет</span>
+            <span className="text-xs text-neutral-400">{t('photos.empty')}</span>
           </div>
         )}
       </div>
@@ -102,7 +104,7 @@ export function PhotoManager({ listingId }: { listingId: string }) {
 
       <label className="btn-secondary inline-flex cursor-pointer !px-3 !py-2 text-sm">
         <Upload size={16} className="mr-2" />
-        {isUploading ? 'Загрузка...' : 'Добавить фото'}
+        {isUploading ? t('photos.uploading') : t('photos.add')}
         <input
           type="file"
           accept="image/png,image/jpeg,image/webp,image/heic,image/heif"
@@ -111,7 +113,7 @@ export function PhotoManager({ listingId }: { listingId: string }) {
           className="hidden"
         />
       </label>
-      <p className="text-xs text-neutral-400">До 2 МБ на файл, максимум 50 фото на объявление.</p>
+      <p className="text-xs text-neutral-400">{t('photos.hint')}</p>
     </div>
   );
 }

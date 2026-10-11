@@ -5,6 +5,7 @@ import type { Review } from '@/types/models';
 import { createReview, fetchReviewByBooking, updateReview } from '@/api/reviews';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { parseApiError } from '@/lib/errors';
+import { useI18n } from '@/i18n';
 
 interface ReviewFormProps {
   bookingId: string;
@@ -20,6 +21,7 @@ export function ReviewForm({ bookingId, existingReview, onSubmitted }: ReviewFor
   const [text, setText] = useState(existingReview?.text ?? '');
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const { t } = useI18n();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,7 +40,7 @@ export function ReviewForm({ bookingId, existingReview, onSubmitted }: ReviewFor
       if (!review.id) {
         review = (await fetchReviewByBooking(bookingId)) ?? review;
       }
-      toast.success(existingReview ? 'Отзыв обновлён' : 'Спасибо за отзыв!');
+      toast.success(existingReview ? t('review.updated') : t('review.thanks'));
       onSubmitted(review);
     } catch (err) {
       setError(parseApiError(err).message);
@@ -49,10 +51,10 @@ export function ReviewForm({ bookingId, existingReview, onSubmitted }: ReviewFor
 
   return (
     <form onSubmit={handleSubmit} className="mt-3 space-y-3 rounded-xl border border-neutral-200 bg-white p-4">
-      <StarPicker label="Оценка объекта" value={propertyRating} onChange={setPropertyRating} />
-      <StarPicker label="Оценка расположения" value={locationRating} onChange={setLocationRating} />
+      <StarPicker label={t('review.propertyRating')} value={propertyRating} onChange={setPropertyRating} />
+      <StarPicker label={t('review.locationRating')} value={locationRating} onChange={setLocationRating} />
       <div>
-        <label className="mb-1 block text-xs font-medium text-neutral-500">Комментарий</label>
+        <label className="mb-1 block text-xs font-medium text-neutral-500">{t('review.comment')}</label>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -60,24 +62,25 @@ export function ReviewForm({ bookingId, existingReview, onSubmitted }: ReviewFor
           rows={3}
           required
           className="input resize-none"
-          placeholder="Поделитесь впечатлениями о проживании..."
+          placeholder={t('review.placeholder')}
         />
       </div>
       <ErrorAlert message={error} />
       <button type="submit" disabled={isSaving} className="btn-primary !px-4 !py-2 text-sm">
-        {isSaving ? 'Отправка...' : existingReview ? 'Сохранить изменения' : 'Оставить отзыв'}
+        {isSaving ? t('review.sending') : existingReview ? t('review.saveChanges') : t('review.submit')}
       </button>
     </form>
   );
 }
 
 function StarPicker({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+  const { t } = useI18n();
   return (
     <div>
       <label className="mb-1 block text-xs font-medium text-neutral-500">{label}</label>
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((n) => (
-          <button key={n} type="button" onClick={() => onChange(n)} aria-label={`${n} из 5`}>
+          <button key={n} type="button" onClick={() => onChange(n)} aria-label={t('review.outOf5', { n })}>
             <Star size={22} className={n <= value ? 'fill-brand-500 text-brand-500' : 'fill-neutral-200 text-neutral-200'} />
           </button>
         ))}

@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
+import { useI18n } from '@/i18n';
 import { useAuth } from '@/hooks/useAuth';
 import { AnalyticsPanel } from '@/components/dashboard/AnalyticsPanel';
 import { ListingManager } from '@/components/dashboard/ListingManager';
@@ -10,16 +12,15 @@ type Tab = 'analytics' | 'listings' | 'bookings';
 export function DashboardPage() {
   const { isLandlord } = useAuth();
   const [tab, setTab] = useState<Tab>('analytics');
+  const { t } = useI18n();
 
   // Роль определяется AuthContext'ом по ответу IsLandLord-эндпоинта; бэк в любом случае вернёт 403
   // арендатору, это лишь защита от показа пустого/ломающегося дашборда.
   if (!isLandlord) {
     return (
       <div className="mx-auto max-w-md py-16 text-center">
-        <h1 className="text-xl font-bold">Панель арендодателя</h1>
-        <p className="mt-2 text-neutral-500">
-          Чтобы размещать объекты и управлять бронированиями, сначала станьте арендодателем.
-        </p>
+        <h1 className="text-xl font-bold">{t('dashboard.title')}</h1>
+        <p className="mt-2 text-neutral-500">{t('dashboard.becomeHint')}</p>
         <div className="mt-5 flex justify-center">
           <BecomeLandlordButton className="btn-primary" />
         </div>
@@ -29,17 +30,17 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Панель арендодателя</h1>
+      <h1 className="text-2xl font-bold">{t('dashboard.title')}</h1>
 
       <div className="flex gap-1 border-b border-neutral-200">
         <TabButton active={tab === 'analytics'} onClick={() => setTab('analytics')}>
-          Аналитика
+          {t('dashboard.tabAnalytics')}
         </TabButton>
         <TabButton active={tab === 'listings'} onClick={() => setTab('listings')}>
-          Объявления
+          {t('dashboard.tabListings')}
         </TabButton>
         <TabButton active={tab === 'bookings'} onClick={() => setTab('bookings')}>
-          Бронирования
+          {t('dashboard.tabBookings')}
         </TabButton>
       </div>
 
@@ -57,7 +58,7 @@ function TabButton({
 }: {
   active: boolean;
   onClick: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <button

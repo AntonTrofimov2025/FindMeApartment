@@ -4,10 +4,12 @@ import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { parseApiError } from '@/lib/errors';
+import { useI18n } from '@/i18n';
 
 export function RegisterPage() {
   const { register, login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   const [form, setForm] = useState({
     email: '',
@@ -40,7 +42,7 @@ export function RegisterPage() {
         phone: form.phone.trim() === '' ? null : form.phone.trim(),
       });
       await login(form.email, form.password);
-      toast.success('Добро пожаловать в FindMeApartment!');
+      toast.success(t('auth.welcome'));
       navigate('/');
     } catch (err) {
       const parsed = parseApiError(err);
@@ -54,38 +56,38 @@ export function RegisterPage() {
   return (
     <div className="mx-auto max-w-md py-10">
       <div className="card space-y-5 p-8">
-        <h1 className="text-xl font-bold">Создать аккаунт</h1>
+        <h1 className="text-xl font-bold">{t('auth.registerTitle')}</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Имя" value={form.first_name} error={fieldErrors.first_name}
+            <Field label={t('profileForm.firstName')} value={form.first_name} error={fieldErrors.first_name}
               onChange={(v) => setForm((f) => ({ ...f, first_name: v }))} />
-            <Field label="Фамилия" value={form.last_name} error={fieldErrors.last_name}
+            <Field label={t('profileForm.lastName')} value={form.last_name} error={fieldErrors.last_name}
               onChange={(v) => setForm((f) => ({ ...f, last_name: v }))} />
           </div>
-          <Field label="Email" type="email" required value={form.email} error={fieldErrors.email}
+          <Field label={t('auth.email')} type="email" required value={form.email} error={fieldErrors.email}
             onChange={(v) => setForm((f) => ({ ...f, email: v }))} />
-          <Field label="Дата рождения" type="date" value={form.birth_date} error={fieldErrors.birth_date}
+          <Field label={t('profileForm.birthDate')} type="date" value={form.birth_date} error={fieldErrors.birth_date}
             onChange={(v) => setForm((f) => ({ ...f, birth_date: v }))} />
           <div>
-            <Field label="Телефон" placeholder="+491701234567" value={form.phone} error={fieldErrors.phone}
+            <Field label={t('profileForm.phone')} placeholder="+491701234567" value={form.phone} error={fieldErrors.phone}
               onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
-            <p className="mt-1 text-xs text-neutral-400">Необязательно.</p>
+            <p className="mt-1 text-xs text-neutral-400">{t('auth.optional')}</p>
           </div>
-          <Field label="Пароль" type="password" required value={form.password} error={fieldErrors.password}
+          <Field label={t('auth.password')} type="password" required value={form.password} error={fieldErrors.password}
             onChange={(v) => setForm((f) => ({ ...f, password: v }))} />
-          <Field label="Повторите пароль" type="password" required value={form.re_password} error={fieldErrors.re_password}
+          <Field label={t('auth.repeatPassword')} type="password" required value={form.re_password} error={fieldErrors.re_password}
             onChange={(v) => setForm((f) => ({ ...f, re_password: v }))} />
 
           <ErrorAlert message={error} />
 
           <button type="submit" disabled={isSubmitting} className="btn-primary w-full">
-            {isSubmitting ? 'Создание...' : 'Зарегистрироваться'}
+            {isSubmitting ? t('auth.registering') : t('auth.register')}
           </button>
         </form>
         <p className="text-center text-sm text-neutral-500">
-          Уже есть аккаунт?{' '}
+          {t('auth.hasAccount')}{' '}
           <Link to="/login" className="font-semibold text-brand-600">
-            Войти
+            {t('auth.toLogin')}
           </Link>
         </p>
       </div>

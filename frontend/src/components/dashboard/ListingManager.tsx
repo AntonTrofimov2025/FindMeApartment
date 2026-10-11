@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { Plus, Pencil, ImagePlus, Trash2, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { Listing } from '@/types/models';
@@ -11,9 +13,11 @@ import { RatingBadge } from '@/components/ui/RatingBadge';
 import { ListingForm } from './ListingForm';
 import { PhotoManager } from './PhotoManager';
 import { parseApiError } from '@/lib/errors';
+import { useI18n } from '@/i18n';
 
 export function ListingManager() {
   const { user } = useAuth();
+  const { t, tn } = useI18n();
   const [listings, setListings] = useState<Listing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [formTarget, setFormTarget] = useState<Listing | 'new' | null>(null);
@@ -52,7 +56,7 @@ export function ListingManager() {
     if (!confirmDelete) return;
     try {
       await deleteListing(confirmDelete.id);
-      toast.success('Объявление удалено');
+      toast.success(t('listings.deleted'));
       setListings((prev) => prev.filter((l) => l.id !== confirmDelete.id));
       setConfirmDelete(null);
     } catch (err) {
@@ -71,30 +75,32 @@ export function ListingManager() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Мои объявления ({listings.length})</h2>
+        <h2 className="text-lg font-semibold">{t('listings.title', { n: listings.length })}</h2>
         <button onClick={() => setFormTarget('new')} className="btn-primary !px-4 !py-2 text-sm">
           <Plus size={16} className="mr-1.5" />
-          Новое объявление
+          {t('listings.new')}
         </button>
       </div>
 
       {listings.length === 0 ? (
-        <p className="py-10 text-center text-neutral-400">
-          У вас пока нет объявлений — создайте первое, чтобы оно появилось на главной странице.
-        </p>
+        <p className="py-10 text-center text-neutral-400">{t('listings.empty')}</p>
       ) : (
         <div className="space-y-3">
           {listings.map((listing) => (
             <div key={listing.id} className="card flex flex-wrap items-center gap-4 p-4">
               <div className="min-w-[220px] flex-1">
                 <div className="flex items-center gap-2">
-                  <h3 className="font-semibold">{listing.title}</h3>
+                  <h3 className="font-semibold">
+                    <Link to={`/listings/${listing.id}`} className="hover:text-brand-600 hover:underline">
+                      {listing.title}
+                    </Link>
+                  </h3>
                   {!listing.is_active && (
-                    <span className="rounded-md bg-neutral-200 px-2 py-0.5 text-xs text-neutral-600">Скрыто</span>
+                    <span className="rounded-md bg-neutral-200 px-2 py-0.5 text-xs text-neutral-600">{t('card.hidden')}</span>
                   )}
                 </div>
                 <p className="text-sm text-neutral-500">
-                  {listing.city} · {listing.rooms} комн. · до {listing.max_guests} гостей
+                  {listing.city} · {t('rooms.short', { n: listing.rooms })} · {tn('guests.upTo', listing.max_guests)}
                 </p>
                 <div className="mt-2 flex items-center gap-3">
                   <PriceTag
@@ -107,16 +113,16 @@ export function ListingManager() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <IconButton icon={<Pencil size={14} />} label="Редактировать" onClick={() => setFormTarget(listing)} />
-                <IconButton icon={<ImagePlus size={14} />} label="Фото" onClick={() => setPhotoTarget(listing)} />
+                <IconButton icon={<Pencil size={14} />} label={t('listings.edit')} onClick={() => setFormTarget(listing)} />
+                <IconButton icon={<ImagePlus size={14} />} label={t('listings.photos')} onClick={() => setPhotoTarget(listing)} />
                 <IconButton
                   icon={listing.is_active ? <EyeOff size={14} /> : <Eye size={14} />}
-                  label={listing.is_active ? 'Скрыть' : 'Показать'}
+                  label={listing.is_active ? t('listings.hide') : t('listings.show')}
                   onClick={() => handleToggleActive(listing)}
                 />
                 <IconButton
                   icon={<Trash2 size={14} />}
-                  label="Удалить"
+                  label={t('listings.delete')}
                   danger
                   onClick={() => setConfirmDelete(listing)}
                 />
@@ -128,7 +134,7 @@ export function ListingManager() {
 
       {formTarget && (
         <Modal
-          title={formTarget === 'new' ? 'Новое объявление' : 'Редактирование объявления'}
+          title={formTarget === 'new' ? t('listings.newTitle') : t('listings.editTitle')}
           onClose={() => setFormTarget(null)}
           widthClass="max-w-2xl"
         >
@@ -143,24 +149,20 @@ export function ListingManager() {
       )}
 
       {photoTarget && (
-        <Modal title={`Фото: ${photoTarget.title}`} onClose={() => setPhotoTarget(null)} widthClass="max-w-xl">
+        <Modal title={t('listings.photosTitle', { title: photoTarget.title })} onClose={() => setPhotoTarget(null)} widthClass="max-w-xl">
           <PhotoManager listingId={photoTarget.id} />
         </Modal>
       )}
 
       {confirmDelete && (
-        <Modal title="Удалить объявление?" onClose={() => setConfirmDelete(null)}>
-          <p className="mb-4 text-sm text-neutral-600">
-            «{confirmDelete.title}» будет скрыто (мягкое удаление) и больше не появится в каталоге. Действие
-            необратимо на этом экране. Если по объекту есть подтверждённые бронирования или гость сейчас
-            проживает, удаление будет отклонено — сначала отмените или завершите эти бронирования.
-          </p>
+        <Modal title={t('listings.deleteTitle')} onClose={() => setConfirmDelete(null)}>
+          <p className="mb-4 text-sm text-neutral-600">{t('listings.deleteText', { title: confirmDelete.title })}</p>
           <div className="flex justify-end gap-2">
             <button onClick={() => setConfirmDelete(null)} className="btn-secondary !px-4 !py-2 text-sm">
-              Отмена
+              {t('common.cancel')}
             </button>
             <button onClick={handleDelete} className="btn-primary !bg-red-600 !px-4 !py-2 text-sm hover:!bg-red-700">
-              Удалить
+              {t('listings.delete')}
             </button>
           </div>
         </Modal>
@@ -175,7 +177,7 @@ function IconButton({
   onClick,
   danger,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   onClick: () => void;
   danger?: boolean;

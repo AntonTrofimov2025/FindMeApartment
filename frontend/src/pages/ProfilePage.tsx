@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
+import { useI18n } from '@/i18n';
 import { Link, useSearchParams } from 'react-router-dom';
 import { LayoutDashboard } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,6 +19,7 @@ export function ProfilePage() {
   const initialTab = (searchParams.get('tab') as Tab) ?? 'info';
   const [tab, setTab] = useState<Tab>(initialTab === 'bookings' ? 'bookings' : initialTab);
   const highlightId = searchParams.get('highlight');
+  const { t } = useI18n();
 
   if (isLoading || !user) {
     return (
@@ -30,13 +33,13 @@ export function ProfilePage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Личный кабинет</h1>
+          <h1 className="text-2xl font-bold">{t('profile.title')}</h1>
           <p className="text-sm text-neutral-500">{user.email}</p>
         </div>
         {isLandlord ? (
           <Link to="/dashboard" className="btn-secondary">
             <LayoutDashboard size={16} className="mr-2" />
-            Панель арендодателя
+            {t('profile.landlordPanel')}
           </Link>
         ) : (
           <BecomeLandlordButton />
@@ -45,13 +48,13 @@ export function ProfilePage() {
 
       <div className="flex gap-1 border-b border-neutral-200">
         <TabButton active={tab === 'info'} onClick={() => setTab('info')}>
-          Личные данные
+          {t('profile.tabInfo')}
         </TabButton>
         <TabButton active={tab === 'bookings'} onClick={() => setTab('bookings')}>
-          Мои бронирования
+          {t('profile.tabBookings')}
         </TabButton>
         <TabButton active={tab === 'security'} onClick={() => setTab('security')}>
-          Безопасность
+          {t('profile.tabSecurity')}
         </TabButton>
       </div>
 
@@ -74,7 +77,7 @@ function TabButton({
 }: {
   active: boolean;
   onClick: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <button

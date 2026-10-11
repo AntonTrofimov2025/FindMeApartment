@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ExternalLink } from 'lucide-react';
 import { format, parseISO, differenceInCalendarDays } from 'date-fns';
-import { ru } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 import type { Booking, Review } from '@/types/models';
 import { fetchMyBookings, cancelBooking } from '@/api/bookings';
@@ -11,9 +12,11 @@ import { ReviewForm } from './ReviewForm';
 import { Spinner } from '@/components/ui/Spinner';
 import { parseApiError } from '@/lib/errors';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/i18n';
 
 export function BookingHistory({ highlightId }: { highlightId?: string | null }) {
   const { user, isLandlord } = useAuth();
+  const { t, tn, money, dateLocale } = useI18n();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [reviewFormFor, setReviewFormFor] = useState<string | null>(null);
@@ -74,7 +77,7 @@ export function BookingHistory({ highlightId }: { highlightId?: string | null })
         delete next[bookingId];
         return next;
       });
-      toast.success('Отзыв удалён');
+      toast.success(t('history.reviewDeleted'));
     } catch (err) {
       toast.error(parseApiError(err).message);
     }
@@ -91,9 +94,7 @@ export function BookingHistory({ highlightId }: { highlightId?: string | null })
   if (!bookings.length) {
     return (
       <p className="py-10 text-center text-neutral-400">
-        {isLandlord
-          ? 'У вас нет поездок, забронированных в роли арендатора. Бронирования гостей по вашим объектам — в панели арендодателя.'
-          : 'У вас пока нет бронирований.'}
+        {isLandlord ? t('history.emptyLandlord') : t('history.empty')}
       </p>
     );
   }
@@ -102,7 +103,7 @@ export function BookingHistory({ highlightId }: { highlightId?: string | null })
     <div className="space-y-4">
       {bookings.map((booking) => {
         const isHighlighted = booking.id === highlightId;
-        const propertyTitle = booking.snapshot_data.property_data?.title ?? 'Объект';
+        const propertyTitle = booking.snapshot_data.property_data?.title ?? t('snapshot.property');
         // Booking.clean(): отмену уже подтверждённой (CONFIRMED) брони бэк отклонит меньше чем
         // за 2 дня до заезда — подсказываем это на кнопке, но финальное решение всегда за сервером.
         const nightsToStart = differenceInCalendarDays(parseISO(booking.date_from), new Date());
@@ -119,37 +120,51 @@ export function BookingHistory({ highlightId }: { highlightId?: string | null })
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h3 className="font-semibold">{propertyTitle}</h3>
+                {/* Название ведёт на страницу объявления — параметры объекта можно посмотреть прямо из брони */}
+                <h3 className="font-semibold">
+                  <Link to={`/listings/${booking.listing}`} className="hover:text-brand-600 hover:underline">
+                    {propertyTitle}
+                  </Link>
+                </h3>
                 <p className="text-sm text-neutral-500">
-                  {format(parseISO(booking.date_from), 'd MMM yyyy', { locale: ru })} —{' '}
-                  {format(parseISO(booking.date_to), 'd MMM yyyy', { locale: ru })} · {booking.guests_number} гостей
+                  {format(parseISO(booking.date_from), 'd MMM yyyy', { locale: dateLocale })} —{' '}
+                  {format(parseISO(booking.date_to), 'd MMM yyyy', { locale: dateLocale })} ·{' '}
+                  {tn('guests.count', booking.guests_number)}
                 </p>
               </div>
               <StatusBadge status={booking.booking_status} />
             </div>
 
             <div className="flex items-center justify-between text-sm">
-              <span className="text-neutral-500">Итого</span>
-              <span className="font-semibold">{Number(booking.total_price).toFixed(2)} €</span>
+              <span className="text-neutral-500">{t('history.total')}</span>
+              <span className="font-semibold">{money(Number(booking.total_price))}</span>
             </div>
 
             <BookingSnapshotCard snapshot={booking.snapshot_data} />
 
             <div className="flex flex-wrap items-center gap-2 pt-1">
+              <Link
+                to={`/listings/${booking.listing}`}
+                className="btn-secondary inline-flex items-center gap-1.5 !px-3 !py-1.5 text-xs"
+              >
+                <ExternalLink size={14} />
+                {t('history.openListing')}
+              </Link>
+
               {canCancel && (
                 <button
                   onClick={() => handleCancel(booking)}
                   disabled={isBusy}
-                  title={tooLateToCancelConfirmed ? 'Отмена подтверждённой брони возможна не позднее чем за 2 дня до заезда' : undefined}
+                  title={tooLateToCancelConfirmed ? t('history.cancelHint') : undefined}
                   className="btn-secondary border-red-200 !px-3 !py-1.5 text-xs text-red-600 hover:bg-red-50"
                 >
-                  {isBusy ? 'Отмена...' : 'Отменить бронирование'}
+                  {isBusy ? t('history.cancelling') : t('history.cancel')}
                 </button>
               )}
 
               {canReview && !myReview && reviewFormFor !== booking.id && (
                 <button onClick={() => setReviewFormFor(booking.id)} className="btn-secondary !px-3 !py-1.5 text-xs">
-                  Оставить отзыв
+                  {t('history.leaveReview')}
                 </button>
               )}
 
@@ -161,7 +176,7 @@ export function BookingHistory({ highlightId }: { highlightId?: string | null })
                   onClick={() => handleDeleteReview(booking.id)}
                   className="btn-secondary border-red-200 !px-3 !py-1.5 text-xs text-red-600 hover:bg-red-50"
                 >
-                  Удалить отзыв
+                  {t('history.deleteReview')}
                 </button>
               )}
             </div>
@@ -169,16 +184,14 @@ export function BookingHistory({ highlightId }: { highlightId?: string | null })
             {myReview && (
               <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm">
                 <p className="mb-1 text-xs font-medium text-neutral-500">
-                  Ваш отзыв · объект {myReview.property_rating}/5 · расположение {myReview.location_rating}/5
+                  {t('history.yourReview', { p: myReview.property_rating, l: myReview.location_rating })}
                 </p>
                 <p className="whitespace-pre-line text-neutral-700">{myReview.text}</p>
               </div>
             )}
 
             {tooLateToCancelConfirmed && canCancel && (
-              <p className="text-xs text-neutral-400">
-                Отмена подтверждённой брони возможна не позднее чем за 2 дня до заезда.
-              </p>
+              <p className="text-xs text-neutral-400">{t('history.cancelHint')}</p>
             )}
 
             {reviewFormFor === booking.id && (

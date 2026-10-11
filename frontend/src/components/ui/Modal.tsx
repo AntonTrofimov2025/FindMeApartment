@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useI18n } from '@/i18n';
 
 interface ModalProps {
   title: string;
@@ -10,6 +11,7 @@ interface ModalProps {
 }
 
 export function Modal({ title, onClose, children, widthClass = 'max-w-lg' }: ModalProps) {
+  const { t } = useI18n();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     document.addEventListener('keydown', onKey);
@@ -25,7 +27,7 @@ export function Modal({ title, onClose, children, widthClass = 'max-w-lg' }: Mod
       <div className={`w-full ${widthClass} rounded-xl2 bg-white p-6 shadow-card-hover`}>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">{title}</h2>
-          <button onClick={onClose} className="rounded-full p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700" aria-label="Закрыть">
+          <button onClick={onClose} className="rounded-full p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700" aria-label={t('common.close')}>
             <X size={18} />
           </button>
         </div>

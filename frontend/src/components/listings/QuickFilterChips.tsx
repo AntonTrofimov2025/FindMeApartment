@@ -1,25 +1,28 @@
 import type { ListingFilters } from '@/api/listings';
+import { useI18n } from '@/i18n';
+import type { StringKey } from '@/i18n';
 
 // Пресеты собраны строго из полей ListingFilter (apps/listings/filters/listing_filter.py):
 // property_type, city (istartswith), rooms/min_rooms/max_rooms, guests (вместимость от N, gte),
 // min_price/max_price (по цене СО СКИДКОЙ: price_per_night * discount). Города и цены проверены на
 // сид-данных create_initial_listings — каждый пресет что-то находит. Валюта — €, как и в аналитике.
 export interface QuickFilterPreset {
-  label: string;
+  /** Ключ словаря i18n — подпись переводится в момент отрисовки */
+  labelKey: StringKey;
   filters: Partial<ListingFilters>;
 }
 
 export const QUICK_FILTER_PRESETS: QuickFilterPreset[] = [
-  { label: 'Апартаменты до 100 €', filters: { property_type: 'apartment', max_price: 100 } },
-  { label: 'Студии', filters: { property_type: 'studio' } },
-  { label: 'Дома от 3 комнат', filters: { property_type: 'house', min_rooms: 3 } },
-  { label: 'Для компании от 6 гостей', filters: { guests: 6 } },
-  { label: 'Лофты', filters: { property_type: 'loft' } },
-  { label: 'Таунхаусы', filters: { property_type: 'townhouse' } },
-  { label: 'Комнаты до 60 €', filters: { property_type: 'room', max_price: 60 } },
-  { label: 'Жильё в Мюнхене', filters: { city: 'München' } },
-  { label: 'Жильё в Гамбурге', filters: { city: 'Hamburg' } },
-  { label: 'Бюджетно: до 80 €/ночь', filters: { max_price: 80 } },
+  { labelKey: 'chips.apartmentsUnder100', filters: { property_type: 'apartment', max_price: 100 } },
+  { labelKey: 'chips.studios', filters: { property_type: 'studio' } },
+  { labelKey: 'chips.houses3Rooms', filters: { property_type: 'house', min_rooms: 3 } },
+  { labelKey: 'chips.groups6', filters: { guests: 6 } },
+  { labelKey: 'chips.lofts', filters: { property_type: 'loft' } },
+  { labelKey: 'chips.townhouses', filters: { property_type: 'townhouse' } },
+  { labelKey: 'chips.roomsUnder60', filters: { property_type: 'room', max_price: 60 } },
+  { labelKey: 'chips.munich', filters: { city: 'München' } },
+  { labelKey: 'chips.hamburg', filters: { city: 'Hamburg' } },
+  { labelKey: 'chips.budget80', filters: { max_price: 80 } },
 ];
 
 interface QuickFilterChipsProps {
@@ -28,11 +31,12 @@ interface QuickFilterChipsProps {
 }
 
 export function QuickFilterChips({ activeIndex, onSelect }: QuickFilterChipsProps) {
+  const { t } = useI18n();
   return (
     <div className="flex flex-wrap gap-2">
       {QUICK_FILTER_PRESETS.map((preset, index) => (
         <button
-          key={preset.label}
+          key={preset.labelKey}
           onClick={() => onSelect(preset, index)}
           className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
             activeIndex === index
@@ -40,7 +44,7 @@ export function QuickFilterChips({ activeIndex, onSelect }: QuickFilterChipsProp
               : 'border-neutral-200 bg-white text-neutral-700 hover:border-brand-300 hover:bg-brand-50'
           }`}
         >
-          {preset.label}
+          {t(preset.labelKey)}
         </button>
       ))}
     </div>

@@ -1,16 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import type { Listing } from '@/types/models';
 import { fetchListings, type ListingFilters } from '@/api/listings';
 import { ListingGrid } from '@/components/listings/ListingGrid';
 import { QuickFilterChips, type QuickFilterPreset } from '@/components/listings/QuickFilterChips';
-import { PROPERTY_TYPES, COUNTRIES, ROOM_COUNTS, MAX_GUESTS_OPTIONS } from '@/types/choices';
+import {
+  PROPERTY_TYPES,
+  COUNTRY_CODES,
+  ROOM_COUNTS,
+  MAX_GUESTS_OPTIONS,
+  propertyTypeKey,
+  roomOptionKey,
+} from '@/types/choices';
+import { useI18n } from '@/i18n';
+import type { StringKey } from '@/i18n';
 
-const ORDERING_OPTIONS = [
-  { value: '-created_at', label: 'Сначала новые' },
-  { value: 'price_per_night', label: 'Цена: по возрастанию' },
-  { value: '-price_per_night', label: 'Цена: по убыванию' },
-  { value: 'rooms', label: 'Комнаты: сначала меньше' },
+const ORDERING_OPTIONS: { value: string; labelKey: StringKey }[] = [
+  { value: '-created_at', labelKey: 'home.sort.newest' },
+  { value: 'price_per_night', labelKey: 'home.sort.priceAsc' },
+  { value: '-price_per_night', labelKey: 'home.sort.priceDesc' },
+  { value: 'rooms', labelKey: 'home.sort.roomsAsc' },
 ];
 
 export function HomePage() {
@@ -22,6 +31,15 @@ export function HomePage() {
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<ListingFilters>({ ordering: '-created_at', limit: 12, offset: 0 });
   const [activeChip, setActiveChip] = useState<number | null>(null);
+  const { t, tn, country, intlLocale } = useI18n();
+
+  const countryOptions = useMemo(
+    () =>
+      COUNTRY_CODES.map((code) => ({ code, name: country(code) })).sort((a, b) =>
+        a.name.localeCompare(b.name, intlLocale),
+      ),
+    [country, intlLocale],
+  );
 
   async function load(nextFilters: ListingFilters) {
     setIsLoading(true);
@@ -81,8 +99,8 @@ export function HomePage() {
       {/* Hero: тёмно-синяя секция с поисковой карточкой, наплывающей на нижний край — как на Booking.com */}
       <section className="-mx-4 -mt-6 bg-brand-900 px-4 pb-16 pt-8 sm:-mx-6 sm:px-6">
         <div className="mx-auto max-w-5xl">
-          <h1 className="text-2xl font-bold text-white sm:text-3xl">Найдите следующее жильё для отдыха</h1>
-          <p className="mt-1 text-brand-100">Квартиры, дома и студии — с моментальным бронированием</p>
+          <h1 className="text-2xl font-bold text-white sm:text-3xl">{t('home.heroTitle')}</h1>
+          <p className="mt-1 text-brand-100">{t('home.heroSubtitle')}</p>
         </div>
       </section>
 
@@ -93,16 +111,16 @@ export function HomePage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Город, район, название объявления..."
+              placeholder={t('home.searchPlaceholder')}
               className="input pl-10"
             />
           </div>
           <button type="submit" className="btn-primary">
-            Найти
+            {t('home.search')}
           </button>
           <button type="button" onClick={() => setShowFilters((s) => !s)} className="btn-secondary">
             <SlidersHorizontal size={16} className="mr-2" />
-            Фильтры
+            {t('home.filters')}
           </button>
         </form>
 
@@ -115,10 +133,10 @@ export function HomePage() {
               defaultValue=""
               onChange={(e) => updateFilter('property_type', e.target.value || undefined)}
             >
-              <option value="">Тип жилья</option>
-              {PROPERTY_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
+              <option value="">{t('home.anyType')}</option>
+              {PROPERTY_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {t(propertyTypeKey(type))}
                 </option>
               ))}
             </select>
@@ -128,10 +146,10 @@ export function HomePage() {
               defaultValue=""
               onChange={(e) => updateFilter('country', e.target.value ? Number(e.target.value) : undefined)}
             >
-              <option value="">Страна</option>
-              {COUNTRIES.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
+              <option value="">{t('home.anyCountry')}</option>
+              {countryOptions.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
                 </option>
               ))}
             </select>
@@ -141,10 +159,10 @@ export function HomePage() {
               defaultValue=""
               onChange={(e) => updateFilter('rooms', e.target.value ? Number(e.target.value) : undefined)}
             >
-              <option value="">Комнат (точно)</option>
+              <option value="">{t('home.anyRooms')}</option>
               {ROOM_COUNTS.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
+                <option key={r} value={r}>
+                  {t(roomOptionKey(r))}
                 </option>
               ))}
             </select>
@@ -154,30 +172,30 @@ export function HomePage() {
               defaultValue=""
               onChange={(e) => updateFilter('guests', e.target.value ? Number(e.target.value) : undefined)}
             >
-              <option value="">Гостей</option>
+              <option value="">{t('home.anyGuests')}</option>
               {MAX_GUESTS_OPTIONS.map((n) => (
                 <option key={n} value={n}>
-                  от {n} {n === 1 ? 'гостя' : 'гостей'}
+                  {tn('guests.atLeast', n)}
                 </option>
               ))}
             </select>
 
             <input
               type="number"
-              placeholder="Цена от"
+              placeholder={t('home.priceFrom')}
               className="input"
               onChange={(e) => updateFilter('min_price', e.target.value ? Number(e.target.value) : undefined)}
             />
             <input
               type="number"
-              placeholder="Цена до"
+              placeholder={t('home.priceTo')}
               className="input"
               onChange={(e) => updateFilter('max_price', e.target.value ? Number(e.target.value) : undefined)}
             />
             <select className="input" value={filters.ordering} onChange={(e) => updateFilter('ordering', e.target.value)}>
               {ORDERING_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
-                  {o.label}
+                  {t(o.labelKey)}
                 </option>
               ))}
             </select>
@@ -187,7 +205,7 @@ export function HomePage() {
 
       <div className="flex items-baseline justify-between">
         <h2 className="text-xl font-semibold text-neutral-900">
-          {isLoading ? 'Ищем варианты...' : `Найдено объявлений: ${count}`}
+          {isLoading ? t('home.searching') : t('home.found', { n: count })}
         </h2>
       </div>
 

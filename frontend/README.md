@@ -32,6 +32,7 @@ SPA route `/listings/:id` and the API route `/api/listings/<uuid>/` from collidi
 
 ```
 src/
+  i18n/        — dictionaries (ru/en/de), useI18n() hook, plural rules, money/country formatting
   types/       — TypeScript types mirroring the DRF serializers (choices.ts, models.ts)
   lib/         — Axios client with JWT refresh, parser for drf-standardized-errors responses
   api/         — one module per Django app (auth, users, listings, photos, bookings, reviews)
@@ -64,6 +65,11 @@ src/
 - **Reviews**: an existing review is looked up via `GET /api/reviews/?booking=<id>`. Editing (`PATCH`) is
   restricted to administrators, so the author deletes the review and writes a new one — the backend
   restores the archived record with the new content.
+- **Soft-deleted reviews**: for staff, `ReviewViewSet` is built on `Review.all_objects`, so deleted
+  reviews come back in the list while `avg_rating` already ignores them. `api/reviews.ts` drops
+  `is_deleted` reviews on the client so the property page and the rating always agree.
+- **Booking → listing**: booking titles in the profile and in the dashboard link to `/listings/:id`.
+  If the host has hidden or deleted the listing, the API answers `404` to tenants and the page says so.
 - **Photos**: the catalog and the property page use the nested `listing.photos`; the dashboard
   additionally filters `/api/photos/` by `is_deleted` on the client.
 - **Password change** goes only through `POST /api/users/me/` with `old_password` and `refresh`; the
@@ -74,6 +80,31 @@ src/
 Ten presets below the search bar are built from `ListingFilter` fields and verified against the
 `create_initial_listings` seed data. Guest capacity uses the `guests` parameter ("at least N guests"),
 and `min_price`/`max_price` filter by the discounted price.
+
+## Internationalization
+
+The UI is available in Russian, German and English (UK); the language is switched with the flag
+buttons in the header and remembered in `localStorage` (`fma_lang`). On the first visit the browser
+language is used, falling back to English like the backend (`LANGUAGE_CODE = 'en-us'`).
+
+- **No extra dependencies**: `src/i18n/index.ts` is a small store built on `useSyncExternalStore`;
+  components call `const { t, tn, money, country, dateLocale } = useI18n()`.
+- **Backend messages are translated too**: every request carries `Accept-Language`, so Django's
+  `LocaleMiddleware` returns validation errors and `msg` fields in the selected language.
+- **Dictionaries** live in `src/i18n/messages/{ru,en,de}.ts`. `ru.ts` is the reference: the `Messages`
+  type is derived from it, so a missing or misspelled key in `en.ts`/`de.ts` or in a `t('…')` call fails
+  `npm run typecheck`. Placeholders are written as `{name}`; plural forms use `Intl.PluralRules`
+  (`one`/`few`/`many`/`other`).
+- **Choices** (`types/choices.ts`) keep only the values that must match the backend; labels come from
+  the dictionaries, and country names come from `Intl.DisplayNames` by ISO code.
+- **Dates and money**: `date-fns` locales are registered for `react-datepicker`, prices are formatted
+  with `Intl.NumberFormat` for the active locale.
+- **Snapshots are not re-translated**: `snapshot_data` stores `get_*_display()` labels in the language
+  of the request that created the booking.
+- **Adding a language**: add `xx.ts` (typed as `Messages`), extend `LANGUAGES`, `DICTIONARIES`,
+  `INTL_LOCALE` and `DATE_LOCALE` in `src/i18n/index.ts`, register the `date-fns` locale and add a flag
+  to `components/layout/LanguageSwitcher.tsx`. Flags are inline SVG because Windows does not render
+  flag emoji.
 
 # FindMeApartment — Frontend
 
@@ -105,6 +136,7 @@ npm run build        # production-сборка в dist/
 
 ```
 src/
+  i18n/        — словари (ru/en/de), хук useI18n(), плюрализация, форматирование денег и стран
   types/       — TS-типы по Serializer.Meta.fields (choices.ts, models.ts)
   lib/         — axios-клиент с JWT refresh, парсер ошибок drf-standardized-errors
   api/         — по модулю на Django app (auth, users, listings, photos, bookings, reviews)
@@ -132,6 +164,11 @@ src/
 - **Отзывы**: наличие отзыва проверяется через `GET /api/reviews/?booking=<id>`. Редактирование
   (`PATCH`) на бэке доступно только администратору, поэтому автор может удалить отзыв и написать
   заново — `perform_create` восстановит удалённую запись с новыми данными.
+- **Мягко удалённые отзывы**: для staff `ReviewViewSet` строится от `Review.all_objects`, поэтому
+  удалённые отзывы приходят в списке, хотя `avg_rating` их уже не учитывает. `api/reviews.ts`
+  отбрасывает `is_deleted` на клиенте, чтобы страница объекта и рейтинг не расходились.
+- **Бронь → объявление**: название брони в профиле и в дашборде ведёт на `/listings/:id`. Если хозяин
+  скрыл или удалил объявление, API отвечает арендатору `404`, и страница об этом сообщает.
 - **Фото**: в каталоге и на странице объекта берутся из вложенного `listing.photos`; в дашборде
   `/api/photos/` дополнительно фильтруется по `is_deleted` на клиенте.
 - **Смена пароля** — только через `POST /api/users/me/` с `old_password` и `refresh`; `PATCH` профиля
@@ -142,3 +179,27 @@ src/
 10 пресетов под строкой поиска собраны из полей `ListingFilter` и проверены на сид-данных
 `create_initial_listings`. Вместимость фильтруется параметром `guests` («от N гостей»), а
 `min_price`/`max_price` — по цене со скидкой.
+
+## Интернационализация
+
+Интерфейс доступен на русском, немецком и английском (британском); язык переключается флажками в шапке
+и запоминается в `localStorage` (`fma_lang`). При первом визите берётся язык браузера, а если он не
+поддерживается — английский, как и на бэке (`LANGUAGE_CODE = 'en-us'`).
+
+- **Без новых зависимостей**: `src/i18n/index.ts` — небольшое хранилище на `useSyncExternalStore`;
+  компоненты используют `const { t, tn, money, country, dateLocale } = useI18n()`.
+- **Сообщения бэка тоже переводятся**: каждый запрос отправляет `Accept-Language`, и `LocaleMiddleware`
+  возвращает ошибки валидации и поля `msg` на выбранном языке.
+- **Словари** — `src/i18n/messages/{ru,en,de}.ts`. Эталон — `ru.ts`: из него выводится тип `Messages`,
+  поэтому пропущенный или опечатанный ключ в `en.ts`/`de.ts` или в вызове `t('…')` ломает
+  `npm run typecheck`. Плейсхолдеры — `{name}`, множественное число — через `Intl.PluralRules`
+  (`one`/`few`/`many`/`other`).
+- **Справочники** (`types/choices.ts`) хранят только значения, совпадающие с бэком; подписи берутся из
+  словарей, а названия стран — из `Intl.DisplayNames` по ISO-коду.
+- **Даты и деньги**: локали `date-fns` зарегистрированы для `react-datepicker`, цены форматируются через
+  `Intl.NumberFormat` под текущий язык.
+- **Снимки не перепереводятся**: в `snapshot_data` лежат подписи `get_*_display()` на языке запроса,
+  которым создавалась бронь.
+- **Новый язык**: добавить `xx.ts` (тип `Messages`), расширить `LANGUAGES`, `DICTIONARIES`,
+  `INTL_LOCALE` и `DATE_LOCALE` в `src/i18n/index.ts`, зарегистрировать локаль `date-fns` и добавить флаг
+  в `components/layout/LanguageSwitcher.tsx`. Флаги — inline SVG, потому что Windows не рисует эмодзи-флаги.

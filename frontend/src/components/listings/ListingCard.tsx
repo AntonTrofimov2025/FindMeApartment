@@ -3,14 +3,16 @@ import { ImageOff } from 'lucide-react';
 import type { Listing } from '@/types/models';
 import { RatingBadge } from '@/components/ui/RatingBadge';
 import { PriceTag } from '@/components/ui/PriceTag';
-import { countryLabel, PROPERTY_TYPES } from '@/types/choices';
+import { propertyTypeKey } from '@/types/choices';
+import { useI18n } from '@/i18n';
 
 export function ListingCard({ listing }: { listing: Listing }) {
   // ListingSerializer теперь встраивает photos инлайн — отдельный запрос к /photos/ на
   // каждую карточку каталога больше не нужен (раньше это был N+1: одна карточка = один запрос).
   const coverUrl = [...listing.photos].sort((a, b) => a.photo_number - b.photo_number)[0]?.photo ?? null;
 
-  const typeLabel = PROPERTY_TYPES.find((t) => t.value === listing.property_type)?.label ?? listing.property_type;
+  const { t, country } = useI18n();
+  const typeLabel = t(propertyTypeKey(listing.property_type));
 
   return (
     <Link to={`/listings/${listing.id}`} className="card group block overflow-hidden">
@@ -25,7 +27,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-neutral-300">
             <ImageOff size={32} />
-            <span className="text-xs">Нет фото</span>
+            <span className="text-xs">{t('card.noPhoto')}</span>
           </div>
         )}
         {!listing.is_deleted && (
@@ -35,7 +37,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         )}
         {!listing.is_active && (
           <span className="absolute right-3 top-3 rounded-md bg-neutral-900/80 px-2.5 py-1 text-xs font-medium text-white">
-            Скрыто
+            {t('card.hidden')}
           </span>
         )}
       </div>
@@ -45,7 +47,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
           <h3 className="line-clamp-1 font-semibold text-neutral-900">{listing.title}</h3>
         </div>
         <p className="line-clamp-1 text-sm text-neutral-500">
-          {listing.city}, {countryLabel(listing.country)}
+          {listing.city}, {country(listing.country)}
         </p>
         <div className="flex items-center justify-between gap-2 pt-1">
           <PriceTag

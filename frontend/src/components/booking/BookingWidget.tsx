@@ -10,22 +10,24 @@ import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { useAuth } from '@/hooks/useAuth';
 import { createBooking } from '@/api/bookings';
 import { parseApiError } from '@/lib/errors';
+import { useI18n } from '@/i18n';
 
 const ISO = (d: Date) => format(d, 'yyyy-MM-dd');
 
 export function BookingWidget({ listing }: { listing: Listing }) {
   const { isAuthenticated, isLandlord, user } = useAuth();
   const navigate = useNavigate();
+  const { t, tn, money } = useI18n();
   // Booking.clean() запрещает бронировать своё же объявление и неактивные объявления, а по карте
   // ролей у Landlord нет bookings.add_booking. Показываем причину заранее, вместо формы, которая
   // всё равно упадёт на сервере (или, для лендлорда, пройдёт мимо бизнес-правила — см. README).
   const isOwner = !!user && listing.user === user.id;
   const blockedReason = isOwner
-    ? 'Это ваше объявление — бронировать собственный объект нельзя.'
+    ? t('booking.blockedOwner')
     : isLandlord
-      ? 'Арендодатели не могут бронировать жильё. Бронирование доступно только аккаунтам арендаторов.'
+      ? t('booking.blockedLandlord')
       : !listing.is_active
-        ? 'Объявление сейчас скрыто владельцем и не принимает бронирования.'
+        ? t('booking.blockedInactive')
         : null;
 
   const [dateFrom, setDateFrom] = useState<Date | null>(null);
@@ -58,7 +60,7 @@ export function BookingWidget({ listing }: { listing: Listing }) {
         date_to: ISO(dateTo),
         guests_number: guests,
       });
-      toast.success('Бронирование создано и ожидает подтверждения арендодателя.');
+      toast.success(t('booking.created'));
       navigate(`/profile?tab=bookings&highlight=${booking.id}`);
     } catch (err) {
       // Сюда прилетит, в частности, "Unfortunately the selected dates are already booked."
@@ -85,7 +87,7 @@ export function BookingWidget({ listing }: { listing: Listing }) {
         </div>
         {isOwner && (
           <Link to="/dashboard" className="btn-secondary w-full">
-            Управлять объявлением
+            {t('booking.manageListing')}
           </Link>
         )}
       </div>
@@ -101,14 +103,14 @@ export function BookingWidget({ listing }: { listing: Listing }) {
         size="lg"
       />
 
-      <DateRangePicker dateFrom={dateFrom} dateTo={dateTo} onChange={(f, t) => { setDateFrom(f); setDateTo(t); setError(null); }} />
+      <DateRangePicker dateFrom={dateFrom} dateTo={dateTo} onChange={(from, to) => { setDateFrom(from); setDateTo(to); setError(null); }} />
 
       {nights > 30 && (
-        <p className="text-xs text-red-600">Максимум — 30 ночей за одно бронирование.</p>
+        <p className="text-xs text-red-600">{t('booking.maxNights')}</p>
       )}
 
       <div>
-        <label className="mb-1 block text-xs font-medium text-neutral-500">Количество гостей</label>
+        <label className="mb-1 block text-xs font-medium text-neutral-500">{t('booking.guests')}</label>
         <select
           value={guests}
           onChange={(e) => setGuests(Number(e.target.value))}
@@ -116,35 +118,32 @@ export function BookingWidget({ listing }: { listing: Listing }) {
         >
           {Array.from({ length: listing.max_guests }, (_, i) => i + 1).map((n) => (
             <option key={n} value={n}>
-              {n} {n === 1 ? 'гость' : 'гостей'}
+              {tn('guests.count', n)}
             </option>
           ))}
         </select>
-        <p className="mt-1 text-xs text-neutral-400">Максимум для этого объекта: {listing.max_guests}</p>
+        <p className="mt-1 text-xs text-neutral-400">{t('booking.maxGuests', { n: listing.max_guests })}</p>
       </div>
 
       <ErrorAlert message={error} />
 
       <button onClick={handleSubmit} disabled={!canSubmit || isSubmitting} className="btn-primary w-full">
-        {isSubmitting ? 'Отправка...' : isAuthenticated ? 'Забронировать' : 'Войдите, чтобы забронировать'}
+        {isSubmitting ? t('booking.submitting') : isAuthenticated ? t('booking.submit') : t('booking.loginToBook')}
       </button>
 
       {nights > 0 && (
         <div className="space-y-1 border-t border-neutral-100 pt-3 text-sm text-neutral-600">
           <div className="flex justify-between">
             <span>
-              {nights} {nights === 1 ? 'ночь' : nights < 5 ? 'ночи' : 'ночей'} ×{' '}
-              {Number(listing.final_price_per_night).toFixed(2)} €
+              {tn('nights.count', nights)} × {money(Number(listing.final_price_per_night))}
             </span>
-            <span>{estimatedTotal.toFixed(2)} €</span>
+            <span>{money(estimatedTotal)}</span>
           </div>
           <div className="flex justify-between font-semibold text-neutral-900">
-            <span>Итого (ориентировочно)</span>
-            <span>{estimatedTotal.toFixed(2)} €</span>
+            <span>{t('booking.estimatedTotal')}</span>
+            <span>{money(estimatedTotal)}</span>
           </div>
-          <p className="text-xs text-neutral-400">
-            Точная сумма фиксируется сервером в момент подтверждения бронирования.
-          </p>
+          <p className="text-xs text-neutral-400">{t('booking.totalNote')}</p>
         </div>
       )}
     </div>

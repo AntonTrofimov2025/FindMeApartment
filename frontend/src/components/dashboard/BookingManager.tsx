@@ -1,20 +1,22 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { format, parseISO, isBefore, startOfDay } from 'date-fns';
-import { ru } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 import type { Booking } from '@/types/models';
 import type { BookingStatus } from '@/types/choices';
 import { fetchMyBookings, approveBooking, rejectBooking, cancelBooking, checkInBooking } from '@/api/bookings';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Spinner } from '@/components/ui/Spinner';
-import { BOOKING_STATUSES } from '@/types/choices';
+import { BOOKING_STATUSES, statusKey } from '@/types/choices';
 import { parseApiError } from '@/lib/errors';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/i18n';
 
 type FilterValue = BookingStatus | 'all';
 
 export function BookingManager() {
   const { user } = useAuth();
+  const { t, tn, money, dateLocale } = useI18n();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<FilterValue>('all');
@@ -58,12 +60,12 @@ export function BookingManager() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">Бронирования по моим объектам</h2>
+      <h2 className="text-lg font-semibold">{t('hostBookings.title')}</h2>
 
       <div className="flex flex-wrap gap-2">
-        <FilterChip active={filter === 'all'} onClick={() => setFilter('all')} label="Все" />
+        <FilterChip active={filter === 'all'} onClick={() => setFilter('all')} label={t('hostBookings.all')} />
         {BOOKING_STATUSES.map((s) => (
-          <FilterChip key={s.value} active={filter === s.value} onClick={() => setFilter(s.value)} label={s.label} />
+          <FilterChip key={s} active={filter === s} onClick={() => setFilter(s)} label={t(statusKey(s))} />
         ))}
       </div>
 
@@ -72,12 +74,12 @@ export function BookingManager() {
           <Spinner />
         </div>
       ) : bookings.length === 0 ? (
-        <p className="py-10 text-center text-neutral-400">Бронирований с таким статусом нет.</p>
+        <p className="py-10 text-center text-neutral-400">{t('hostBookings.empty')}</p>
       ) : (
         <div className="space-y-3">
           {bookings.map((booking) => {
             const tenant = booking.snapshot_data.Tenant;
-            const propertyTitle = booking.snapshot_data.property_data?.title ?? 'Объект';
+            const propertyTitle = booking.snapshot_data.property_data?.title ?? t('snapshot.property');
             const isBusy = pendingActionId === booking.id;
             // booking_check_in: заселить можно с даты заезда включительно и до даты выезда
             // не включительно (timezone.localdate() < date_to).
@@ -95,19 +97,24 @@ export function BookingManager() {
               <div key={booking.id} className="card space-y-3 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <h3 className="font-semibold">{propertyTitle}</h3>
+                    <h3 className="font-semibold">
+                      <Link to={`/listings/${booking.listing}`} className="hover:text-brand-600 hover:underline">
+                        {propertyTitle}
+                      </Link>
+                    </h3>
                     <p className="text-sm text-neutral-500">
-                      {format(parseISO(booking.date_from), 'd MMM yyyy', { locale: ru })} —{' '}
-                      {format(parseISO(booking.date_to), 'd MMM yyyy', { locale: ru })} · {booking.guests_number} гостей
+                      {format(parseISO(booking.date_from), 'd MMM yyyy', { locale: dateLocale })} —{' '}
+                      {format(parseISO(booking.date_to), 'd MMM yyyy', { locale: dateLocale })} ·{' '}
+                      {tn('guests.count', booking.guests_number)}
                     </p>
                     {tenant && (
                       <p className="text-sm text-neutral-500">
-                        Арендатор: {tenant.first_name} {tenant.last_name} · {tenant.email}
+                        {t('hostBookings.tenant', { name: `${tenant.first_name} ${tenant.last_name}`, email: tenant.email })}
                       </p>
                     )}
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-semibold">{Number(booking.total_price).toFixed(2)} €</span>
+                    <span className="font-semibold">{money(Number(booking.total_price))}</span>
                     <StatusBadge status={booking.booking_status} />
                   </div>
                 </div>
@@ -116,17 +123,13 @@ export function BookingManager() {
                   {booking.booking_status === 'pending' && (
                     <>
                       <ActionButton
-                        label="Подтвердить"
+                        label={t('hostBookings.approve')}
                         onClick={() => runAction(booking.id, () => approveBooking(booking.id))}
                         disabled={isBusy || isExpiredRequest}
-                        title={
-                          isExpiredRequest
-                            ? 'Заявка просрочена: дата заезда уже прошла. Ночью она будет отменена автоматически.'
-                            : undefined
-                        }
+                        title={isExpiredRequest ? t('hostBookings.expiredHint') : undefined}
                       />
                       <ActionButton
-                        label="Отклонить"
+                        label={t('hostBookings.reject')}
                         danger
                         onClick={() => runAction(booking.id, () => rejectBooking(booking.id))}
                         disabled={isBusy}
@@ -136,17 +139,20 @@ export function BookingManager() {
                   {booking.booking_status === 'confirmed' && (
                     <>
                       <ActionButton
-                        label="Заселить"
+                        label={t('hostBookings.checkIn')}
                         onClick={() => runAction(booking.id, () => checkInBooking(booking.id))}
                         disabled={isBusy || !canCheckIn}
                         title={
                           canCheckIn
                             ? undefined
-                            : `Заселение доступно с ${booking.date_from} и до ${booking.date_to} (не включая дату выезда)`
+                            : t('hostBookings.checkInHint', {
+                                from: format(parseISO(booking.date_from), 'P', { locale: dateLocale }),
+                                to: format(parseISO(booking.date_to), 'P', { locale: dateLocale }),
+                              })
                         }
                       />
                       <ActionButton
-                        label="Отменить"
+                        label={t('hostBookings.cancel')}
                         danger
                         onClick={() => runAction(booking.id, () => cancelBooking(booking.id))}
                         disabled={isBusy}

@@ -3,11 +3,13 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { parseApiError } from '@/lib/errors';
+import { useI18n } from '@/i18n';
 
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useI18n();
   const from = (location.state as { from?: Location })?.from?.pathname || '/';
 
   const [email, setEmail] = useState('');
@@ -23,7 +25,8 @@ export function LoginPage() {
       await login(email, password);
       navigate(from, { replace: true });
     } catch (err) {
-      setError(parseApiError(err).message || 'Неверный email или пароль.');
+      // Текст ошибки (в т.ч. «неверный email или пароль») приходит с бэка уже на языке Accept-Language
+      setError(parseApiError(err).message);
     } finally {
       setIsSubmitting(false);
     }
@@ -32,10 +35,10 @@ export function LoginPage() {
   return (
     <div className="mx-auto max-w-md py-10">
       <div className="card space-y-5 p-8">
-        <h1 className="text-xl font-bold">Вход в аккаунт</h1>
+        <h1 className="text-xl font-bold">{t('auth.loginTitle')}</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-neutral-500">Email</label>
+            <label className="mb-1 block text-xs font-medium text-neutral-500">{t('auth.email')}</label>
             <input
               type="email"
               required
@@ -46,7 +49,7 @@ export function LoginPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-neutral-500">Пароль</label>
+            <label className="mb-1 block text-xs font-medium text-neutral-500">{t('auth.password')}</label>
             <input
               type="password"
               required
@@ -58,13 +61,13 @@ export function LoginPage() {
           </div>
           <ErrorAlert message={error} />
           <button type="submit" disabled={isSubmitting} className="btn-primary w-full">
-            {isSubmitting ? 'Вход...' : 'Войти'}
+            {isSubmitting ? t('auth.loggingIn') : t('auth.login')}
           </button>
         </form>
         <p className="text-center text-sm text-neutral-500">
-          Ещё нет аккаунта?{' '}
+          {t('auth.noAccount')}{' '}
           <Link to="/register" className="font-semibold text-brand-600">
-            Зарегистрироваться
+            {t('auth.toRegister')}
           </Link>
         </p>
       </div>

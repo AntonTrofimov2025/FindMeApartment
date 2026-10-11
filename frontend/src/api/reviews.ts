@@ -5,7 +5,12 @@ export async function fetchReviewsForListing(listingId: string) {
   const { data } = await apiClient.get<PaginatedResponse<Review>>('/reviews/', {
     params: { 'booking__listing': listingId, limit: 25, ordering: '-created_at' },
   });
-  return data;
+  // ReviewViewSet.get_queryset() для staff/superuser строится от Review.all_objects, поэтому под
+  // админом в списке оказываются и мягко удалённые отзывы — а avg_rating в ListingViewSet их уже
+  // не учитывает. Отсюда и расхождение "на главной оценки нет, а в объявлении отзыв висит".
+  // Отсекаем удалённые на клиенте; правильный фикс — на бэке (см. README / ответ в чате).
+  const visible = data.results.filter((review) => !review.is_deleted);
+  return { ...data, count: data.count - (data.results.length - visible.length), results: visible };
 }
 
 // ReviewViewSet.filterset_fields теперь включает 'booking': ['exact'] — можно узнать,
@@ -15,7 +20,9 @@ export async function fetchReviewByBooking(bookingId: string): Promise<Review | 
   const { data } = await apiClient.get<PaginatedResponse<Review>>('/reviews/', {
     params: { booking: bookingId, limit: 1 },
   });
-  return data.results[0] ?? null;
+  // Staff получает Review.all_objects (включая мягко удалённые) — удалённый отзыв считаем отсутствующим.
+  const review = data.results[0];
+  return review && !review.is_deleted ? review : null;
 }
 
 export async function createReview(payload: ReviewCreatePayload) {

@@ -4,6 +4,7 @@ import { changePassword } from '@/api/users';
 import { tokenStorage } from '@/lib/apiClient';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { parseApiError } from '@/lib/errors';
+import { useI18n } from '@/i18n';
 
 // UserMeView.post() -> ChangePasswordSerializer — единственный безопасный путь смены пароля:
 // требует текущий пароль (old_password) и текущий refresh, который сервер тут же блэклистит.
@@ -15,6 +16,7 @@ export function PasswordForm() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const { t } = useI18n();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -22,13 +24,13 @@ export function PasswordForm() {
     setFieldErrors({});
 
     if (newPassword !== reNewPassword) {
-      setFieldErrors({ re_new_password: 'Пароли не совпадают.' });
+      setFieldErrors({ re_new_password: t('errors.passwordsMismatch') });
       return;
     }
 
     const refresh = tokenStorage.getRefresh();
     if (!refresh) {
-      setError('Сессия истекла, пожалуйста, войдите заново.');
+      setError(t('errors.sessionExpired'));
       return;
     }
 
@@ -40,7 +42,7 @@ export function PasswordForm() {
         re_new_password: reNewPassword,
         refresh,
       });
-      toast.success('Пароль изменён');
+      toast.success(t('password.changed'));
       setOldPassword('');
       setNewPassword('');
       setReNewPassword('');
@@ -55,10 +57,10 @@ export function PasswordForm() {
 
   return (
     <form onSubmit={handleSubmit} className="card space-y-4 p-6">
-      <h2 className="text-lg font-semibold">Смена пароля</h2>
+      <h2 className="text-lg font-semibold">{t('password.title')}</h2>
 
       <div>
-        <label className="mb-1 block text-xs font-medium text-neutral-500">Текущий пароль</label>
+        <label className="mb-1 block text-xs font-medium text-neutral-500">{t('password.current')}</label>
         <input
           type="password"
           value={oldPassword}
@@ -70,7 +72,7 @@ export function PasswordForm() {
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-medium text-neutral-500">Новый пароль</label>
+        <label className="mb-1 block text-xs font-medium text-neutral-500">{t('password.new')}</label>
         <input
           type="password"
           value={newPassword}
@@ -84,7 +86,7 @@ export function PasswordForm() {
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-medium text-neutral-500">Повторите новый пароль</label>
+        <label className="mb-1 block text-xs font-medium text-neutral-500">{t('password.repeatNew')}</label>
         <input
           type="password"
           value={reNewPassword}
@@ -100,7 +102,7 @@ export function PasswordForm() {
       <ErrorAlert message={error} />
 
       <button type="submit" disabled={isSaving || !oldPassword || !newPassword} className="btn-secondary">
-        {isSaving ? 'Сохранение...' : 'Изменить пароль'}
+        {isSaving ? t('profileForm.saving') : t('password.submit')}
       </button>
     </form>
   );

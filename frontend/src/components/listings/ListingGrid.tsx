@@ -1,6 +1,7 @@
 import type { Listing } from '@/types/models';
 import { ListingCard } from './ListingCard';
 import { Spinner } from '@/components/ui/Spinner';
+import { useI18n } from '@/i18n';
 
 interface ListingGridProps {
   listings: Listing[];
@@ -8,6 +9,8 @@ interface ListingGridProps {
 }
 
 export function ListingGrid({ listings, isLoading }: ListingGridProps) {
+  const { t } = useI18n();
+
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -21,8 +24,8 @@ export function ListingGrid({ listings, isLoading }: ListingGridProps) {
   if (!listings?.length) {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-2 text-neutral-400">
-        <p className="text-lg font-medium">Ничего не найдено</p>
-        <p className="text-sm">Попробуйте изменить параметры фильтра</p>
+        <p className="text-lg font-medium">{t('home.emptyTitle')}</p>
+        <p className="text-sm">{t('home.emptyHint')}</p>
       </div>
     );
   }

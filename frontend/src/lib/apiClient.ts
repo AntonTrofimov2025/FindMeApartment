@@ -1,4 +1,5 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import { getLang } from '@/i18n';
 
 // Весь бэкенд теперь смонтирован под /api/ (config/urls.py), а nginx.conf отправляет в Django
 // только ^/(api|admin)/ — всё остальное уходит в контейнер фронтенда. Поэтому baseURL строго
@@ -29,6 +30,9 @@ export const apiClient = axios.create({ baseURL });
 apiClient.interceptors.request.use((config) => {
   const token = tokenStorage.getAccess();
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  // Django LocaleMiddleware выбирает язык ответа по Accept-Language: сообщения API
+  // (msg, ошибки валидации) приходят уже на языке, выбранном в интерфейсе.
+  config.headers['Accept-Language'] = getLang();
   return config;
 });
 
@@ -41,7 +45,11 @@ async function refreshAccessToken(): Promise<string> {
   const refresh = tokenStorage.getRefresh();
   if (!refresh) throw new Error('No refresh token available');
 
-  const { data } = await axios.post(`${baseURL}/auth/refresh/`, { refresh });
+  const { data } = await axios.post(
+    `${baseURL}/auth/refresh/`,
+    { refresh },
+    { headers: { 'Accept-Language': getLang() } },
+  );
   tokenStorage.setTokens(data.access, data.refresh);
   return data.access as string;
 }

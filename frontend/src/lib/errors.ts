@@ -1,4 +1,5 @@
 import { AxiosError } from 'axios';
+import { translate } from '@/i18n';
 
 /**
  * Формат ответа CustomDRFStandardizedErrorsExceptionHandler (apps/core/exceptions.py) —
@@ -36,17 +37,17 @@ export interface ParsedApiError {
 }
 
 export function parseApiError(error: unknown): ParsedApiError {
-  const fallbackMessage = 'Что-то пошло не так. Попробуйте ещё раз.';
+  const fallbackMessage = translate('common.genericError');
   const simple = (message: string): ParsedApiError => ({ message, generalMessage: message, fieldErrors: {} });
 
   if (!(error instanceof AxiosError)) return simple(fallbackMessage);
 
   const data = error.response?.data as StandardizedErrorResponse | undefined;
   if (!data?.errors?.length) {
-    if (!error.response) return simple('Сервер недоступен. Проверьте подключение к сети.');
-    if (error.response.status === 401) return simple('Сессия истекла. Пожалуйста, войдите снова.');
-    if (error.response.status === 403) return simple('Недостаточно прав для этого действия.');
-    if (error.response.status === 404) return simple('Ресурс не найден.');
+    if (!error.response) return simple(translate('errors.network'));
+    if (error.response.status === 401) return simple(translate('errors.401'));
+    if (error.response.status === 403) return simple(translate('errors.403'));
+    if (error.response.status === 404) return simple(translate('errors.404'));
     return simple(fallbackMessage);
   }
 

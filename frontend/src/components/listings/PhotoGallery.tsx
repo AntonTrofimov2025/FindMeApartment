@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { ImageOff, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Photo } from '@/types/models';
+import { useI18n } from '@/i18n';
 
 export function PhotoGallery({ photos }: { photos: Photo[] }) {
   const sorted = [...photos].sort((a, b) => a.photo_number - b.photo_number);
   const [active, setActive] = useState(0);
+  const { t } = useI18n();
 
   if (!sorted.length) {
     return (
@@ -21,7 +23,7 @@ export function PhotoGallery({ photos }: { photos: Photo[] }) {
       <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl2 bg-neutral-100">
         <img
           src={sorted[active].photo}
-          alt={`Фото ${active + 1}`}
+          alt={t('gallery.photo', { n: active + 1 })}
           className="h-full w-full object-cover transition-opacity duration-300"
         />
         {sorted.length > 1 && (
@@ -29,14 +31,14 @@ export function PhotoGallery({ photos }: { photos: Photo[] }) {
             <button
               onClick={() => go(-1)}
               className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow-md hover:bg-white"
-              aria-label="Предыдущее фото"
+              aria-label={t('gallery.prev')}
             >
               <ChevronLeft size={18} />
             </button>
             <button
               onClick={() => go(1)}
               className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow-md hover:bg-white"
-              aria-label="Следующее фото"
+              aria-label={t('gallery.next')}
             >
               <ChevronRight size={18} />
             </button>
