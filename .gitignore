@@ -378,3 +378,5 @@ frontend/node_modules/
 
 #**/migrations/*.py
 #!**/migrations/__init__.py
+
+frontend_old/
