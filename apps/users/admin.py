@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
@@ -8,7 +9,7 @@ User = get_user_model()
 
 
 @admin.register(User)
-class Admin(admin.ModelAdmin):
+class Admin(UserAdmin):
     list_display = (
         'username', 'email', 'get_avatar', 'first_name', 'last_name', 'birth_date',
         'phone', 'is_active', 'is_staff', 'last_login', 'date_joined', 'updated_at', 'show_is_deleted'
@@ -16,6 +17,13 @@ class Admin(admin.ModelAdmin):
     search_fields = ('email', 'username', 'first_name', 'last_name')
     readonly_fields = ('deleted_at', 'date_joined', 'updated_at', 'last_login')
     ordering = ('-date_joined',)
+
+    fieldsets = UserAdmin.fieldsets + (
+        (_('Custom Profile Meta'), {'fields': ('birth_date', 'phone', 'avatar', 'deleted_at')}),
+    )
+    add_fieldsets = UserAdmin.add_fieldsets + (
+        (_('Custom Profile Meta'), {'fields': ('email', 'first_name', 'last_name', 'birth_date', 'phone', 'avatar')}),
+    )
 
     @admin.display(description=_('Avatar'))
     def get_avatar(self, user):

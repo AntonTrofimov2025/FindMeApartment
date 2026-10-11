@@ -79,6 +79,8 @@ class ListingViewSet(viewsets.ModelViewSet):
             return queryset.filter(
                 Q(user=user) | Q(is_active=True)
             )
+        if self.action == 'retrieve' and user.is_authenticated:
+            return queryset.filter(Q(is_active=True) | Q(bookings__user=user)).distinct()
         return queryset.filter(is_active=True)
 
     @extend_schema(

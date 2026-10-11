@@ -139,7 +139,7 @@ msgstr "Чтобы отклонить бронирование оно должн
 
 #: .\apps\bookings\views.py:81
 msgid "The booking has successfully been rejected."
-msgstr "Бронирование успешно отклонено"
+msgstr "Бронирование успешно отклонено."
 
 #: .\apps\bookings\views.py:102
 msgid "You do not have permission to cancel this booking!"
@@ -510,7 +510,7 @@ msgstr "Загруженный файл поврежден либо не явл�
 
 #: .\apps\core\utils\file_validators.py:21
 msgid "File size is too big! Maximum allowed size is 2 MB."
-msgstr "Размер файла слишком большой! Максимальный разрешенный размер 2 МБ"
+msgstr "Размер файла слишком большой! Максимальный разрешенный размер 2 МБ."
 
 #: .\apps\listings\admin.py:25
 msgid "Main Photo"
@@ -644,7 +644,7 @@ msgstr "Комнаты"
 msgid ""
 "Cannot delete a listing with active or confirmed future bookings! Please "
 "process client cancellations or completions first."
-msgstr "Нельзя удалить объявление с активными или подтвержденными будущими бронированиями! Пожалуйста"
+msgstr "Нельзя удалить объявление с активными или подтвержденными будущими бронированиями! Пожалуйста "
 "сперва отмените бронирования Ваших гостей или завершите их."
 
 #: .\apps\listings\models.py:108
@@ -842,7 +842,7 @@ msgstr "Нельзя удалить Ваш аккаунт Арендодател
 msgid ""
 "Cannot delete account! You have active or confirmed upcoming reservations. "
 "Please cancel your bookings first before deleting your profile."
-msgstr "Нельзя удалить аккаунт! У вас есть активные или подтвержденные будущие бронированиями."
+msgstr "Нельзя удалить аккаунт! У вас есть активные или подтвержденные будущие бронирования. "
 "Пожалуйста перед удалением профиля сперва отмените Ваши бронирования."
 
 #: .\apps\users\serializers\users.py:20

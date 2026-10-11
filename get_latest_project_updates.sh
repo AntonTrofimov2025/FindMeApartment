@@ -10,8 +10,8 @@ docker compose up -d --build
 echo "Применяем миграции (если изменились модели)..."
 docker compose exec web python manage.py migrate
 
-echo "Компилируем переводы..."
-docker compose exec web python manage.py compilemessages
+#echo "Компилируем переводы..."
+#docker compose exec web python manage.py compilemessages
 
 echo "Проверяем статус контейнеров..."
 docker compose ps

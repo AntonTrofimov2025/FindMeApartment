@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     build-essential \
     curl \
+    gettext \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /fma
@@ -14,6 +15,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
+
+RUN django-admin compilemessages
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
