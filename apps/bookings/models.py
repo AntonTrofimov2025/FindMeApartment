@@ -40,14 +40,14 @@ class Booking(UniqueID, TimeStampedModel):
     date_to = models.DateField()
 
     booking_status = models.CharField(choices=StatusChoices, default=StatusChoices.PENDING, max_length=15,
-                                      help_text="Shows current booking's status", verbose_name=_("Booking's status"))
+                                      help_text=_("Shows current booking's status"), verbose_name=_("Booking's status"))
     guests_number = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)],
-                                              help_text="Specified guests number", verbose_name=_("Guest number"))
+                                              help_text=_("Specified guests number"), verbose_name=_("Guest number"))
 
     snapshot_data = models.JSONField(default=dict, verbose_name=_('Snapshot of current Listing data'))
 
     total_price = models.DecimalField(max_digits=10, decimal_places=2,
-                                      help_text='Total price for the stay', verbose_name=_('Total price'),
+                                      help_text=_('Total price for the stay'), verbose_name=_('Total price'),
                                       validators=[MinValueValidator(Decimal('0.00'))])
     history = HistoricalRecords(
         table_name='fma_bookings_historicalrecords'

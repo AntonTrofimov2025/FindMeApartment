@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 
 def validate_extension(file):
     if file.name.split('.')[-1].lower() not in ['png', 'jpeg', 'jpg', 'webp', 'heic', 'heif']:
-        raise ValidationError('This extension is not allowed! Allowed: png, jpeg, jpg, webp, heic, heif')
+        raise ValidationError(_('This extension is not allowed! Allowed: png, jpeg, jpg, webp, heic, heif'))
 
     try:
         with Image.open(file) as img:
@@ -18,5 +18,5 @@ def validate_extension(file):
 
 def validate_file_size(file):
     if file.size / 1024 / 1024 > 2:
-        raise ValidationError('File size is too big! Maximum allowed size is 2 MB.')
+        raise ValidationError(_('File size is too big! Maximum allowed size is 2 MB.'))
     return file

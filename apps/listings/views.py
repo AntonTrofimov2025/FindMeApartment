@@ -17,6 +17,7 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from django.db.models import Q, Avg, OuterRef, Exists
 from django.db.models.functions import Round
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 @extend_schema_view(
     list=extend_schema(summary='Get all listings', description='List of all listings'),
@@ -100,7 +101,7 @@ class ListingViewSet(viewsets.ModelViewSet):
         listing = self.get_object()
 
         if listing.is_deleted:
-            return Response({'msg': 'Cannot toggle active status on a deleted listing!'},
+            return Response({'msg': _('Cannot toggle active status on a deleted listing!')},
                             status=status.HTTP_400_BAD_REQUEST)
 
         if listing.user != request.user and not (request.user.is_staff or request.user.is_superuser):
@@ -109,8 +110,9 @@ class ListingViewSet(viewsets.ModelViewSet):
         listing.is_active = not listing.is_active
         listing.updated_at = timezone.now()
         listing.save(update_fields=['is_active', 'updated_at'])
+        is_status = _('active') if listing.is_active else _('not active')
         return Response({'id': listing.id, 'is_active': listing.is_active, 'updated_at': listing.updated_at,
-                         'msg': f"Status has been changed to {'active' if listing.is_active else 'not active'}"},
+                         'msg': _("Status has been changed to {}").format(is_status)},
                         status=status.HTTP_200_OK)
 
 @extend_schema_view(

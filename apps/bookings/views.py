@@ -36,12 +36,12 @@ def booking_approve(request, pk, *args, **kwargs):
     """
     booking = get_object_or_404(Booking.all_objects, pk=pk)
     if request.user != booking.listing.user:
-        raise PermissionDenied({'detail': 'You are not the owner of this property!'})
+        raise PermissionDenied({'detail': _('You are not the owner of this property!')})
     if booking.booking_status != StatusChoices.PENDING:
-        raise ValidationError({'detail': 'The booking status must be PENDING only to be approved!'})
+        raise ValidationError({'detail': _('The booking status must be PENDING only to be approved!')})
     if booking.date_from < timezone.localdate():
         raise ValidationError({
-            "detail": "Cannot approve this booking! The check-in date has already passed. This request is expired."
+            "detail": _("Cannot approve this booking! The check-in date has already passed. This request is expired.")
         })
     try:
         booking.booking_status = StatusChoices.CONFIRMED
@@ -49,7 +49,7 @@ def booking_approve(request, pk, *args, **kwargs):
     except DjangoValidationError as e:
         error_data = e.message_dict if hasattr(e, 'message_dict') else e.messages
         raise ValidationError(error_data)
-    return Response({'msg': 'The booking has successfully been confirmed.'}, status=status.HTTP_200_OK)
+    return Response({'msg': _('The booking has successfully been confirmed.')}, status=status.HTTP_200_OK)
 
 @extend_schema(summary='Reject booking', description='Rejection of booking, provided its status is PENDING',
                request=None,
@@ -69,16 +69,16 @@ def booking_reject(request, pk, *args, **kwargs):
     """
     booking = get_object_or_404(Booking.all_objects, pk=pk)
     if request.user != booking.listing.user:
-        raise PermissionDenied({'detail': 'You are not the owner of this property!'})
+        raise PermissionDenied({'detail': _('You are not the owner of this property!')})
     if booking.booking_status != StatusChoices.PENDING:
-        raise ValidationError({'detail': 'The booking status must be PENDING only to be rejected!'})
+        raise ValidationError({'detail': _('The booking status must be PENDING only to be rejected!')})
     try:
         booking.booking_status = StatusChoices.REJECTED
         booking.save()
     except DjangoValidationError as e:
         error_data = e.message_dict if hasattr(e, 'message_dict') else e.messages
         raise ValidationError(error_data)
-    return Response({'msg': 'The booking has successfully been rejected.'}, status=status.HTTP_200_OK)
+    return Response({'msg': _('The booking has successfully been rejected.')}, status=status.HTTP_200_OK)
 
 @extend_schema(summary='Cancel booking', description='Cancellation of booking provided its status is CONFIRMED',
                request=None,
@@ -99,16 +99,16 @@ def booking_cancel(request, pk, *args, **kwargs):
     """
     booking = get_object_or_404(Booking.all_objects, pk=pk)
     if request.user != booking.listing.user and request.user != booking.user:
-        raise PermissionDenied({'detail': 'You do not have permission to cancel this booking!'})
+        raise PermissionDenied({'detail': _('You do not have permission to cancel this booking!')})
     if booking.booking_status not in [StatusChoices.CONFIRMED, StatusChoices.PENDING]:
-        raise ValidationError({'detail': 'The booking status must be either PENDING or CONFIRMED only to be cancelled!'})
+        raise ValidationError({'detail': _('The booking status must be either PENDING or CONFIRMED only to be cancelled!')})
     try:
         booking.booking_status = StatusChoices.CANCELLED
         booking.save()
     except DjangoValidationError as e:
         error_data = e.message_dict if hasattr(e, 'message_dict') else e.messages
         raise ValidationError(error_data)
-    return Response({'msg': 'The booking has successfully been cancelled.'}, status=status.HTTP_200_OK)
+    return Response({'msg': _('The booking has successfully been cancelled.')}, status=status.HTTP_200_OK)
 
 @extend_schema(summary='CHECK IN your guest',
                description='Change status of booking to CHECKED IN provided its status is CONFIRMED',

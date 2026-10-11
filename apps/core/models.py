@@ -5,16 +5,16 @@ from django.utils.translation import gettext_lazy as _
 
 class UniqueID(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False,
-                          help_text='Unique UUID Primary Key', verbose_name='UUID pk')
+                          help_text=_('Unique UUID Primary Key'), verbose_name=_('UUID pk'))
 
     class Meta:
         abstract = True
 
 
 class TimeStampedModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True, help_text='Date of creation', verbose_name='Created at')
-    updated_at = models.DateTimeField(auto_now=True, help_text='Date of update', verbose_name='Updated at')
-    deleted_at = models.DateTimeField(null=True, blank=True, help_text='Date of deletion', verbose_name='Deleted at')
+    created_at = models.DateTimeField(auto_now_add=True, help_text=_('Date of creation'), verbose_name=_('Created at'))
+    updated_at = models.DateTimeField(auto_now=True, help_text=_('Date of update'), verbose_name=_('Updated at'))
+    deleted_at = models.DateTimeField(null=True, blank=True, help_text=_('Date of deletion'), verbose_name=_('Deleted at'))
 
     class Meta:
         abstract = True

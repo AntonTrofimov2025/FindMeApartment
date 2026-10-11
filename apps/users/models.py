@@ -84,8 +84,8 @@ class User(AbstractBaseUser, PermissionsMixin, UniqueID):
                                     date_to__gte=timezone.localdate()
                                 ).exists():
             raise ValidationError({
-                "detail": "Cannot delete account! You have active or confirmed upcoming reservations. "
-                          "Please cancel your bookings first before deleting your profile."
+                "detail": _("Cannot delete account! You have active or confirmed upcoming reservations. "
+                          "Please cancel your bookings first before deleting your profile.")
             })
 
         filter_attrs = Q(listing__user=self, booking_status=StatusChoices.PENDING) | Q(

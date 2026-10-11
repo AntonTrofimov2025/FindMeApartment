@@ -1,0 +1,937 @@
+# Russian translation for the Django project.
+# Copyright (C) 2026
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <XERURGANTON@GMAIL.COM>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-11 18:55+0200\n"
+"PO-Revision-Date: 2026-10-11 20:15+0300\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || "
+"(n%100>=11 && n%100<=14)? 2 : 3);\n"
+#: .\apps\bookings\admin.py:20 .\apps\listings\admin.py:21
+#: .\apps\listings\admin.py:83 .\apps\reviews\admin.py:48
+#: .\apps\users\admin.py:26
+msgid "Deleted?"
+msgstr "Удалено?"
+
+#: .\apps\bookings\models.py:35 .\apps\listings\models.py:182
+#: .\apps\reviews\admin.py:38
+msgid "Listing"
+msgstr "Объявление"
+
+#: .\apps\bookings\models.py:37 .\apps\listings\models.py:42
+msgid "User"
+msgstr "Пользователь"
+
+#: .\apps\bookings\models.py:43
+msgid "Shows current booking's status"
+msgstr "Показывает текущий статус бронирования"
+
+#: .\apps\bookings\models.py:43
+msgid "Booking's status"
+msgstr "Статус бронирования"
+
+#: .\apps\bookings\models.py:45
+msgid "Specified guests number"
+msgstr "Указанное количество гостей"
+
+#: .\apps\bookings\models.py:45
+msgid "Guest number"
+msgstr "Количество гостей"
+
+#: .\apps\bookings\models.py:47
+msgid "Snapshot of current Listing data"
+msgstr "Снимок текущих данных объявления"
+
+#: .\apps\bookings\models.py:50
+msgid "Total price for the stay"
+msgstr "Полная стоимость проживания"
+
+#: .\apps\bookings\models.py:50
+msgid "Total price"
+msgstr "Полная стоимость"
+
+#: .\apps\bookings\models.py:75 .\apps\bookings\models.py:188
+msgid "Booking start date can not be greater than end date!"
+msgstr "Дата начала бронирования не может быть больше даты окончания!"
+
+#: .\apps\bookings\models.py:81
+msgid "Unfortunately the selected dates are already booked."
+msgstr "К сожалению выбранные желаемые даты уже забронированы."
+
+#: .\apps\bookings\models.py:94
+msgid ""
+"This property listing is currently inactive and cannot accept new "
+"reservations."
+msgstr "Эта собственность на данный момент неактивна и не принимает новых гостей."
+
+#: .\apps\bookings\models.py:98
+msgid ""
+"Landlords are strictly prohibited from booking their own property listings!"
+msgstr "Арендодателям строго воспрещено бронировать свои собственные объявления!"
+
+#: .\apps\bookings\models.py:102
+msgid "Booking start date cannot be in the past."
+msgstr "Дата начала бронирования не может быть в прошлом."
+
+#: .\apps\bookings\models.py:104
+msgid "You cannot book more than 1 year in advance."
+msgstr "Вы не можете бронировать заранее более чем за один год."
+
+#: .\apps\bookings\models.py:106
+msgid "Booking end date cannot exceed 1 year from today."
+msgstr "Дата окончания бронирования не может превышать один год от текущего дня."
+
+#: .\apps\bookings\models.py:108
+msgid "You cannot book this property for more than 30 nights."
+msgstr "Вы не можете бронировать это объявление более чем на 30 ночей."
+
+#: .\apps\bookings\models.py:111
+#, python-brace-format
+msgid ""
+"The number of guests cannot exceed the listing's maximum capacity. (max: {})"
+msgstr "Количество гостей не может превышать максимальную вместимость объекта. (макс: {})"
+
+#: .\apps\bookings\models.py:120
+msgid "You cannot cancel this booking less than 2 days before the start date."
+msgstr "Вы не можете отменить бронирование менее чем за 2 дня до заезда."
+
+#: .\apps\bookings\models.py:185
+msgid "Guests number must be between 1 and 10!"
+msgstr "Число гостей должно быть между 1 и 10!"
+
+#: .\apps\bookings\models.py:191
+msgid "Total price can not be less than zero!"
+msgstr "Полная стоимость не может быть меньше нуля!"
+
+#: .\apps\bookings\views.py:39 .\apps\bookings\views.py:72
+#: .\apps\bookings\views.py:133
+msgid "You are not the owner of this property!"
+msgstr "Вы не являетесь владельцем этой собственности!"
+
+#: .\apps\bookings\views.py:41
+msgid "The booking status must be PENDING only to be approved!"
+msgstr "Чтобы подтвердить бронирование оно должно быть лишь в статусе ОЖИДАЕТСЯ!"
+
+#: .\apps\bookings\views.py:44
+msgid ""
+"Cannot approve this booking! The check-in date has already passed. This "
+"request is expired."
+msgstr "Невозможно подтвердить это бронирование! Дата заезда уже прошла. Этот запрос уже устарел."
+
+#: .\apps\bookings\views.py:52
+msgid "The booking has successfully been confirmed."
+msgstr "Бронирование успешно подтверждено."
+
+#: .\apps\bookings\views.py:74
+msgid "The booking status must be PENDING only to be rejected!"
+msgstr "Чтобы отклонить бронирование оно должно быть лишь в статусе ОЖИДАЕТСЯ!"
+
+#: .\apps\bookings\views.py:81
+msgid "The booking has successfully been rejected."
+msgstr "Бронирование успешно отклонено"
+
+#: .\apps\bookings\views.py:102
+msgid "You do not have permission to cancel this booking!"
+msgstr "У Вас нет права чтобы отменить это бронирование!"
+
+#: .\apps\bookings\views.py:104
+msgid ""
+"The booking status must be either PENDING or CONFIRMED only to be cancelled!"
+msgstr "Для отмены бронирование оно должно быть либо в статусе ОЖИДАЕТСЯ либо ПОДТВЕРЖДЕНО!"
+
+#: .\apps\bookings\views.py:111
+msgid "The booking has successfully been cancelled."
+msgstr "Бронирование успешно отменено."
+
+#: .\apps\bookings\views.py:135
+msgid "The booking status must be CONFIRMED only to check in your guest!"
+msgstr "Для заселения Ваших гостей статус бронирование должен быть в статусе ПОДТВЕРЖДЕНО!"
+
+#: .\apps\bookings\views.py:137
+#, python-brace-format
+msgid "You cannot check in your guest before the start date ({})!"
+msgstr "Вы не можете заселить гостей перед датой начала бронирования ({})!"
+
+#: .\apps\bookings\views.py:140
+msgid "Too late! The booking period has already expired."
+msgstr "Слишком поздно! Период бронирования уже истек."
+
+#: .\apps\bookings\views.py:147
+msgid "Your guest has successfully been checked in. :)"
+msgstr "Ваш гость был успешно заселен. :)"
+
+#: .\apps\core\models.py:8
+msgid "Unique UUID Primary Key"
+msgstr "Уникальный UUID Primary Key"
+
+#: .\apps\core\models.py:8
+msgid "UUID pk"
+msgstr "UUID pk"
+
+#: .\apps\core\models.py:15
+msgid "Date of creation"
+msgstr "Дата создания"
+
+#: .\apps\core\models.py:15
+msgid "Created at"
+msgstr "Создано"
+
+#: .\apps\core\models.py:16 .\apps\users\models.py:51
+msgid "Date of update"
+msgstr "Дата обновления"
+
+#: .\apps\core\models.py:16 .\apps\users\models.py:51
+msgid "Updated at"
+msgstr "Обновлено"
+
+#: .\apps\core\models.py:17 .\apps\users\models.py:52
+msgid "Date of deletion"
+msgstr "Дата удаления"
+
+#: .\apps\core\models.py:17 .\apps\users\models.py:52
+msgid "Deleted at"
+msgstr "Удалено"
+
+#: .\apps\core\models.py:24
+msgid "Azerbaijan"
+msgstr "Азербайджан"
+
+#: .\apps\core\models.py:25
+msgid "Armenia"
+msgstr "Армения"
+
+#: .\apps\core\models.py:26
+msgid "China"
+msgstr "Китай"
+
+#: .\apps\core\models.py:27
+msgid "Georgia"
+msgstr "Грузия"
+
+#: .\apps\core\models.py:28
+msgid "India"
+msgstr "Индия"
+
+#: .\apps\core\models.py:29
+msgid "Indonesia"
+msgstr "Индонезия"
+
+#: .\apps\core\models.py:30
+msgid "Israel"
+msgstr "Израиль"
+
+#: .\apps\core\models.py:31
+msgid "Japan"
+msgstr "Япония"
+
+#: .\apps\core\models.py:32
+msgid "Kazakhstan"
+msgstr "Казахстан"
+
+#: .\apps\core\models.py:33
+msgid "Kyrgyzstan"
+msgstr "Киргизстан"
+
+#: .\apps\core\models.py:34
+msgid "Malaysia"
+msgstr "Малайзия"
+
+#: .\apps\core\models.py:35
+msgid "South Korea"
+msgstr "Южная Корея"
+
+#: .\apps\core\models.py:36
+msgid "Taiwan"
+msgstr "Тайвань"
+
+#: .\apps\core\models.py:37
+msgid "Tajikistan"
+msgstr "Таджикистан"
+
+#: .\apps\core\models.py:38
+msgid "Thailand"
+msgstr "Тайланд"
+
+#: .\apps\core\models.py:39
+msgid "Turkey"
+msgstr "Турция"
+
+#: .\apps\core\models.py:40
+msgid "Turkmenistan"
+msgstr "Туркменистан"
+
+#: .\apps\core\models.py:41
+msgid "United Arab Emirates"
+msgstr "Объединенные Арабские Эмираты"
+
+#: .\apps\core\models.py:42
+msgid "Uzbekistan"
+msgstr "Узбекистан"
+
+#: .\apps\core\models.py:43
+msgid "Vietnam"
+msgstr "Вьетнам"
+
+#: .\apps\core\models.py:46
+msgid "Austria"
+msgstr "Австрия"
+
+#: .\apps\core\models.py:47
+msgid "Belarus"
+msgstr "Беларусь"
+
+#: .\apps\core\models.py:48
+msgid "Belgium"
+msgstr "Бельгия"
+
+#: .\apps\core\models.py:49
+msgid "Bulgaria"
+msgstr "Болгария"
+
+#: .\apps\core\models.py:50
+msgid "Cyprus"
+msgstr "Кипр"
+
+#: .\apps\core\models.py:51
+msgid "Czechia"
+msgstr "Чехия"
+
+#: .\apps\core\models.py:52
+msgid "Denmark"
+msgstr "Дания"
+
+#: .\apps\core\models.py:53
+msgid "Finland"
+msgstr "Финляндия"
+
+#: .\apps\core\models.py:54
+msgid "France"
+msgstr "Франция"
+
+#: .\apps\core\models.py:55
+msgid "Germany"
+msgstr "Германия"
+
+#: .\apps\core\models.py:56
+msgid "Greece"
+msgstr "Греция"
+
+#: .\apps\core\models.py:57
+msgid "Hungary"
+msgstr "Венгрия"
+
+#: .\apps\core\models.py:58
+msgid "Ireland"
+msgstr "Ирландия"
+
+#: .\apps\core\models.py:59
+msgid "Italy"
+msgstr "Италия"
+
+#: .\apps\core\models.py:60
+msgid "Moldova"
+msgstr "Молдова"
+
+#: .\apps\core\models.py:61
+msgid "Netherlands"
+msgstr "Нидерланды"
+
+#: .\apps\core\models.py:62
+msgid "Norway"
+msgstr "Норвегия"
+
+#: .\apps\core\models.py:63
+msgid "Poland"
+msgstr "Польша"
+
+#: .\apps\core\models.py:64
+msgid "Portugal"
+msgstr "Португалия"
+
+#: .\apps\core\models.py:65
+msgid "Romania"
+msgstr "Румыния"
+
+#: .\apps\core\models.py:66
+msgid "Russia"
+msgstr "Россия"
+
+#: .\apps\core\models.py:67
+msgid "Serbia"
+msgstr "Сербия"
+
+#: .\apps\core\models.py:68
+msgid "Spain"
+msgstr "Испания"
+
+#: .\apps\core\models.py:69
+msgid "Sweden"
+msgstr "Швеция"
+
+#: .\apps\core\models.py:70
+msgid "Switzerland"
+msgstr "Швейцария"
+
+#: .\apps\core\models.py:71
+msgid "Ukraine"
+msgstr "Украина"
+
+#: .\apps\core\models.py:72
+msgid "United Kingdom"
+msgstr "Великобритания"
+
+#: .\apps\core\models.py:75
+msgid "Argentina"
+msgstr "Аргентина"
+
+#: .\apps\core\models.py:76
+msgid "Brazil"
+msgstr "Бразилия"
+
+#: .\apps\core\models.py:77
+msgid "Canada"
+msgstr "Канада"
+
+#: .\apps\core\models.py:78
+msgid "Mexico"
+msgstr "Мексика"
+
+#: .\apps\core\models.py:79
+msgid "United States"
+msgstr "Соединенные Штаты Америки"
+
+#: .\apps\core\models.py:82
+msgid "Australia"
+msgstr "Австралия"
+
+#: .\apps\core\models.py:83
+msgid "Egypt"
+msgstr "Египет"
+
+#: .\apps\core\models.py:84
+msgid "New Zealand"
+msgstr "Новая Зеландия"
+
+#: .\apps\core\models.py:85
+msgid "South Africa"
+msgstr "Южная Африка"
+
+#: .\apps\core\models.py:88
+msgid "Apartment"
+msgstr "Апартамент"
+
+#: .\apps\core\models.py:89
+msgid "Studio"
+msgstr "Студия"
+
+#: .\apps\core\models.py:90
+msgid "House"
+msgstr "Дом"
+
+#: .\apps\core\models.py:91
+msgid "Townhouse"
+msgstr "Таунхаус"
+
+#: .\apps\core\models.py:92
+msgid "Room"
+msgstr "Комната"
+
+#: .\apps\core\models.py:93
+msgid "Loft"
+msgstr "Лофт"
+
+#: .\apps\core\models.py:96
+msgid "0 Rooms (Studio / Loft)"
+msgstr "0 Комнат (Студия / Лофт)"
+
+#: .\apps\core\models.py:97
+msgid "1 Room"
+msgstr "1 Комната"
+
+#: .\apps\core\models.py:98
+msgid "2 Rooms"
+msgstr "2 Комнаты"
+
+#: .\apps\core\models.py:99
+msgid "3 Rooms"
+msgstr "3 Комнаты"
+
+#: .\apps\core\models.py:100
+msgid "4 Rooms"
+msgstr "4 Комнаты"
+
+#: .\apps\core\models.py:101
+msgid "5+ Rooms"
+msgstr "5+ Комнат"
+
+#: .\apps\core\models.py:116
+msgid "Pending"
+msgstr "Ожидается"
+
+#: .\apps\core\models.py:117
+msgid "Confirmed"
+msgstr "Подтверждено"
+
+#: .\apps\core\models.py:118
+msgid "Checked In"
+msgstr "Заселен"
+
+#: .\apps\core\models.py:119
+msgid "Completed"
+msgstr "Завершено"
+
+#: .\apps\core\models.py:120
+msgid "Cancelled"
+msgstr "Отменено"
+
+#: .\apps\core\models.py:121
+msgid "Rejected"
+msgstr "Отклонено"
+
+#: .\apps\core\utils\file_validators.py:8
+msgid ""
+"This extension is not allowed! Allowed: png, jpeg, jpg, webp, heic, heif"
+msgstr "Это расширение не поддерживается! Разрешенные: png, jpeg, jpg, webp, heic, heif"
+
+#: .\apps\core\utils\file_validators.py:14
+msgid "The uploaded file is corrupted or not a valid image!"
+msgstr "Загруженный файл поврежден либо не является валидным изображением!"
+
+#: .\apps\core\utils\file_validators.py:21
+msgid "File size is too big! Maximum allowed size is 2 MB."
+msgstr "Размер файла слишком большой! Максимальный разрешенный размер 2 МБ"
+
+#: .\apps\listings\admin.py:25
+msgid "Main Photo"
+msgstr "Главное Фото"
+
+#: .\apps\listings\admin.py:32
+msgid "Number of bookings"
+msgstr "Число бронирований"
+
+#: .\apps\listings\admin.py:36
+msgid "Description"
+msgstr "Описание"
+
+#: .\apps\listings\admin.py:75
+msgid "Listing Title"
+msgstr "Наименование Объявления"
+
+#: .\apps\listings\admin.py:79
+msgid "Landlord Email"
+msgstr "Email Арендодателя"
+
+#: .\apps\listings\admin.py:87
+msgid "Photo Preview"
+msgstr "Фото Превью"
+
+#: .\apps\listings\filters\listing_filter.py:27
+msgid "Select minimal guests quantity"
+msgstr "Выбранное минимальное число гостей"
+
+#: .\apps\listings\models.py:39
+msgid "Listing's Title"
+msgstr "Наименование Объявления"
+
+#: .\apps\listings\models.py:40
+msgid "Listing's description"
+msgstr "Описание Объявления"
+
+#: .\apps\listings\models.py:42
+msgid "Current selected user"
+msgstr "Текущий выбранный пользователь"
+
+#: .\apps\listings\models.py:43
+msgid "Selected country"
+msgstr "Выбранная страна"
+
+#: .\apps\listings\models.py:44
+msgid "Country"
+msgstr "Страна"
+
+#: .\apps\listings\models.py:45
+msgid "Specified district"
+msgstr "Указанный район"
+
+#: .\apps\listings\models.py:46
+msgid "District"
+msgstr "Район"
+
+#: .\apps\listings\models.py:47
+msgid "Specified city"
+msgstr "Указанный город"
+
+#: .\apps\listings\models.py:48
+msgid "City"
+msgstr "Город"
+
+#: .\apps\listings\models.py:49
+msgid "Specified street"
+msgstr "Указанная улица"
+
+#: .\apps\listings\models.py:50
+msgid "Street"
+msgstr "Улица"
+
+#: .\apps\listings\models.py:52
+msgid "Specified house number"
+msgstr "Указанный номер дома"
+
+#: .\apps\listings\models.py:52
+msgid "House number"
+msgstr "Номер дома"
+
+#: .\apps\listings\models.py:54
+msgid "Specified apartment number"
+msgstr "Указанный номер апартамента"
+
+#: .\apps\listings\models.py:54
+msgid "Apartment number"
+msgstr "Номер апартамента"
+
+#: .\apps\listings\models.py:55
+msgid "Available?"
+msgstr "Доступно?"
+
+#: .\apps\listings\models.py:57
+msgid "Selected guests max quantity"
+msgstr "Выбранное максимальное число гостей"
+
+#: .\apps\listings\models.py:57
+msgid "Max guests"
+msgstr "Максимальное число гостей"
+
+#: .\apps\listings\models.py:59
+msgid "Selected Property Type"
+msgstr "Выбранный тип собственности"
+
+#: .\apps\listings\models.py:59
+msgid "Property type"
+msgstr "Тип собственности"
+
+#: .\apps\listings\models.py:60
+msgid "Current price per night"
+msgstr "Текущая цена за ночь"
+
+#: .\apps\listings\models.py:64
+msgid "Discount coefficient for price per night"
+msgstr "Коэффициент скидки на цену за ночь"
+
+#: .\apps\listings\models.py:64
+msgid "Discount"
+msgstr "Скидка"
+
+#: .\apps\listings\models.py:65
+msgid "Selected room's quantity"
+msgstr "Выбранное число комнат"
+
+#: .\apps\listings\models.py:66
+msgid "Rooms"
+msgstr "Комнаты"
+
+#: .\apps\listings\models.py:96
+msgid ""
+"Cannot delete a listing with active or confirmed future bookings! Please "
+"process client cancellations or completions first."
+msgstr "Нельзя удалить объявление с активными или подтвержденными будущими бронированиями! Пожалуйста"
+"сперва отмените бронирования Ваших гостей или завершите их."
+
+#: .\apps\listings\models.py:108
+msgid "A valid landlord user instance must be assigned to create a listing!"
+msgstr "Чтобы создать объявление вначале должен быть присвоен корректный экземпляр пользователя Арендодатель!"
+
+#: .\apps\listings\models.py:111
+msgid "The apartment number is required for room/apartment property type"
+msgstr "Для типов собственности Комната/Апартамент требуется номер апартамента"
+
+#: .\apps\listings\models.py:113
+msgid "The house/studio property type can not have an apartment number."
+msgstr "Тип собственности Дом/Студия не может иметь номера апартамента."
+
+#: .\apps\listings\models.py:127
+msgid "You have already registered a property at this exact apartment address!"
+msgstr "Вы уже зарегистрировали собственность по этому конкретному адресу апартамента!"
+
+#: .\apps\listings\models.py:132
+msgid ""
+"You have already registered a standalone property at this exact house "
+"address!"
+msgstr "Вы уже зарегистрировали отдельную собственность по этому конкретному адресу дома!"
+
+#: .\apps\listings\models.py:158
+msgid "Discount is only allowed in range of (0.01 and 1.00)."
+msgstr "Разрешенная скидка должна быть в диапазоне (от 0.01 до 1.00)."
+
+#: .\apps\listings\models.py:183
+msgid "Photo"
+msgstr "Фото"
+
+#: .\apps\listings\models.py:186
+msgid "Specified photo number"
+msgstr "Указанный номер фото"
+
+#: .\apps\listings\models.py:186
+msgid "Photo number"
+msgstr "Номер фото"
+
+#: .\apps\listings\models.py:213
+msgid "Photo with this number already exists for this active listing!"
+msgstr "Фото с этим номером уже существует для этого активного объявления!"
+
+#: .\apps\listings\views.py:104
+msgid "Cannot toggle active status on a deleted listing!"
+msgstr "Нельзя переключить статус активности на удаленных объявлениях!"
+
+#: .\apps\listings\views.py:113
+msgid "active"
+msgstr "активный"
+
+#: .\apps\listings\views.py:113
+msgid "not active"
+msgstr "не активный"
+
+#: .\apps\listings\views.py:115
+#, python-brace-format
+msgid "Status has been changed to {}"
+msgstr "Статус был изменен на {}"
+
+#: .\apps\reviews\admin.py:24
+msgid "Prop Rating"
+msgstr "Рейтинг Собственности"
+
+#: .\apps\reviews\admin.py:29
+msgid "Loc Rating"
+msgstr "Рейтинг Расположения"
+
+#: .\apps\reviews\admin.py:34
+msgid "Tenant"
+msgstr "Арендатор"
+
+#: .\apps\reviews\admin.py:42
+msgid "Review Text"
+msgstr "Текст Отзыва"
+
+#: .\apps\reviews\admin.py:46
+msgid "- No text -"
+msgstr "- Нет текста -"
+
+#: .\apps\reviews\models.py:26
+msgid "Associated Booking"
+msgstr "Связанное бронирование"
+
+#: .\apps\reviews\models.py:26
+msgid "Booking"
+msgstr "Бронирование"
+
+#: .\apps\reviews\models.py:30
+msgid "Review's text"
+msgstr "Текст отзыва"
+
+#: .\apps\reviews\models.py:43
+msgid "A review cannot exist without a verified underlying booking contract!"
+msgstr "Отзыв не может существовать без верифицированного основного контракта бронирования!"
+
+#: .\apps\reviews\models.py:45
+msgid "You can only leave a review after the booking is completed!"
+msgstr "Вы можете оставить отзыв только после завершения бронирования!"
+
+#: .\apps\reviews\models.py:68
+msgid "Property rating must be between 1 and 5!"
+msgstr "Рейтинг собственности должен быть между 1 и 5!"
+
+#: .\apps\reviews\models.py:71
+msgid "Location rating must be between 1 and 5!"
+msgstr "Рейтинг расположения должен быть между 1 и 5!"
+
+#: .\apps\reviews\serializers\reviews.py:45
+msgid "You can leave reviews for your own completed bookings only!"
+msgstr "Вы можете оставлять отзывы только для своих собственных завершенных бронирований!"
+
+#: .\apps\reviews\serializers\reviews.py:50
+msgid "You can leave only one review for the booking!"
+msgstr "Вы можете оставить только один отзыв для каждого бронирования!"
+
+#: .\apps\users\admin.py:20 .\apps\users\models.py:40
+msgid "Avatar"
+msgstr "Аватар"
+
+#: .\apps\users\managers\users.py:24 .\apps\users\managers\users.py:52
+msgid "This email field is required."
+msgstr "Поле email является обязательным."
+
+#: .\apps\users\managers\users.py:37 .\apps\users\managers\users.py:65
+msgid "Superuser must have is_staff=True."
+msgstr "Суперпользователь обязательно должен иметь параметр is_staff=True."
+
+#: .\apps\users\managers\users.py:39 .\apps\users\managers\users.py:67
+msgid "Superuser must have is_superuser=True."
+msgstr "Суперпользователь обязательно должен иметь параметр is_superuser=True."
+
+#: .\apps\users\models.py:34
+msgid "Specified Username"
+msgstr "Указанное имя пользователя"
+
+#: .\apps\users\models.py:34
+msgid "Username"
+msgstr "Имя пользователя"
+
+#: .\apps\users\models.py:35
+msgid "Your email"
+msgstr "Ваш email"
+
+#: .\apps\users\models.py:35
+msgid "Email"
+msgstr "Email"
+
+#: .\apps\users\models.py:36
+msgid "First name"
+msgstr "Имя"
+
+#: .\apps\users\models.py:37
+msgid "Last name"
+msgstr "Фамилия"
+
+#: .\apps\users\models.py:38
+msgid "Your birthday"
+msgstr "Ваш день рождения"
+
+#: .\apps\users\models.py:38
+msgid "Birthday"
+msgstr "День рождения"
+
+#: .\apps\users\models.py:44
+msgid "Specified phone number"
+msgstr "Указанный номер телефона"
+
+#: .\apps\users\models.py:44
+msgid "Phone number"
+msgstr "Номер телефона"
+
+#: .\apps\users\models.py:45
+msgid "Last login"
+msgstr "Время последнего входа"
+
+#: .\apps\users\models.py:50
+msgid "Date of join"
+msgstr "Дата регистрации"
+
+#: .\apps\users\models.py:50
+msgid "Joined at"
+msgstr "Зарегистрирован"
+
+#: .\apps\users\models.py:77
+msgid ""
+"Cannot delete your landlord account while you have active or confirmed "
+"future guest bookings! Please process client cancellations or completions "
+"first through your dashboard."
+msgstr "Нельзя удалить Ваш аккаунт Арендодателя пока у Вас есть активные или подтвержденные будущие бронирования!"
+" Пожалуйста сперва отмените бронирования Ваших гостей или завершите их используя панель управления в личном кабинете."
+
+#: .\apps\users\models.py:87
+msgid ""
+"Cannot delete account! You have active or confirmed upcoming reservations. "
+"Please cancel your bookings first before deleting your profile."
+msgstr "Нельзя удалить аккаунт! У вас есть активные или подтвержденные будущие бронированиями."
+"Пожалуйста перед удалением профиля сперва отмените Ваши бронирования."
+
+#: .\apps\users\serializers\users.py:20
+msgid ""
+"The phone number must consist of 10-75 symbols in total and start from + "
+"symbol!!\n"
+"Example: +3423234455323"
+msgstr "Номер телефона должен состоять от 10-75 символов в общей сложности и "
+"начинаться с символа + !!\n"
+"Пример: +3423234455323"
+
+#: .\apps\users\serializers\users.py:64
+msgid "This email already exists!!"
+msgstr "Этот email уже существует"
+
+#: .\apps\users\serializers\users.py:77
+msgid "Password fields are required for registration!!"
+msgstr "Для завершения регистрации требуется указать оба поля пароль!!"
+
+#: .\apps\users\serializers\users.py:79
+msgid "Passwords do not match!!"
+msgstr "Пароли не совпадают!!"
+
+#: .\apps\users\serializers\users.py:124
+msgid "Current password verification failed! Please try again."
+msgstr "Верификация текущего пароля провалилась! Пожалуйста, попробуйте снова."
+
+#: .\apps\users\serializers\users.py:141
+msgid "New passwords do not match!!"
+msgstr "Новые пароли не совпадают!!"
+
+#: .\apps\users\serializers\users.py:145
+msgid "Authentication context missing."
+msgstr "Отсутствует контекст Аутентификации."
+
+#: .\apps\users\serializers\users.py:155
+msgid ""
+"Security breach: Provided refresh token does not belong to your account "
+"session!"
+msgstr "Нарушение безопасности: предоставленный refresh-токен не принадлежит сессии вашей учетной записи!"
+
+#: .\apps\users\serializers\users.py:159
+msgid "Provided refresh token is invalid or already expired."
+msgstr "Предоставленный refresh-токен неправильный или уже истек."
+
+#: .\apps\users\validators\validate_birth_date_age.py:21
+msgid "You must be at least 18 years old to register!"
+msgstr "Вам должно быть как минимум 18 лет чтобы регистрироваться!"
+
+#: .\apps\users\validators\validate_birth_date_age.py:24
+msgid "You are so old my friend! :D Try again :)"
+msgstr "Ты такой древний мой друг! :D Попытайся ещё раз :)"
+
+#: .\apps\users\views.py:84
+msgid "Password has been successfully updated."
+msgstr "Пароль успешно обновлен."
+
+#: .\apps\users\views.py:162
+msgid "You are already a Landlord!"
+msgstr "Вы уже являетесь Арендодателем!"
+
+#: .\apps\users\views.py:166
+msgid "You are now a Landlord. You can host properties! :)"
+msgstr "Теперь Вы Арендодатель. Вы можете создавать объявления! :)"
+
+#: .\apps\users\views.py:170
+msgid "System user groups (Tenant/Landlord) are not initialized."
+msgstr "Системные группы пользователей (Арендатор/Арендодатель) не инициализированы."
+
+#: .\apps\users\views.py:192
+msgid "Refresh token is required."
+msgstr "Требуется refresh-токен."
+
+#: .\apps\users\views.py:196
+msgid "You have been logged out."
+msgstr "Вы вышли из учётной записи."
+
+#: .\apps\users\views.py:198
+msgid "Token is invalid or expired."
+msgstr "Токен неправильный или уже истек."
+
+#: .\config\settings.py:264
+msgid "Russian"
+msgstr "Русский"
+
+#: .\config\settings.py:265
+msgid "English"
+msgstr "Английский"
+
+#: .\config\settings.py:266
+msgid "Deutsch"
+msgstr "Немецкий"

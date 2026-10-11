@@ -2,6 +2,7 @@ from django_filters import rest_framework as filters
 from apps.listings.models import Listing
 from apps.core.models import Countries, RoomCount, MaxGuests
 from django.db.models import F, ExpressionWrapper, DecimalField
+from django.utils.translation import gettext_lazy as _
 
 
 class ListingFilter(filters.FilterSet):
@@ -23,7 +24,7 @@ class ListingFilter(filters.FilterSet):
     rooms = filters.ChoiceFilter(field_name='rooms', lookup_expr='exact',
                                  choices=RoomCount.choices)
     guests = filters.ChoiceFilter(field_name='max_guests', lookup_expr='gte', choices=MaxGuests.choices,
-                                  help_text='Select minimal guests quantity')
+                                  help_text=_('Select minimal guests quantity'))
 
     class Meta:
         model = Listing

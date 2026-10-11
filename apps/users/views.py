@@ -15,6 +15,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, APIView
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework_simplejwt.serializers import TokenBlacklistSerializer
+from django.utils.translation import gettext_lazy as _
 
 @extend_schema(summary='Register new user', description='New user registration')
 class UserCreateGenericView(CreateAPIView):
@@ -80,7 +81,7 @@ class UserMeView(APIView):
 
         refresh = RefreshToken.for_user(user)
 
-        return Response({'msg': 'Password has been successfully updated.',
+        return Response({'msg': _('Password has been successfully updated.'),
                              'tokens': {
                                  'refresh': str(refresh),
                                  'access': str(refresh.access_token)
@@ -158,15 +159,15 @@ class UserBecomeLandlordView(APIView):
             landlord_group_id = Group.objects.values_list('id', flat=True).get(name='Landlord')
 
             if user.groups.filter(pk=landlord_group_id).exists():
-                return Response({'detail': 'You are already a Landlord!'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'detail': _('You are already a Landlord!')}, status=status.HTTP_400_BAD_REQUEST)
 
             user.groups.set([landlord_group_id])
 
-            return Response({'msg': 'You are now a Landlord. You can host properties! :)'},
+            return Response({'msg': _('You are now a Landlord. You can host properties! :)')},
                             status=status.HTTP_200_OK)
 
         except Group.DoesNotExist:
-            return Response({'detail': 'System user groups (Tenant/Landlord) are not initialized.'},
+            return Response({'detail': _('System user groups (Tenant/Landlord) are not initialized.')},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @extend_schema(summary='Account Logout',
@@ -188,13 +189,13 @@ def logout(request, *args, **kwargs):
     """
     refresh_token = request.data.get('refresh')
     if not refresh_token:
-        raise ValidationError({'detail': 'Refresh token is required.'})
+        raise ValidationError({'detail': _('Refresh token is required.')})
     try:
         token = RefreshToken(refresh_token)
         token.blacklist()
-        return Response({'msg': 'You have been logged out.'}, status=status.HTTP_200_OK)
+        return Response({'msg': _('You have been logged out.')}, status=status.HTTP_200_OK)
     except TokenError:
-        raise ValidationError({'detail': 'Token is invalid or expired.'})
+        raise ValidationError({'detail': _('Token is invalid or expired.')})
 
 
 class UserReadOnlyViewSet(ReadOnlyModelViewSet):

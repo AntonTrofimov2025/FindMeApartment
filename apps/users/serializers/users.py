@@ -74,9 +74,9 @@ class RegisterUserSerializer(ValidatePhoneMixin, serializers.ModelSerializer):
     def validate(self, attrs):
         if not self.instance or 'password' in attrs or 're_password' in attrs:
             if not attrs.get('password') or not attrs.get('re_password'):
-                raise serializers.ValidationError({'password': 'Password fields are required for registration!!'})
+                raise serializers.ValidationError({'password': _('Password fields are required for registration!!')})
             if attrs.get('password') != attrs.get('re_password'):
-                raise DRFValidationError({'re_password': 'Passwords do not match!!'})
+                raise DRFValidationError({'re_password': _('Passwords do not match!!')})
         return super().validate(attrs)
 
     def create(self, validated_data):
@@ -121,7 +121,7 @@ class ChangePasswordSerializer(serializers.Serializer):
     def validate_old_password(self, value):
         user = self.context['request'].user
         if not user.check_password(value):
-            raise serializers.ValidationError("Current password verification failed! Please try again.")
+            raise serializers.ValidationError(_("Current password verification failed! Please try again."))
         return value
 
     def validate_new_password(self, value):
@@ -138,7 +138,7 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if attrs['new_password'] != attrs['re_new_password']:
-            raise serializers.ValidationError({"re_new_password": "New passwords do not match!!"})
+            raise serializers.ValidationError({"re_new_password": _("New passwords do not match!!")})
 
         request = self.context.get('request')
         if not request or not request.user:

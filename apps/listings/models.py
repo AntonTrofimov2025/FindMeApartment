@@ -39,30 +39,30 @@ class Listing(UniqueID, TimeStampedModel):
                              verbose_name=_("Listing's Title"))
     description = models.TextField(verbose_name=_("Listing's description"))
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='listings', on_delete=models.PROTECT,
-                             verbose_name=_('User'), help_text='Current selected user')
-    country = models.SmallIntegerField(choices=Countries, default=Countries.GERMANY, help_text='Selected country',
+                             verbose_name=_('User'), help_text=_('Current selected user'))
+    country = models.SmallIntegerField(choices=Countries, default=Countries.GERMANY, help_text=_('Selected country'),
                                        verbose_name=_('Country'))
-    district = models.CharField(max_length=50, validators=[MinLengthValidator(3)], help_text='Specified district',
+    district = models.CharField(max_length=50, validators=[MinLengthValidator(3)], help_text=_('Specified district'),
                             verbose_name=_('District'))
-    city = models.CharField(max_length=50, validators=[MinLengthValidator(3)], help_text='Specified city',
+    city = models.CharField(max_length=50, validators=[MinLengthValidator(3)], help_text=_('Specified city'),
                             verbose_name=_('City'))
-    street = models.CharField(max_length=100, validators=[MinLengthValidator(3)], help_text='Specified street',
-                              verbose_name='Street')
+    street = models.CharField(max_length=100, validators=[MinLengthValidator(3)], help_text=_('Specified street'),
+                              verbose_name=_('Street'))
     house_number = models.CharField(max_length=10, validators=[MinLengthValidator(1)],
-                                    help_text='Specified house number', verbose_name=_('House number'))
+                                    help_text=_('Specified house number'), verbose_name=_('House number'))
     apartment_number = models.CharField(max_length=10, validators=[MinLengthValidator(1)], null=True, blank=True,
-                                        help_text='Specified apartment number', verbose_name=_('Apartment number'))
+                                        help_text=_('Specified apartment number'), verbose_name=_('Apartment number'))
     is_active = models.BooleanField(default=True, verbose_name=_('Available?'))
     max_guests = models.SmallIntegerField(choices=MaxGuests, default=MaxGuests.TWO,
-                                          help_text='Selected guests max quantity', verbose_name=_('Max guests'))
+                                          help_text=_('Selected guests max quantity'), verbose_name=_('Max guests'))
     property_type = models.CharField(max_length=15, choices=PropertyType, default=PropertyType.APARTMENT,
-                                     help_text='Selected Property Type', verbose_name=_('Property type'))
+                                     help_text=_('Selected Property Type'), verbose_name=_('Property type'))
     price_per_night = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_('Current price per night'),
                                           validators=[MinValueValidator(Decimal('0.00'))])
     discount = models.DecimalField(max_digits=3, decimal_places=2, validators=[MinValueValidator(Decimal("0.01")),
                                                                 MaxValueValidator(Decimal("1"))], default=Decimal("1"),
                                    help_text=_('Discount coefficient for price per night'), verbose_name=_('Discount'))
-    rooms = models.SmallIntegerField(choices=RoomCount, default=RoomCount.ONE, help_text="Selected room's quantity",
+    rooms = models.SmallIntegerField(choices=RoomCount, default=RoomCount.ONE, help_text=_("Selected room's quantity"),
                                      verbose_name=_('Rooms'))
 
     @property
@@ -105,7 +105,7 @@ class Listing(UniqueID, TimeStampedModel):
 
     def clean(self):
         if not self.user_id:
-            raise ValidationError({'user': 'A valid landlord user instance must be assigned to create a listing!'})
+            raise ValidationError({'user': _('A valid landlord user instance must be assigned to create a listing!')})
         super().clean()
         if self.property_type and self.property_type in [PropertyType.ROOM, PropertyType.APARTMENT] and not self.apartment_number:
             raise ValidationError(_('The apartment number is required for room/apartment property type'))
@@ -155,7 +155,7 @@ class Listing(UniqueID, TimeStampedModel):
         ordering = ('-created_at',)
         constraints = [models.CheckConstraint(name='discount_from_0.01_to_1',
                                               condition=Q(discount__gt=Decimal("0")) & Q(discount__lte=Decimal("1")),
-                                              violation_error_message='Discount is only allowed in range of (0.01 and 1.00).')]
+                                              violation_error_message=_('Discount is only allowed in range of (0.01 and 1.00).'))]
         indexes = [models.Index(fields=['city', 'price_per_night'], name='fma_listings_city_price_idx'),
                    models.Index(fields=['city', 'rooms'], name='fma_listings_city_rooms_idx'),
                    models.Index(fields=['city', 'price_per_night', 'rooms'], name='fma_list_city_price_rooms_idx'),
@@ -183,7 +183,7 @@ class Photo(UniqueID, TimeStampedModel):
     photo = models.ImageField(upload_to=get_upload_path, verbose_name=_('Photo'),
     validators=[validate_extension, validate_file_size])
     photo_number = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(50)],
-                                              help_text="Specified photo number", verbose_name=_('Photo number'))
+                                              help_text=_("Specified photo number"), verbose_name=_('Photo number'))
 
 
     objects = PhotoSoftDeleteManager()

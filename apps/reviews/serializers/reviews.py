@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from apps.reviews.models import Review
+from django.utils.translation import gettext_lazy as _
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -41,11 +42,11 @@ class ReviewCreateUpdateSerializer(serializers.ModelSerializer):
 
         if booking and request:
             if booking.user != request.user and not (request.user.is_staff or request.user.is_superuser):
-                raise serializers.ValidationError('You can leave reviews for your own completed bookings only!')
+                raise serializers.ValidationError(_('You can leave reviews for your own completed bookings only!'))
 
             existing_review = Review.objects.filter(booking=booking).first()
             if existing_review:
                 if not self.instance or existing_review.pk != self.instance.pk:
-                    raise serializers.ValidationError('You can leave only one review for the booking!')
+                    raise serializers.ValidationError(_('You can leave only one review for the booking!'))
 
         return super().validate(attrs)

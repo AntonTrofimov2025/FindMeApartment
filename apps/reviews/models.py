@@ -23,7 +23,7 @@ class Review(UniqueID, TimeStampedModel):
         - Relies on database check constraints to enforce property and location metrics between 1 and 5 stars.
     """
     booking = models.OneToOneField(Booking, related_name='review', on_delete=models.PROTECT,
-                                help_text='Associated Booking', verbose_name=_('Booking'))
+                                help_text=_('Associated Booking'), verbose_name=_('Booking'))
 
     property_rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     location_rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
@@ -40,7 +40,7 @@ class Review(UniqueID, TimeStampedModel):
     def clean(self):
         super().clean()
         if not self.booking_id:
-            raise ValidationError({'booking': 'A review cannot exist without a verified underlying booking contract!'})
+            raise ValidationError({'booking': _('A review cannot exist without a verified underlying booking contract!')})
         if self.booking.booking_status != StatusChoices.COMPLETED:
             raise ValidationError(_('You can only leave a review after the booking is completed!'))
 
